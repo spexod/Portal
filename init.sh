@@ -3,7 +3,7 @@ clear
 echo "SpExServer Initialization Script"
 cd /opt/bitnami/ || return
 PROJECT=projects
-cd $PROJECT/ || exit && docker-compose down && cd ../
+cd $PROJECT/ || return && docker-compose down && cd ../
 rm $PROJECT -rf
 mkdir $PROJECT && chmod 755 $PROJECT && cd $PROJECT/ || exit
 git clone https://github.com/chw3k5/SpExServer .
