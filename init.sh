@@ -7,7 +7,7 @@ PROJECT=projects
 cd $PROJECT/ || return && docker-compose down && cd ../
 rm $PROJECT -rf
 mkdir $PROJECT && chmod 755 $PROJECT && cd $PROJECT/ || exit
-cp ~/sql_config.py .
+cp /home/bitnami/sql_config.py .
 git clone https://github.com/chw3k5/SpExServer .
 git checkout main
 chmod 744 init_repos.sh init.sh update_repos.sh update.sh
