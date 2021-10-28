@@ -15,7 +15,7 @@ cd ../
 
 echo "Updating SpExoDisks Repository"
 cd SpExoDisks
-git pull origin master
-git checkout master
+git pull origin main
+git checkout main
 cd ../
 echo "completed: SpExServer initialization Script"
