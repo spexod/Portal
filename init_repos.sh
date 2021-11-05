@@ -7,7 +7,7 @@ git checkout main
 echo "Downloading SpExWebsite Repository"
 git clone https://github.com/isaacj96/SpExWebsite
 git checkout master
-cp sql_config.py SpExWebsite/SpExoDisks/mypysql/.
+cp sql_config.py SpExWebsite/.
 
 echo "Downloading SpExoDisks Repository"
 git clone https://github.com/chw3k5/SpExoDisks
