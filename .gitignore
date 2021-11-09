@@ -3,3 +3,4 @@ venv
 SpExo-FrontEnd
 SpExWebsite
 SpExoDisks
+*sql_config.py*

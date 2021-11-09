@@ -1,9 +1,9 @@
-# SpExoDisks_Containerized
-This is  an assembly repository that links the work of the SpExoDisks
+# SpExServer
+This is an assembly repository that links the work of the SpExoDisks
 development teams. This repository contains the linking and manage files
 (docker-compose.yml,  nginx-setup.conf, nginx.conf) to set up a 
 containerized sever on any computer with Docker and Docker-Compose.
-## Running on a Sever or Your Local Machine
+## Running on a Sever/Local Machine Setup
 ### Initial Setup
 This repo (SpExServer) is super lightweight, it does not contain the
 code (and in the future, simply the docker images) needed to build the
@@ -38,7 +38,7 @@ is meant to be streamed lined with a script, SpExServer/init.sh.
 # clone this repository
 git clone https://github.com/chw3k5/SpExServer
 # copy the sql_config.py to the SpExServer directory
-cp sql_config.py SpExSever/.
+cp sql_config.py SpExServer/.
 # change directory to SpExServer
 cd SpExServer
 # modify all the shell scripts to be allowed to be executed
@@ -51,4 +51,85 @@ Depending on how you use your computer or if you are on a unix server,
 you may have to enter your Github.com `username` and paste your 
 `personal access token`.
 
+`init.sh` takes a long time on the first time as it builds the docker images 
+from freshly downloaded repositories. This get faster with subsequent builds
+as the Docker makes use of cached files.
 
+### Updating
+With the initialization above (chmod 744 on update.sh update_repos.sh)
+it is simple to update the repositories all to the main branch with:
+```angular2html
+cd SpExServer
+sudo ./update.sh
+```
+
+However, this script (and all the scripts) are designed for fast updates
+on a remote sever that have already been verified locally. If you are doing
+the local verification, you will need a finer set of tools.
+
+## Local Machine Testing
+SpExServer is a conglomerate repository, that brings together other smaller
+component repositories. On a local machine, we can individually control 
+which branch and commit is checked out for the component repositories.
+This *time-machine* allows us to test developments before deploying to the
+server.
+
+### Changing Component git branches and 
+For example: the .git files SpExServer/.git, SpExServer/SpExo-FrontEnd/.git,
+and SpExServer/SpExwebsite/.git can all be controlled independently simple by
+using 'cd' to get into that directory. There are editors that can visually
+demonstrate this selection process, we recommend https://www.jetbrains.com/edu-products/download/#section=idea
+but this editor has many advance features that may be difficult to learn.
+
+- git cheatsheet https://education.github.com/git-cheat-sheet-education.pdf
+- the command to check out a branch https://git-scm.com/docs/git-checkout
+  - `git checkout your_branch_name`
+
+### Building with Docker-Compose
+After updating the component repositories, you will want to test, 
+and thus build, the website. For this we need only a few, `docker-compose`
+commands (when everything is going right.) Note, docker-compose is a
+python package the 'bolts-on-top-of' the Docker Engine, but is not the
+Docker Engine itself. The scope of `docker-compose` is the assembly of
+my docker images to make a deployment of docker containers, a website 
+and an APT in our case.
+
+`docker-comopse` always looks for a docker-compose.yml file for
+instructions. So we 
+```angular2html
+cd SpExServer
+```
+to be in the same directory as 
+SpExServer/docker-compose.yml
+
+*End the Old Docker-Compose Deployment*
+Gracefully shut down any existing containers and networks with:
+```angular2html
+docker-compose down
+```
+
+*Build the Docker Images from the Repositories*
+Build the Images from the repositories and their Dockerfiles, locations
+specified in SpExServer/docker-compose.yml.
+```angular2html
+docker-compose build
+```
+
+*Deploy the Docker images into running Containers*
+With a successful container deployment, check `localhost` 
+on a browser, and you should see the deployed website and API
+```angular2html
+docker-compose up
+```
+
+A variation of `docker-compose up` with `-d` (detach argument) to disconnect the terminal session from the docker-compose
+deployment (remember to clean up with `docker-compose down` after).
+```angular2html
+docker-compose up -d
+```
+
+A variation of `docker-compose up` with `--build` (build argument) 
+to automatically *build* the images and then bring *up* the containers.
+```angular2html
+docker-compose up --build
+```
