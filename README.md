@@ -22,6 +22,7 @@ the current recommended configuration.
 - Docker installation https://docs.docker.com/engine/install/
 - Unix step: docker-compose installation (docker-compose comes with
 Windows and Mac Installation) https://docs.docker.com/compose/install/.
+- Test the docker is running with `docker version` You should see both a `client` and `Engine`.
 - Get the connection credentials (sql_config.py) for the SpExoDisks MySQL server.
   - It is easy to generate these files, ask SpExoDisks Technical 
     Administrators (Issac or Caleb in 2021)
