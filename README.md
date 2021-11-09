@@ -46,6 +46,7 @@ chmod 744 *.sh
 # call the initialization script, that takes care of the rest.
 sudo ./init.sh
 ```
+sudo is not needed in Git-Bash.
 
 Depending on how you use your computer or if you are on a unix server,
 you may have to enter your Github.com `username` and paste your 
