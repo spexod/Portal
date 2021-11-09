@@ -4,9 +4,10 @@ echo "SpExServer Initialization Script"
 # on the Server
 [ -d "/opt/bitnami" ] && echo "  Server Initialization" && PROJECT=projects && cd /opt/bitnami
 # on a local machine
-[ ! -d "/opt/bitnami" ] && echo "  Local Machine Initialization" && PROJECT=SpExServer && cd ../
+[ ! -d "/opt/bitnami" ] && echo "  Local Machine Initialization" && PROJECT=SpExServer
 # Stop any running container to free up resources
-[ -d $PROJECT/ ] && cd $PROJECT/ && echo "  Stopping Running Containers in $(pwd)" && docker-compose down && cd ../
+[ -d $PROJECT/ ] && cd $PROJECT/ && echo "  Stopping Running Containers in $(pwd)" && docker-compose down
+[ -d $PROJECT/ ] cd ../
 # delete the old directory
 echo "  Deleting the old directory $PROJECT in $(pwd)"
 exit
