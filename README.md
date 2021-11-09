@@ -35,10 +35,10 @@ to clone the various github repositories and/or docker images, the process
 is meant to be streamed lined with a script, SpExServer/init.sh.
 
 ```angular2html
+# check to make sure `sql_config.py` is in the current directory
+ls -l *sql_config.py*
 # clone this repository
 git clone https://github.com/chw3k5/SpExServer
-# copy the sql_config.py to the SpExServer directory
-cp sql_config.py SpExServer/.
 # change directory to SpExServer
 cd SpExServer
 # modify all the shell scripts to be allowed to be executed
