@@ -8,7 +8,7 @@ echo "SpExServer Initialization Script"
 # Stop any running container to free up resources
 [ -d $PROJECT/ ] && cd $PROJECT/ && echo "  Stopping Running Containers in $(pwd)" && docker-compose down && cd ../
 # delete the old directory
-echo "  Deleting the old directory $(PROJECT) in $(pwd)"
+echo "  Deleting the old directory $PROJECT in $(pwd)"
 exit
 
 
