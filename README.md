@@ -34,6 +34,7 @@ With your command line environment setup, and the correct privileges
 to clone the various github repositories and/or docker images, the process
 is meant to be streamed lined with a script, SpExServer/init.sh.
 
+For Git-Bash, `sudo` is not needed in Git-Bash  and the neither is the `chmod 744`
 ```angular2html
 # check to make sure `sql_config.py` is in the current directory
 ls -l *sql_config.py*
@@ -42,9 +43,22 @@ git clone https://github.com/chw3k5/SpExServer
 # change directory to SpExServer
 cd SpExServer
 # call the initialization script, that takes care of the rest.
+./init.sh
+```
+
+For Mac Linux,
+```angular2html
+# check to make sure `sql_config.py` is in the current directory
+ls -l *sql_config.py*
+# clone this repository
+git clone https://github.com/chw3k5/SpExServer
+# change directory to SpExServer
+cd SpExServer
+# give the scripts permission to be executed
+chmod 744 *.sh
+# call the initialization script, that takes care of the rest.
 sudo ./init.sh
 ```
-sudo is not needed in Git-Bash.
 
 Depending on how you use your computer or if you are on a unix server,
 you may have to enter your Github.com `username` and paste your 
