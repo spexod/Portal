@@ -116,7 +116,7 @@ docker-compose build
 
 *Deploy the Docker images into running Containers*
 With a successful container deployment, check `localhost` 
-on a browser, and you should see the deployed website and API
+on a browser, and you should see the deployed website and API.docker-compose
 ```angular2html
 docker-compose up
 ```
@@ -131,4 +131,9 @@ A variation of `docker-compose up` with `--build` (build argument)
 to automatically *build* the images and then bring *up* the containers.
 ```angular2html
 docker-compose up --build
+```
+
+*Check the status of a detected Docker-Compose Build:
+```angular2html
+docker-compose ps
 ```
