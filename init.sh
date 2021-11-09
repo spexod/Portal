@@ -18,7 +18,7 @@ git checkout main
 # on the server only, get the sql_config file
 [ -d "/home/bitnami/sql_config.py" ] && cp /home/bitnami/sql_config.py .
 # on a local machine only, get the sql_config file
-[ -d "../sql_config.py" ] && cp ../sql_config.py .
+[ ! -d "/home/bitnami/sql_config.py" ] && cp ../sql_config.py .
 # modify the scripts to be executable
 chmod 744 *.sh
 # on the Server, ad the update script to the home directory
