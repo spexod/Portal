@@ -9,7 +9,7 @@ echo "SpExServer Initialization Script"
 [ -d $PROJECT/ ] && cd $PROJECT/ && echo "  Stopping Running Containers in $(pwd)" && docker-compose down
 [ -d ../$PROJECT/ ] && cd ../
 # delete the old directory
-echo "  Deleting the old directory $PROJECT in $(pwd)" && rm $PROJECT -rf
+echo "  Deleting the old directory $PROJECT in $(pwd)" && rm -rf $PROJECT
 # make a new directory with the correct permissions
 mkdir $PROJECT && chmod 755 $PROJECT && cd $PROJECT/ || exit
 # clone SpExoServer repo
