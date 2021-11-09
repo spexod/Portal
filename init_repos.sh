@@ -9,8 +9,8 @@ git clone https://github.com/isaacj96/SpExWebsite
 git checkout master
 cp sql_config.py SpExWebsite/.
 
-echo "Downloading SpExoDisks Repository"
-git clone https://github.com/chw3k5/SpExoDisks
-git checkout main
-cp sql_config.py SpExoDisks/mypysql/.
-echo "completed: SpExServer initialization Script"
+# echo "Downloading SpExoDisks Repository"
+# git clone https://github.com/chw3k5/SpExoDisks
+# git checkout main
+# cp sql_config.py SpExoDisks/mypysql/.
+# echo "completed: SpExServer initialization Script"
