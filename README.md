@@ -41,8 +41,6 @@ ls -l *sql_config.py*
 git clone https://github.com/chw3k5/SpExServer
 # change directory to SpExServer
 cd SpExServer
-# modify all the shell scripts to be allowed to be executed
-chmod 744 *.sh
 # call the initialization script, that takes care of the rest.
 sudo ./init.sh
 ```
