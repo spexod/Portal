@@ -6,7 +6,7 @@ echo "SpExServer Initialization Script"
 # on a local machine
 [ ! -d "/opt/bitnami" ] && echo "  Local Machine Initialization" && PROJECT=SpExServer && cd ../
 # Stop any running container to free up resources
-[ -d $PROJECT/ ] && echo "  Stopping Running Containers" cd $PROJECT/ && docker-compose down && cd ../
+[ -d $PROJECT/ ] && echo "  Stopping Running Containers in $(pwd)" cd $PROJECT/ && docker-compose down && cd ../
 # delete the old directory
 rm $PROJECT -rf
 # make a new directory with the correct permissions
