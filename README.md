@@ -18,7 +18,7 @@ the current recommended configuration.
   - Obtain a personal access token: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
     Save this in a save place to cut and paste from later.
   - Send your Github.com username to the SpExoDisks Technical Administrators
-    (Issac or Caleb in 2021).
+    (Isaac or Caleb in 2021).
 - Docker installation https://docs.docker.com/engine/install/
 - Unix step: docker-compose installation (docker-compose comes with
 Windows and Mac Installation) https://docs.docker.com/compose/install/.
