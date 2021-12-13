@@ -25,7 +25,7 @@ Windows and Mac Installation) https://docs.docker.com/compose/install/.
 - Test the docker is running with `docker version` You should see both a `client` and `Engine`.
 - Get the connection credentials (sql_config.py) for the SpExoDisks MySQL server.
   - It is easy to generate these files, ask SpExoDisks Technical 
-    Administrators (Issac or Caleb in 2021)
+    Administrators (Isaac or Caleb in 2021)
   - In the code below this file is expected to be in the parent directory
     of SpExoSever so that `cp sql_config.py SpExSever/.` is ready to
     be copied by the `init.sh` script.
