@@ -9,8 +9,8 @@ cd ../
 
 echo "Updating SpExWebsite Repository"
 cd SpExWebsite
-git pull origin master
-git checkout master
+git pull origin main
+git checkout main
 cd ../
 
 # echo "Updating SpExoDisks Repository"
