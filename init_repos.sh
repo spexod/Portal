@@ -10,7 +10,7 @@ cd ../
 echo "Downloading SpExWebsite Repository"
 git clone https://github.com/isaacj96/SpExWebsite
 cd SpExWebsite
-git checkout git down-data
+git checkout down-data
 chmod -R 777 .
 cd ../
 cp sql_config.py SpExWebsite/.
