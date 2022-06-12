@@ -15,7 +15,7 @@ mkdir $PROJECT && chmod 755 $PROJECT && cd $PROJECT/ || exit
 # clone SpExoServer repo
 git clone https://github.com/chw3k5/SpExServer .
 # checkout the main branch
-git checkout main
+git checkout dev
 # on the server only, get the sql_config file
 [ -d "/home/bitnami/sql_config.py" ] && cp /home/bitnami/sql_config.py .
 # on a local machine only, get the sql_config file
