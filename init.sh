@@ -21,7 +21,7 @@ git checkout dev
 # on a local machine only, get the sql_config file
 [ ! -d "/home/bitnami/sql_config.py" ] && cp ../sql_config.py .
 # modify the scripts to be executable
-chmod 744 *.sh
+chmod 777 *.sh
 # on the Server, add the update script to the home directory
 [ -d "/home/bitnami" ] && cp update-deploy.sh  /home/bitnami/.
 # run the repository initialisation (download) script
