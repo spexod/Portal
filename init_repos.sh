@@ -2,15 +2,19 @@
 echo "SpExServer initialization Script"
 echo "Downloading SpExo-FrontEnd Repository"
 git clone https://github.com/L-Key/SpExo-FrontEnd
+cd SpExo-FrontEnd
 git checkout main
+cd ../
+chmod -R 777 SpExo-FrontEnd
 
 echo "Downloading SpExWebsite Repository"
 git clone https://github.com/isaacj96/SpExWebsite
+cd SpExWebsite
 git checkout main
-cp sql_config.py SpExWebsite/.
+cd ../
 
-# echo "Downloading SpExoDisks Repository"
-# git clone https://github.com/chw3k5/SpExoDisks
-# git checkout main
-# cp sql_config.py SpExoDisks/mypysql/.
-# echo "completed: SpExServer initialization Script"
+cd SpExWebsite
+cp ../sql_config.py .
+./init_repos.sh
+cd ../
+echo "completed: SpExServer repository initialization script."

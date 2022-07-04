@@ -15,13 +15,14 @@ mkdir $PROJECT && chmod 755 $PROJECT && cd $PROJECT/ || exit
 # clone SpExoServer repo
 git clone https://github.com/chw3k5/SpExServer .
 # checkout the main branch
-git checkout main
+git checkout dev
 # on the server only, get the sql_config file
 [ -d "/home/bitnami/sql_config.py" ] && cp /home/bitnami/sql_config.py .
 # on a local machine only, get the sql_config file
 [ ! -d "/home/bitnami/sql_config.py" ] && cp ../sql_config.py .
 # modify the scripts to be executable
-chmod 744 *.sh
+chmod 777 *.sh
+chmod -R 777 .git
 # on the Server, add the update script to the home directory
 [ -d "/home/bitnami" ] && cp update-deploy.sh  /home/bitnami/.
 # run the repository initialisation (download) script
