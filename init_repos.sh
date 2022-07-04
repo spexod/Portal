@@ -3,14 +3,14 @@ echo "SpExServer initialization Script"
 echo "Downloading SpExo-FrontEnd Repository"
 git clone https://github.com/L-Key/SpExo-FrontEnd
 cd SpExo-FrontEnd
-git checkout down-data
+git checkout main
 cd ../
 chmod -R 777 SpExo-FrontEnd
 
 echo "Downloading SpExWebsite Repository"
 git clone https://github.com/isaacj96/SpExWebsite
 cd SpExWebsite
-git checkout down-data
+git checkout main
 cd ../
 
 cd SpExWebsite
