@@ -11,11 +11,7 @@ echo "Updating SpExWebsite Repository"
 cd SpExWebsite
 git pull origin main
 git checkout main
-cd ../
 
-# echo "Updating SpExoDisks Repository"
-# cd SpExoDisks
-# git pull origin main
-# git checkout main
-# cd ../
-# echo "completed: SpExServer initialization Script"
+./update_repos.sh
+cd ../
+echo "completed: SpExServer Update Script"
