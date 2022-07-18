@@ -2,6 +2,7 @@
 echo "SpExServer Update Script"
 echo "Updating SpExo-FrontEnd Repository"
 cd SpExo-FrontEnd
+git restore .
 git pull origin main
 git checkout main
 cd ../
@@ -9,6 +10,7 @@ cd ../
 
 echo "Updating SpExWebsite Repository"
 cd SpExWebsite
+git restore .
 git pull origin main
 git checkout main
 
