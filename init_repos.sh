@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "SpExServer initialization Script"
 echo "Downloading SpExo-FrontEnd Repository"
-git clone https://github.com/L-Key/SpExo-FrontEnd
+git clone https://github.com/spexod/SpExo-FrontEnd
 cd SpExo-FrontEnd
 git checkout main
 cd ../
