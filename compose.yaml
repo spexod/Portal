@@ -4,8 +4,6 @@ services:
   backend:
     build:
       context: ./SpExWebsite
-      dockerfile: Dockerfile-testupload
-    command: gunicorn SpSite.wsgi --bind 0.0.0.0:8000
   frontend:
     build:
       context: ./SpExo-FrontEnd/front-app
