@@ -5,7 +5,7 @@ git clone https://github.com/spexod/SpExo-FrontEnd
 cd SpExo-FrontEnd
 git checkout main
 cd ../
-chmod -R 777 SpExo-FrontEnd
+# chmod -R 777 SpExo-FrontEnd
 
 echo "Downloading SpExWebsite Repository"
 git clone https://github.com/spexod/SpExWebsite
