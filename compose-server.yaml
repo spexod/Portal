@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   backend:
-    image: https://ghcr.io/spexod/backend:latest
+    image: ghcr.io/spexod/backend:LATEST
     pull_policy: always
   frontend:
-    image: https://ghcr.io/spexod/frontend:latest
+    image: ghcr.io/spexod/frontend:LATEST
     pull_policy: always
   nginx:
     image: nginx:latest

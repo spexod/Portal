@@ -4,6 +4,21 @@ development teams. This repository contains the linking and manage files
 (docker-compose.yml,  nginx-setup.conf, nginx.conf) to set up a 
 containerized sever on any computer with Docker and Docker-Compose.
 ## Running on a Sever/Local Machine Setup
+
+### Warning
+[Docker](https://docs.docker.com), which is required to run the SpExoDisks
+website server, downloads a lot of files, and new versions of 
+Python, NginX, Node base images as well as the changes made to 
+the code base for the SpExoDisks website.
+It is recommended to have a fast internet connection and a lot of
+storage space. Periodically, you may find it helpful to run 
+
+`docker system prune --all`
+
+to remove all old images, containers, caches, etc. (everything that is 
+not currently running). I find that I have enough hard disk space, 
+but that my back-up storage drives get full much faster.
+
 ### Initial Setup
 This repo (SpExServer) is super lightweight, it does not contain the
 code (and in the future, simply the docker images) needed to build the
@@ -18,7 +33,7 @@ the current recommended configuration.
   - Obtain a personal access token: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
     Save this in a save place to cut and paste from later.
   - Send your Github.com username to the SpExoDisks Technical Administrators
-    (Isaac or Caleb in 2021).
+    (Andrea, Isaac, or Caleb in 2023).
 - Docker installation https://docs.docker.com/engine/install/
 - Unix step: docker-compose installation (docker-compose comes with
 Windows and Mac Installation) https://docs.docker.com/compose/install/.
@@ -119,36 +134,36 @@ SpExServer/docker-compose.yml
 *End the Old Docker-Compose Deployment*
 Gracefully shut down any existing containers and networks with:
 ```angular2html
-docker-compose down
+docker compose down
 ```
 
 *Build the Docker Images from the Repositories*
 Build the Images from the repositories and their Dockerfiles, locations
 specified in SpExServer/docker-compose.yml.
 ```angular2html
-docker-compose build
+docker compose build
 ```
 
 *Deploy the Docker images into running Containers*
 With a successful container deployment, check `localhost` 
 on a browser, and you should see the deployed website and API.docker-compose
 ```angular2html
-docker-compose up
+docker compose up
 ```
 
-A variation of `docker-compose up` with `-d` (detach argument) to disconnect the terminal session from the docker-compose
+A variation of `docker compose up` with `-d` (detach argument) to disconnect the terminal session from the docker-compose
 deployment (remember to clean up with `docker-compose down` after).
 ```angular2html
-docker-compose up -d
+docker compose up -d
 ```
 
-A variation of `docker-compose up` with `--build` (build argument) 
+A variation of `docker compose up` with `--build` (build argument) 
 to automatically *build* the images and then bring *up* the containers.
 ```angular2html
-docker-compose up --build
+docker compose up --build
 ```
 
 *Check the status of a detected Docker-Compose Build:
 ```angular2html
-docker-compose ps
+docker compose ps
 ```
