@@ -8,5 +8,6 @@ docker compose -f compose-deploy.yaml build
 # stop here to look for error messages
 echo " "
 read -r -p "Test Build completed, press any key to launch the test-website and continue..."
-# docker compose -f compose-deploy.yaml push
-echo "completed: SpExServer Deployment Build Script"
+docker login ghcr.io
+docker compose -f compose-deploy.yaml push
+read -r -p  "completed: SpExServer Deployment Build Script, press any key to continue..."

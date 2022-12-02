@@ -4,13 +4,13 @@ services:
   backend:
     build:
       context: ./SpExWebsite
-#    image: https://ghcr.io/spexod/backend:latest
-#    pull_policy: build
+    image: ghcr.io/spexod/backend:LATEST
+    pull_policy: build
   frontend:
     build:
       context: ./SpExo-FrontEnd/front-app
-#    image: https://ghcr.io/spexod/frontend:latest
-#    pull_policy: build
+    image: ghcr.io/spexod/frontend:LATEST
+    pull_policy: build
   nginx:
     image: nginx:latest
     ports:
