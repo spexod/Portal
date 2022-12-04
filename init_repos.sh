@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "SpExServer initialization Script"
+cp ../sql_config.py .
 echo "Downloading SpExo-FrontEnd Repository"
 git clone https://github.com/spexod/SpExo-FrontEnd
 cd SpExo-FrontEnd
