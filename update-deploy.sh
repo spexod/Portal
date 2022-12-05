@@ -4,7 +4,7 @@ echo "SpExServer Update Script"
 cd /opt/bitnami/projects/ || return
 git checkout main
 git pull origin main
-# run the update script (pull-deploy.sh) from the pulled version of SpExServer repo
+# run the update script (pull-deploy.sh) from the freshly pulled version of SpExServer repo
 ./pull-deploy.sh
 # take the currently running continues offline
 docker compose -f compose-server.yaml down
