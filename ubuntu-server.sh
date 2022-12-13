@@ -30,9 +30,7 @@
  sudo mkdir /var/www/spexo
 
  # clone the website repository
- git clone https://github.com/yrreprolyat/wheeler_site && cd wheeler_site || return
- # give permission to run the update script
- chmod 744 update.sh update-deploy.sh
+ git clone https://github.com/spexod/SpExServer && cd SpExServer || return
  # run the initialization script, which build and deploys the website with an http server
  ./init.sh
 
@@ -41,7 +39,7 @@
  sudo certbot certonly --webroot -w /var/www/spexo -d spexodisks.com -d www.spexodisks.com
 
  # we now no longer need the http server, so we can get rid of it
- docker-compose down
+ docker compose down
 
  # with a certificate we can now use the deployment version of the website.
  ./update-deploy.sh

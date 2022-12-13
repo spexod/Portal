@@ -2,7 +2,7 @@
 clear
 read -r -p "SpExServer TEST Build Script, press any key to continue..."
 # test the build on a local machine
-./write_test_configs.sh
+./write-test-configs.sh
 docker compose build
 # stop here to look for error messages
 echo " "

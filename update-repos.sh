@@ -14,6 +14,6 @@ git restore .
 git pull origin main
 git checkout main
 
-./update_repos.sh
+./update-repos.sh
 cd ../
 echo "completed: SpExServer Update Script"
