@@ -4,6 +4,8 @@ services:
   backend:
     build:
       context: ./SpExWebsite
+    volumes:
+      - ./SpExWebsite:/usr/src/app
   frontend:
     build:
       context: ./SpExo-FrontEnd/front-app

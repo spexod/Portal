@@ -4,6 +4,8 @@ services:
   backend:
     build:
       context: ./SpExWebsite
+    volumes:
+      - ./SpExWebsite:/usr/src/app
     image: ghcr.io/spexod/backend:LATEST
     pull_policy: build
   frontend:

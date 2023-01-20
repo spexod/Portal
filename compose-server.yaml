@@ -4,6 +4,8 @@ services:
   backend:
     image: ghcr.io/spexod/backend:LATEST
     pull_policy: always
+    volumes:
+      - ./SpExWebsite:/usr/src/app
   frontend:
     image: ghcr.io/spexod/frontend:LATEST
     pull_policy: always
