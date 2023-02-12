@@ -76,14 +76,14 @@ chmod 744 *.sh
 sudo ./init.sh
 ```
 
-Depending on how you use your computer or if you are on a unix server,
+Depending on how you use your computer or if you are on an unix server,
 you may have to enter your GitHub.com `username` and paste your 
 `personal access token`.
 
 ## Scripts
 
 All the scripts discussed in the section
-stops several times and waits for the user to hit
+stop several times and wait for the user to press
 any-key to continue. The stops happen at critical steps to allow users to read
 any error message before continuing to subsequent steps. Use _`control-c`_ in the 
 terminal to stop a script at any time for any reason.
@@ -114,17 +114,18 @@ this just opens GitBash.
 
 There are 4 git repositories to remember to update. You and do this manually
 with the git commands, but there is a convenience script to do this if you
-want to test only the `main` branches of the repositories, `update.sh`. This the best
-practice configuration deploying the website.
+want to test only the `main` branches of the repositories, `update.sh`. 
+This is the best practice configuration deploying the website.
 
-This script does not contain any docker commands.
+This script does not contain any docker commands, but the server still
+requires the use of `sudo` for permission to overwrite files. 
 
 ### Testing (build-test.sh)
 
 This does not affect the live website, but it does use a shared resource
 (the MySQL server) to test the data upload. Make sure to communicate with
 your team members so that this is only being done by one person at time 
-(Consider setting up a local SQL sever on you computer and setting the 
+(Consider setting up a local SQL sever on your computer and setting the 
 sql_config.py to point to that server if you find there are often conflicts).
 
 To test the initialization or any updates, we can make a full version of the
@@ -143,8 +144,8 @@ stop the containers.
 
 ### Build Deployable containers (build-deploy)
 
-The server requires a configuration the that is not compatible with local testing.
-Building docker images to be used and pulled by the server requires a special 
+The server requires a configuration that is not compatible with local testing.
+Building docker images to be used and pulled by the server uses a special 
 script, `build-deploy.sh`.
 
 `build-deploy.sh` is meant to be run directly after a successful `build-test`.
@@ -160,7 +161,7 @@ site.
 
 ### Updating the Server (update-deploy.sh)
 
-Updating the server requirements require asses to the server.
+Updating the server requirements requires access to the server.
 
 The Server require code accept the `update-deploy.sh` script, so the 
 server only has one repository 'SpExServer'.
@@ -171,17 +172,17 @@ navigate to the live website in your browser using <https://spexodisks.com>.
 Congratulations, you just deployed the SpExoDisks website. 
 
 ## Local Machine Testing
-SpExServer is a conglomerate repository, that brings together other smaller
+SpExServer is a conglomerate repository that brings together other smaller
 component repositories. On a local machine, we can individually control 
-which branch and commit is checked out for the component repositories.
+which branch and commit are checked out for the component repositories.
 This *time-machine* allows us to test developments before deploying to the
 server.
 
 ### Changing Component git branches and 
-For example: the .git files SpExServer/.git, SpExServer/SpExo-FrontEnd/.git,
+For example, the .git files SpExServer/.git, SpExServer/SpExo-FrontEnd/.git,
 and SpExServer/SpExwebsite/.git can all be controlled independently simple by
 using 'cd' to get into that directory. There are editors that can visually
-demonstrate this selection process, we recommend https://www.jetbrains.com/edu-products/download/#section=idea
+demonstrate this selection process, we recommend https://www.jetbrains.com/edu-products/download/#section=idea, 
 but this editor has many advance features that may be difficult to learn.
 
 - git cheatsheet https://education.github.com/git-cheat-sheet-education.pdf
