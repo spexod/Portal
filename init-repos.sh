@@ -12,7 +12,7 @@ git clone https://github.com/spexod/SpExWebsite
 cd SpExWebsite
 git checkout main
 cp ../sql_config.py .
-./init_spexodisks.sh
+./init-spexodisks.sh
 cd ../
 
 echo "completed: SpExServer repository initialization script."

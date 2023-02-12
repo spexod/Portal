@@ -29,10 +29,10 @@ the current recommended configuration.
 - A unix terminal (Git-Bash on Windows works)
 - sudo privileges
 - Git installation
-- a Github.com account
+- a GitHub.com account
   - Obtain a personal access token: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
     Save this in a save place to cut and paste from later.
-  - Send your Github.com username to the SpExoDisks Technical Administrators
+  - Send your GitHub username to the SpExoDisks Technical Administrators
     (Andrea, Isaac, or Caleb in 2023).
 - Docker installation https://docs.docker.com/engine/install/
 - Unix step: docker-compose installation (docker-compose comes with
@@ -47,7 +47,7 @@ Windows and Mac Installation) https://docs.docker.com/compose/install/.
 
 *Cloning and Running SpExSever*
 With your command line environment setup, and the correct privileges
-to clone the various github repositories and/or docker images, the process
+to clone the various GitHub repositories and/or docker images, the process
 is meant to be streamed lined with a script, SpExServer/init.sh.
 
 For Git-Bash, `sudo` is not needed in Git-Bash  and the neither is the `chmod 744`
@@ -77,24 +77,98 @@ sudo ./init.sh
 ```
 
 Depending on how you use your computer or if you are on a unix server,
-you may have to enter your Github.com `username` and paste your 
+you may have to enter your GitHub.com `username` and paste your 
 `personal access token`.
 
-`init.sh` takes a long time on the first time as it builds the docker images 
-from freshly downloaded repositories. This get faster with subsequent builds
-as the Docker makes use of cached files.
+## Scripts
 
-### Updating
-With the initialization above (chmod 744 on update.sh update_repos.sh)
-it is simple to update the repositories all to the main branch with:
-```angular2html
-cd SpExServer
-sudo ./update.sh
-```
+All the scripts discussed in the section
+stops several times and waits for the user to hit
+any-key to continue. The stops happen at critical steps to allow users to read
+any error message before continuing to subsequent steps. Use _`control-c`_ in the 
+terminal to stop a script at any time for any reason.
 
-However, this script (and all the scripts) are designed for fast updates
-on a remote sever that have already been verified locally. If you are doing
-the local verification, you will need a finer set of tools.
+Running the scripts can be a little different each operating system. 
+For each system type, see the examples below for running the `build-test.sh` script.
+
+__Linux__
+
+`sudo ./build-test.sh`
+
+__Mac__
+
+sudo is not allowed for docker commands, so we use:
+`./build-test.sh`
+
+__Windows (GitBash)__
+
+`./build-test.sh`
+
+__Windows (PowerShell)__
+
+`.\build-test.sh`
+
+this just opens GitBash.
+
+### Updating (update.sh)
+
+There are 4 git repositories to remember to update. You and do this manually
+with the git commands, but there is a convenience script to do this if you
+want to test only the `main` branches of the repositories, `update.sh`. This the best
+practice configuration deploying the website.
+
+This script does not contain any docker commands.
+
+### Testing (build-test.sh)
+
+This does not affect the live website, but it does use a shared resource
+(the MySQL server) to test the data upload. Make sure to communicate with
+your team members so that this is only being done by one person at time 
+(Consider setting up a local SQL sever on you computer and setting the 
+sql_config.py to point to that server if you find there are often conflicts).
+
+To test the initialization or any updates, we can make a full version of the
+test website using `build-test.sh` (make sure the docker damon is running!)
+This script takes a long time on for two reasons:
+1. It builds the docker images from freshly downloaded repositories with no cache,
+   subsequent builds will use cached data.
+2. There is a 45-minute upload step to put data in test schema on the MySQL server.
+
+Following the prompts in the script, once the images are built and then launched
+into containers, see the test website on your local machine by navigating your
+browser to <http://localhost>.
+
+Once you are done testing the website in the browser, use `control-c` to
+stop the containers.
+
+### Build Deployable containers (build-deploy)
+
+The server requires a configuration the that is not compatible with local testing.
+Building docker images to be used and pulled by the server requires a special 
+script, `build-deploy.sh`.
+
+`build-deploy.sh` is meant to be run directly after a successful `build-test`.
+When this happens the data upload step is skipped, and the data is
+migrated to the main database schemas used by the live site. This leads to a
+much shorting run time compared to `build-test.sh`.
+
+If, for any reason, the data is marked as `new_data_staged=1` (meaning 
+the data upload to MySQL severs was successful) in the `data_status.status`
+table on the MySQL server, the `build-deploy.sh` will first preform this
+long upload process before migrating the data the schemas used by the live
+site.
+
+### Updating the Server (update-deploy.sh)
+
+Updating the server requirements require asses to the server.
+
+The Server require code accept the `update-deploy.sh` script, so the 
+server only has one repository 'SpExServer'.
+
+Following the prompts in the script, once the images are pulled and the
+containers are launched (wait 10 seconds for the initialization), 
+navigate to the live website in your browser using <https://spexodisks.com>.
+Congratulations, you just deployed the SpExoDisks website. 
 
 ## Local Machine Testing
 SpExServer is a conglomerate repository, that brings together other smaller
@@ -115,15 +189,13 @@ but this editor has many advance features that may be difficult to learn.
   - `git checkout your_branch_name`
 
 ### Building with Docker-Compose
-After updating the component repositories, you will want to test, 
-and thus build, the website. For this we need only a few, `docker-compose`
-commands (when everything is going right.) Note, docker-compose is a
-python package the 'bolts-on-top-of' the Docker Engine, but is not the
-Docker Engine itself. The scope of `docker-compose` is the assembly of
-my docker images to make a deployment of docker containers, a website 
-and an APT in our case.
 
-`docker-comopse` always looks for a docker-compose.yml file for
+Everyone should use the scrips to manage and update the repository. However,
+software development will require us to update and test parts of the scripts.
+In this sense, everyone would have some understanding of the basic docker 
+commands used in our scripts.
+
+`docker comopse` always looks for a compose.yaml file for
 instructions. So we 
 ```angular2html
 cd SpExServer
