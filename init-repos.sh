@@ -11,7 +11,6 @@ echo "Downloading SpExWebsite Repository"
 git clone https://github.com/spexod/SpExWebsite
 cd SpExWebsite
 git checkout main
-cp ../sql_config.py .
 ./init-spexodisks.sh
 cd ../
 
