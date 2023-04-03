@@ -159,6 +159,19 @@ table on the MySQL server, the `build-deploy.sh` will first preform this
 long upload process before migrating the data the schemas used by the live
 site.
 
+When running this step, the prompt will ask (the first point on Macs only):
+
+```angular2html 
+Prepare to Enter:
+  1) Your Mac's default password
+  2) GitHub Username
+  3) Github Auth Token
+```
+
+The Git token you use here will need super-powers (ie. have every authorization enabled, when you request it on Git); see here if you need a new token: https://github.com/settings/tokens/new
+
+If you need to update your previously stored token to a new one see here: https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-existing-access-token
+
 ### Updating the Server (update-deploy.sh)
 
 Updating the server requirements requires access to the server.
