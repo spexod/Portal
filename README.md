@@ -168,13 +168,15 @@ Prepare to Enter:
   3) Github Auth Token
 ```
 
+At the prompt request you will first enter your Mac pwd (if using a Mac); after that, the Git token will be automatically read from what's stored on your machine, if you entered it before.
+
 The Git token you use here will need super-powers (ie. have every authorization enabled, when you request it on Git); see here if you need a new token: https://github.com/settings/tokens/new
 
 If you need to update your previously stored token to a new one see here: https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-existing-access-token
 
 ### Updating the Server (update-deploy.sh)
 
-Updating the server requirements requires access to the server.
+Updating the server requirements requires access to the server. In 2022-2023, this step has to be performed on AWS that is hosting the website; after migration to the TXST servers, this will be done there.
 
 The Server require code accept the `update-deploy.sh` script, so the 
 server only has one repository 'SpExServer'.
@@ -182,7 +184,8 @@ server only has one repository 'SpExServer'.
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 
 navigate to the live website in your browser using <https://spexodisks.com>.
-Congratulations, you just deployed the SpExoDisks website. 
+
+Congratulations, you just deployed the SpExoDisks website! 
 
 ## Local Machine Testing
 SpExServer is a conglomerate repository that brings together other smaller
@@ -209,7 +212,7 @@ software development will require us to update and test parts of the scripts.
 In this sense, everyone would have some understanding of the basic docker 
 commands used in our scripts.
 
-`docker comopse` always looks for a compose.yaml file for
+`docker compose` always looks for a compose.yaml file for
 instructions. So we 
 ```angular2html
 cd SpExServer
