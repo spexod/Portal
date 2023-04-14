@@ -178,6 +178,19 @@ If you need to update your previously stored token to a new one see here: https:
 
 Updating the server requirements requires access to the server. In 2022-2023, this step has to be performed on AWS that is hosting the website; after migration to the TXST servers, this will be done there.
 
+Instructions for AWS:
+1) go to Lightsail, and click on the server (named Sp2_4GB in 2023)
+2) click on their "Connect using SSH"
+
+These steps are same:
+3) cd /opt/bitnami/projects
+4) sudo ./update-deploy.sh
+5) will ask you Git username and token (will ask twice, but second time you can just hit enter)
+6) this will start the process of uploading the newly made image to the server from Git repository, then bring live website down, and this one up; at the end will tell you "SpExServer Server Update Script"
+7) go test the live site, to check that all went well
+8) then prune to delete old image and free space (should be about 8 GB, in 2023)
+9) logout
+
 The Server require code accept the `update-deploy.sh` script, so the 
 server only has one repository 'SpExServer'.
 
