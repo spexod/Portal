@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 
@@ -323,23 +324,602 @@
                                 <caption><span class="caption-text">Spectra</span><a class="headerlink" href="#id1"
                                                                                      title="Permalink to this table">#</a>
                                 </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
                                 <thead>
                                 <tr class="row-odd">
-                                    <th class="head"><p>spectrum_handle</p></th>
-                                    <th class="head"><p>spectrum_display_name</p></th>
+                                    <th class="head"><p>Spectra Labels</p></th>
+                                    <th class="head"><p>Spectra Types</p></th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr class="row-even">
-                                    <td><p>False</p></td>
-                                    <td><p>True</p></td>
+                                    <td><p>spectrum_handle</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_display_name</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spexodisks_handle</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_set_type</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_observation_date</p></td>
+                                    <td><p>datetime</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_pi</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_reference</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_downloadable</p></td>
+                                    <td><p>bool</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_data_reduction_by</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_aor_key</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_flux_is_calibrated</p></td>
+                                    <td><p>bool</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_ref_frame</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_min_wavelength_um</p></td>
+                                    <td><p>double</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_max_wavelength_um</p></td>
+                                    <td><p>double</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spectrum_resolution_um</p></td>
+                                    <td><p>double</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spectrum_output_filename</p></td>
+                                    <td><p>string</p></td>
                                 </tr>
                                 </tbody>
                             </table>
-                            <p>The following diagram shows the data flow of the application:</p>
+                            <table class="table" id="id2">
+                                <caption><span class="caption-text">Curated</span><a class="headerlink" href="#id2"
+                                                                                     title="Permalink to this table">#</a>
+                                </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Curated Labels</p></th>
+                                    <th class="head"><p>Curated Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>spexodisks_handle</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>pop_name</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>preferred_simbad_name</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>simbad_link</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>ra_dec</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>ra</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>dec</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>esa_sky</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>has_spectra</p></td>
+                                    <td><p>bool</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>f0point88mm_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>f0point88mm_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>f0point88mm_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>f0point88mm_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>f1point3mm_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>f1point3mm_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>f1point3mm_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>f1point3mm_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>dec_epochj2000_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>dec_epochj2000_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>dec_epochj2000_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>dec_epochj2000_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>dist_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>dist_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>dist_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>dist_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>l_star_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>l_star_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>l_star_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>l_star_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>logl_acc_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>logl_acc_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>logl_acc_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>logl_acc_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>logm_acc_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>logm_acc_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>logm_acc_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>logm_acc_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>m_star_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>m_star_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>m_star_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>m_star_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>ra_epochj2000_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>ra_epochj2000_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>ra_epochj2000_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>ra_epochj2000_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>radial_velocity_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>radial_velocity_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>radial_velocity_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>radial_velocity_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spt_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spt_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spt_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>spt_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>teff_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>teff_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>teff_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>teff_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>is_jwst_target_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>is_jwst_target_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>is_jwst_target_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>is_jwst_target_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>is_dsharp_target_value</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>is_dsharp_target_err_low</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>is_dsharp_target_err_high</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>is_dsharp_target_ref</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table class="table" id="id3">
+                                <caption><span class="caption-text">Objectnamealiases</span><a class="headerlink"
+                                                                                               href="#id3"
+                                                                                               title="Permalink to this table">#</a>
+                                </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Object Name Aliases Labels</p></th>
+                                    <th class="head"><p>Object Name Aliases Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>alias</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>spexodisks_handle</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table class="table" id="id4">
+                                <caption><span class="caption-text">Available_isotopologues</span><a class="headerlink"
+                                                                                                     href="#id4"
+                                                                                                     title="Permalink to this table">#</a>
+                                </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Available Isotopologues Labels</p></th>
+                                    <th class="head"><p>Available Isotopologues Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>name</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>label</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>molecule</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>mol_label</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>color</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>dash</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>min_wavelength_um</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>max_wavelength_um</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>total_lines</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table class="table" id="id5">
+                                <caption><span class="caption-text">Available_params_and_units</span><a
+                                        class="headerlink" href="#id5" title="Permalink to this table">#</a></caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Avaiable Parameters and Units Labels</p></th>
+                                    <th class="head"><p>Parameters and Units Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>param_handle</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>order_index</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>units</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>short_label</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>plot_axis_label</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>for_display</p></td>
+                                    <td><p>bool</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>decimals</p></td>
+                                    <td><p>bool</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table class="table" id="id6">
+                                <caption><span class="caption-text">Isotopologue_*****</span><a class="headerlink"
+                                                                                                href="#id6"
+                                                                                                title="Permalink to this table">#</a>
+                                </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Isotopologues Labels</p></th>
+                                    <th class="head"><p>Isotopologues Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>index_co</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>wavelength_um</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>isotopologue</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>upper_level</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>lower_level</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>transition</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>einstein_a</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>upper_level_energy</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>lower_level_energy</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>g_statistical_weight_upper_level</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>g_statistical_weight_lower_level</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>upper_vibrational</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>upper_rotational</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>branch</p></td>
+                                    <td><p>string</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>lower_vibrational</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>lower_rotational</p></td>
+                                    <td><p>int</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table class="table" id="id7">
+                                <caption><span class="caption-text">Spectrum_handle</span><a class="headerlink"
+                                                                                             href="#id7"
+                                                                                             title="Permalink to this table">#</a>
+                                </caption>
+                                <colgroup>
+                                    <col style="width: 30.0%"/>
+                                    <col style="width: 70.0%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="row-odd">
+                                    <th class="head"><p>Spectrum Handle Labels</p></th>
+                                    <th class="head"><p>Spectrum Handle Types</p></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="row-even">
+                                    <td><p>wavelength_um</p></td>
+                                    <td><p>double</p></td>
+                                </tr>
+                                <tr class="row-odd">
+                                    <td><p>flux</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                <tr class="row-even">
+                                    <td><p>flux_error</p></td>
+                                    <td><p>float</p></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <p>The following diagram shows the data flow of the application to have a better
+                                understanding of the
+                                database structure and how to properly look up the data.</p>
                             <figure class="align-center">
                                 <a class="reference internal image-reference" href="_images/SpExoDisks.png"><img
-                                        alt="_images/SpExoDisks.png" src="_images/SpExoDisks.png" style="width: 100%;"/></a>
+                                        alt="_images/SpExoDisks.png" src="_images/SpExoDisks.png" style="width: 80%;"/></a>
                             </figure>
                         </section>
 

@@ -1,0 +1,4 @@
+Spectrum Handle Labels,Spectrum Handle Types
+wavelength_um,double
+flux,float
+flux_error,float

@@ -184,3 +184,136 @@ spectra_csv = pd.DataFrame({"Spectra Labels": spectra, "Spectra Types": spectra_
 spectra_csv.to_csv(
     "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/spectra.csv",
     index=False)
+
+objectnamealiases = [
+    "alias",
+    "spexodisks_handle"
+]
+
+objectnamealiases_types = [
+    "string",
+    "string"
+]
+
+objectnamealiases_csv = pd.DataFrame(
+    {"Object Name Aliases Labels": objectnamealiases, "Object Name Aliases Types": objectnamealiases_types})
+objectnamealiases_csv.to_csv(
+    "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/objectnamealiases.csv",
+    index=False)
+
+availableiso = [
+    "name",
+    "label",
+    "molecule",
+    "mol_label",
+    "color",
+    "dash",
+    "min_wavelength_um",
+    "max_wavelength_um",
+    "total_lines",
+]
+
+availableiso_types = [
+    "string",
+    "string",
+    "string",
+    "string",
+    "string",
+    "string",
+    "float",
+    "float",
+    "int",
+]
+
+availableiso_csv = pd.DataFrame(
+    {"Available Isotopologues Labels": availableiso, "Available Isotopologues Types": availableiso_types})
+availableiso_csv.to_csv(
+    "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/availableiso.csv",
+    index=False)
+
+params_units = [
+    "param_handle",
+    "order_index",
+    "units",
+    "short_label",
+    "plot_axis_label",
+    "for_display",
+    "decimals",
+]
+
+params_units_types = [
+    "int",
+    "string",
+    "string",
+    "string",
+    "string",
+    "bool",
+    "bool",
+]
+
+params_units_csv = pd.DataFrame(
+    {"Avaiable Parameters and Units Labels": params_units, "Parameters and Units Types": params_units_types})
+params_units_csv.to_csv(
+    "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/params_units.csv",
+    index=False)
+
+isotopologues = [
+    "index_co",
+    "wavelength_um",
+    "isotopologue",
+    "upper_level",
+    "lower_level",
+    "transition",
+    "einstein_a",
+    "upper_level_energy",
+    "lower_level_energy",
+    "g_statistical_weight_upper_level",
+    "g_statistical_weight_lower_level",
+    "upper_vibrational",
+    "upper_rotational",
+    "branch",
+    "lower_vibrational",
+    "lower_rotational",
+]
+
+isotopologues_types = [
+    "int",
+    "float",
+    "string",
+    "string",
+    "string",
+    "string",
+    "float",
+    "float",
+    "float",
+    "float",
+    "float",
+    "int",
+    "int",
+    "string",
+    "int",
+    "int",
+]
+
+isotopologues_csv = pd.DataFrame({"Isotopologues Labels": isotopologues, "Isotopologues Types": isotopologues_types})
+isotopologues_csv.to_csv(
+    "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/isotopologues.csv",
+    index=False)
+
+specrum_handle = [
+    "wavelength_um",
+    "flux",
+    "flux_error",
+]
+
+specrum_handle_types = [
+    "double",
+    "float",
+    "float",
+]
+
+specrum_handle_csv = pd.DataFrame(
+    {"Spectrum Handle Labels": specrum_handle, "Spectrum Handle Types": specrum_handle_types})
+specrum_handle_csv.to_csv(
+    "/Volumes/Isaac Portable SSD/Isaac Backup/Google Drive/School/Texas State/SpExoDisks/SpExoDisks_Container/SpExServer/Sphinx/spectrum_handle.csv",
+    index=False)
