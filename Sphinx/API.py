@@ -16,9 +16,13 @@ import zipfile
 SERVER_URL = 'https://spexodisks.com/api/'
 
 
-def get_available_isotopologues() -> dict:
+def get_available_isotopologues() -> list:
     """
-    Returns a dictionary of available isotopologues and their properties
+    Returns a list of dictionaries of available isotopologues and their properties
+
+    :return: A list of dictionaries of available isotopologues
+    :rtype: list[dict]
+    :exception: requests.RequestException
     """
     url = SERVER_URL + 'available_isotopologues/'
     try:
@@ -30,9 +34,13 @@ def get_available_isotopologues() -> dict:
         return None
 
 
-def get_params_and_units() -> dict:
+def get_params_and_units() -> list:
     """
-    Returns a dictionary of available parameters and units.
+    Returns a list dictionaries of available parameters and units.
+
+    :return: A list of dictionaries of available parameters and units
+    :rtype: list[dict]
+    :exception: requests.RequestException
     """
     url = SERVER_URL + 'available_params_and_units/'
     try:
@@ -44,9 +52,13 @@ def get_params_and_units() -> dict:
         return None
 
 
-def get_curated() -> dict:
+def get_curated() -> list:
     """
-    Returns a dictionary of curated data and corresponding handles.
+    Returns a list of dictionaries of ALL curated data and corresponding handles.
+
+    :return: A list of dictionaries of curated data
+    :rtype: list[dict]
+    :exception: requests.RequestException
     """
     url = SERVER_URL + 'curated/'
     try:
@@ -58,9 +70,13 @@ def get_curated() -> dict:
         return None
 
 
-def get_spectra() -> dict:
+def get_spectra() -> list:
     """
     Returns a dictionary of available spectra.
+
+    :return: A list of dictionaries of available parameters and units
+    :rtype: list[dict]
+    :exception: requests.RequestException
     """
     url = SERVER_URL + 'spectra/'
     try:
@@ -72,9 +88,13 @@ def get_spectra() -> dict:
         return None
 
 
-def get_star_aliases() -> dict:
+def get_star_aliases() -> list:
     """
     Returns a dictionary of star aliases and corresponding handles associated with alias.
+
+    :return: A list of dictionaries star aliases
+    :rtype: list[dict]
+    :exception: requests.RequestException
     """
     url = SERVER_URL + 'objectnamealiases/'
     try:
@@ -86,9 +106,14 @@ def get_star_aliases() -> dict:
         return None
 
 
-def find_spectra_handle(alias=None) -> dict:
+def find_spectra_handle(alias=None) -> list:
     """
-    Returns a dictionary of spectra associated with a given alias.
+    This function allows a user to find the spectra handle for a given star alias.
+
+    :parameter alias: The alias of the star to search for
+    :type alias: str
+    :return: A dictionary of spectra associated with a given alias
+    :rtype: list[dict]
     """
     aliases = get_star_aliases()
     aliases_and_handles = {}
@@ -114,9 +139,14 @@ def find_spectra_handle(alias=None) -> dict:
     return aliases_and_handles[alias]
 
 
-def get_curated_data(handle: str) -> dict:
+def get_curated_data(handle: str) -> list:
     """
-    Returns a dictionary of curated data for a given handle.
+    Given a handle, returns a list of SELECTED dictionaries of curated data.
+
+    :parameter handle: The handle of the star to search for
+    :type handle: str
+    :return: A dictionary of curated data
+    :rtype: dict
     """
     curated = get_curated()
 
@@ -132,6 +162,10 @@ def get_curated_data(handle: str) -> dict:
 def get_all_spectra_handles(spexodisks_handle: str) -> list:
     """
     Returns a list of all spectra handles for a given star/alias.
+
+    :parameter spexodisks_handle: The handle of the star to search for
+    :type spexodisks_handle: str
+    :return: A list of all spectra handles for a given star/alias
     """
     spectra = get_spectra()
     handles = []
@@ -144,7 +178,13 @@ def get_all_spectra_handles(spexodisks_handle: str) -> list:
 
 def get_wavelengths(handle: str) -> dict:
     """
-    Returns a dictionary of wavelengths for a given handle.
+    Retrieves a dictionary of wavelengths for a given handle.
+
+    :parameter handle: The handle of the star to search for
+    :type handle: str
+    :return: A dictionary of wavelengths for a given handle
+    :rtype: dict
+    :exception: requests.RequestException
     """
     url = SERVER_URL + handle.lower() + '/'
     try:
@@ -158,7 +198,13 @@ def get_wavelengths(handle: str) -> dict:
 
 def get_fluxes(handle: str) -> tuple:
     """
-    Returns a tuple of fluxes and flux errors for a given handle.
+    Retrieves fluxes and flux errors for a given handle.
+
+    :parameter handle: The handle of the star to search for
+    :type handle: str
+    :return: A tuple of fluxes and flux errors for a given handle
+    :rtype: tuple
+    :exception: requests.RequestException
     """
     url = SERVER_URL + handle.lower() + '/'
     try:
@@ -175,7 +221,15 @@ def get_fluxes(handle: str) -> tuple:
 
 def get_stars_from_file(filename: str) -> list:
     """
-    Returns a list of stars from a given file.
+    Retrieves a list of stars from a given file.
+
+    :parameter filename: The name of the file to read from
+    :type filename: str
+    :return: A list of stars from a given file
+    :rtype: list
+    :exception: FileNotFoundError
+    :exception: pd.errors.EmptyDataError
+    :exception: pd.errors.ParserError
     """
     try:
         df = pd.read_csv(filename, sep=",")
@@ -190,7 +244,13 @@ def get_stars_from_file(filename: str) -> list:
 
 
 def create_spectra_file(stars: list) -> None:
-    """ Creates a CSV file with all spectra handles for a given list of stars"""
+    """
+    Creates a CSV file with all spectra handles for a given list of stars
+
+    :parameter stars: A list of stars to search for
+    :type stars: list
+    :return: None
+    """
     # Get all spectra handles for each star
     star_spectra = {}
     for star in stars:
@@ -220,6 +280,10 @@ def create_spectra_file(stars: list) -> None:
 def login() -> dict:
     """
     Log in as a user into the SpExoDisks database.
+
+    :return: A dictionary of the user's access and refresh tokens
+    :rtype: dict
+    :exception: requests.RequestException
     """
     access = False
     while not access:
@@ -243,6 +307,10 @@ def login() -> dict:
 def download_spectrum(spectra: List) -> None:
     """
     Downloads spectra from the SpExoDisks database.
+
+    :parameter spectra: A list of spectra to download
+    :type spectra: list
+    :return: None
     """
     access_token = login().get('access')
     if not access_token:
@@ -269,6 +337,12 @@ def download_spectrum(spectra: List) -> None:
 def plot_spectra(wavelength, flux) -> None:
     """
     Plots a spectrum similar to the website.
+
+    :parameter wavelength: A list of wavelengths
+    :type wavelength: list
+    :parameter flux: A list of fluxes
+    :type flux: list
+    :return: None
     """
     df = pd.DataFrame({'wavelength_um': wavelength, 'flux': flux})
     fig = px.line(df, x='wavelength_um', y='flux')

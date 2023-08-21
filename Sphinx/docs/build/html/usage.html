@@ -353,9 +353,18 @@
                                             class="doc">DataFlow</span></a> source page as you follow along with the
                                         documentation.</p>
                                 </div>
-                                <p>To retrieve a list of random ingredients,
-                                    you can use the <code class="docutils literal notranslate"><span class="pre">API.get_available_isotopologues()</span></code>
-                                    function:</p>
+                                <p>The following functions are used to retrieve almost all data from the database:
+                                    <code class="docutils literal notranslate"><span class="pre">API.get_available_isotopologues()</span></code>,
+                                    <code class="docutils literal notranslate"><span
+                                            class="pre">get_params_and_units()</span></code>, <code
+                                            class="docutils literal notranslate"><span class="pre">get_curated()</span></code>,
+                                    <code class="docutils literal notranslate"><span
+                                            class="pre">get_spectra()</span></code>,
+                                    and <code class="docutils literal notranslate"><span
+                                            class="pre">get_star_aliases()</span></code>. Each of these functions
+                                    returns a list of dictionaries, where each dictionary
+                                    represents a row in the database. The keys of the dictionaries are the column names
+                                    of the database,</p>
                                 <dl class="py function">
                                     <dt class="sig sig-object py" id="API.get_available_isotopologues">
                                         <span class="sig-prename descclassname"><span
@@ -363,43 +372,428 @@
                                             class="pre">get_available_isotopologues</span></span><span
                                             class="sig-paren">(</span><span class="sig-paren">)</span> <span
                                             class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
-                                            class="sig-return-typehint"><span class="pre">dict</span></span></span><a
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
                                             class="headerlink" href="#API.get_available_isotopologues"
                                             title="Permalink to this definition">#</a></dt>
-                                    <dd><p>Returns a dictionary of available isotopologues and their properties</p>
+                                    <dd><p>Returns a list of dictionaries of available isotopologues and their
+                                        properties</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>A list of dictionaries of available
+                                                isotopologues</p>
+                                            </dd>
+                                            <dt class="field-even">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>list[dict]</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
                                     </dd>
                                 </dl>
 
-                                <p>The <code class="docutils literal notranslate"><span class="pre">kind</span></code>
-                                    parameter should be either <code class="docutils literal notranslate"><span
-                                            class="pre">&quot;meat&quot;</span></code>, <code
-                                            class="docutils literal notranslate"><span
-                                            class="pre">&quot;fish&quot;</span></code>,
-                                    or <code class="docutils literal notranslate"><span
-                                            class="pre">&quot;veggies&quot;</span></code>. Otherwise, <code
-                                            class="xref py py-func docutils literal notranslate"><span class="pre">lumache.get_random_ingredients()</span></code>
-                                    will raise an exception.</p>
-                                <dl class="py exception">
-                                    <dt class="sig sig-object py" id="lumache.InvalidKindError">
-                                        <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span
-                                            class="sig-prename descclassname"><span
-                                            class="pre">lumache.</span></span><span class="sig-name descname"><span
-                                            class="pre">InvalidKindError</span></span><a class="headerlink"
-                                                                                         href="#lumache.InvalidKindError"
-                                                                                         title="Permalink to this definition">#</a>
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_params_and_units">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_params_and_units</span></span><span
+                                            class="sig-paren">(</span><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_params_and_units"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Returns a list dictionaries of available parameters and units.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>A list of dictionaries of available parameters and
+                                                units</p>
+                                            </dd>
+                                            <dt class="field-even">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>list[dict]</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_curated">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_curated</span></span><span class="sig-paren">(</span><span
+                                            class="sig-paren">)</span> <span class="sig-return"><span
+                                            class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_curated"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Returns a list of dictionaries of ALL curated data and corresponding
+                                        handles.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>A list of dictionaries of curated data</p>
+                                            </dd>
+                                            <dt class="field-even">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>list[dict]</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_spectra">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_spectra</span></span><span class="sig-paren">(</span><span
+                                            class="sig-paren">)</span> <span class="sig-return"><span
+                                            class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_spectra"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Returns a dictionary of available spectra.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>A list of dictionaries of available parameters and
+                                                units</p>
+                                            </dd>
+                                            <dt class="field-even">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>list[dict]</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_star_aliases">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_star_aliases</span></span><span
+                                            class="sig-paren">(</span><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_star_aliases"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Returns a dictionary of star aliases and corresponding handles associated
+                                        with alias.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>A list of dictionaries star aliases</p>
+                                            </dd>
+                                            <dt class="field-even">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>list[dict]</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                            </section>
+                            <section id="navigating-the-spexodisks-database">
+                                <h2>Navigating the SpExoDisks Database<a class="headerlink"
+                                                                         href="#navigating-the-spexodisks-database"
+                                                                         title="Permalink to this heading">#</a></h2>
+                                <div class="admonition warning">
+                                    <p class="admonition-title">Warning</p>
+                                    <p>If the alias is not typed verbatim as it is in the database, it will return a
+                                        list of similar
+                                        aliases. Just copy and paste the alias you want to search for into the
+                                        find_spectra_handle() function and it will
+                                        return a list of dictionaries of the spectra associated with the alias.</p>
+                                </div>
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.find_spectra_handle">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">find_spectra_handle</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">alias</span></span><span class="o"><span
+                                            class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span
+                                            class="sig-paren">)</span> <span class="sig-return"><span
+                                            class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.find_spectra_handle"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>This function allows a user to find the spectra handle for a given star
+                                        alias.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>alias</strong> (<em>str</em>) – The alias
+                                                of the star to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A dictionary of spectra associated with a given
+                                                alias</p>
+                                            </dd>
+                                            <dt class="field-odd">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>list[dict]</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_curated_data">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_curated_data</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">handle</span></span><span class="p"><span
+                                            class="pre">:</span></span><span class="w"> </span><span class="n"><span
+                                            class="pre">str</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_curated_data"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Given a handle, returns a list of SELECTED dictionaries of curated data.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>handle</strong> (<em>str</em>) – The handle
+                                                of the star to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A dictionary of curated data</p>
+                                            </dd>
+                                            <dt class="field-odd">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>dict</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_all_spectra_handles">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_all_spectra_handles</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">spexodisks_handle</span></span><span class="p"><span
+                                            class="pre">:</span></span><span class="w"> </span><span class="n"><span
+                                            class="pre">str</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_all_spectra_handles"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Returns a list of all spectra handles for a given star/alias.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>spexodisks_handle</strong> (<em>str</em>) –
+                                                The handle of the star to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A list of all spectra handles for a given
+                                                star/alias</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_wavelengths">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_wavelengths</span></span><span class="sig-paren">(</span><em
+                                            class="sig-param"><span class="n"><span
+                                            class="pre">handle</span></span><span class="p"><span
+                                            class="pre">:</span></span><span class="w"> </span><span class="n"><span
+                                            class="pre">str</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">dict</span></span></span><a
+                                            class="headerlink" href="#API.get_wavelengths"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Retrieves a dictionary of wavelengths for a given handle.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>handle</strong> (<em>str</em>) – The handle
+                                                of the star to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A dictionary of wavelengths for a given handle</p>
+                                            </dd>
+                                            <dt class="field-odd">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>dict</p>
+                                            </dd>
+                                            <dt class="field-even">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_fluxes">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_fluxes</span></span><span class="sig-paren">(</span><em
+                                            class="sig-param"><span class="n"><span
+                                            class="pre">handle</span></span><span class="p"><span
+                                            class="pre">:</span></span><span class="w"> </span><span class="n"><span
+                                            class="pre">str</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">tuple</span></span></span><a
+                                            class="headerlink" href="#API.get_fluxes"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Retrieves fluxes and flux errors for a given handle.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>handle</strong> (<em>str</em>) – The handle
+                                                of the star to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A tuple of fluxes and flux errors for a given
+                                                handle</p>
+                                            </dd>
+                                            <dt class="field-odd">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>tuple</p>
+                                            </dd>
+                                            <dt class="field-even">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>requests.RequestException</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                            </section>
+                            <section id="misc-functions">
+                                <h2>Misc Functions<a class="headerlink" href="#misc-functions"
+                                                     title="Permalink to this heading">#</a></h2>
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.get_stars_from_file">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">get_stars_from_file</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span
+                                            class="w"> </span><span class="n"><span
+                                            class="pre">str</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">list</span></span></span><a
+                                            class="headerlink" href="#API.get_stars_from_file"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Retrieves a list of stars from a given file.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – The name
+                                                of the file to read from</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>A list of stars from a given file</p>
+                                            </dd>
+                                            <dt class="field-odd">Return type<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>list</p>
+                                            </dd>
+                                            <dt class="field-even">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>FileNotFoundError</p>
+                                            </dd>
+                                            <dt class="field-odd">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p>pd.errors.EmptyDataError</p>
+                                            </dd>
+                                            <dt class="field-even">Exception<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>pd.errors.ParserError</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.create_spectra_file">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">create_spectra_file</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">stars</span></span><span class="p"><span
+                                            class="pre">:</span></span><span class="w"> </span><span class="n"><span
+                                            class="pre">list</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">None</span></span></span><a
+                                            class="headerlink" href="#API.create_spectra_file"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Creates a CSV file with all spectra handles for a given list of stars</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>stars</strong> (<em>list</em>) – A list of
+                                                stars to search for</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>None</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.download_spectrum">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">download_spectrum</span></span><span
+                                            class="sig-paren">(</span><em class="sig-param"><span class="n"><span
+                                            class="pre">spectra</span></span><span class="p"><span class="pre">:</span></span><span
+                                            class="w"> </span><span class="n"><span
+                                            class="pre">List</span></span></em><span class="sig-paren">)</span> <span
+                                            class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                            class="sig-return-typehint"><span class="pre">None</span></span></span><a
+                                            class="headerlink" href="#API.download_spectrum"
+                                            title="Permalink to this definition">#</a></dt>
+                                    <dd><p>Downloads spectra from the SpExoDisks database.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd"><p><strong>spectra</strong> (<em>list</em>) – A list
+                                                of spectra to download</p>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>None</p>
+                                            </dd>
+                                        </dl>
+                                    </dd>
+                                </dl>
+
+                                <dl class="py function">
+                                    <dt class="sig sig-object py" id="API.plot_spectra">
+                                        <span class="sig-prename descclassname"><span
+                                                class="pre">API.</span></span><span class="sig-name descname"><span
+                                            class="pre">plot_spectra</span></span><span class="sig-paren">(</span><em
+                                            class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em>,
+                                        <em class="sig-param"><span class="n"><span
+                                                class="pre">flux</span></span></em><span class="sig-paren">)</span>
+                                        <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span
+                                                class="sig-return-typehint"><span
+                                                class="pre">None</span></span></span><a class="headerlink"
+                                                                                        href="#API.plot_spectra"
+                                                                                        title="Permalink to this definition">#</a>
                                     </dt>
-                                    <dd><p>Raised if the kind is invalid.</p>
+                                    <dd><p>Plots a spectrum similar to the website.</p>
+                                        <dl class="field-list simple">
+                                            <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+                                            <dd class="field-odd">
+                                                <ul class="simple">
+                                                    <li><p><strong>wavelength</strong> (<em>list</em>) – A list of
+                                                        wavelengths</p></li>
+                                                    <li><p><strong>flux</strong> (<em>list</em>) – A list of fluxes</p>
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                            <dt class="field-even">Returns<span class="colon">:</span></dt>
+                                            <dd class="field-even"><p>None</p>
+                                            </dd>
+                                        </dl>
                                     </dd>
                                 </dl>
 
-                                <div class="doctest highlight-default notranslate">
-                                    <div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span
-                                            class="kn">import</span> <span class="nn">lumache</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lumache</span><span class="o">.</span><span class="n">get_random_ingredients</span><span
-                                                class="p">()</span>
-<span class="go">[&#39;shells&#39;, &#39;gorgonzola&#39;, &#39;parsley&#39;]</span>
-</pre>
-                                    </div>
+                                <div class="admonition note">
+                                    <p class="admonition-title">Note</p>
+                                    <p>To see a working example of the API, check out the <span
+                                            class="xref std std-doc">examples</span> section. And also
+                                        the following jupyter notebook: <a class="github reference external"
+                                                                           href="https://github.com/spexod/spexod/blob/python_api_tool/getting_started.ipynb">spexod/spexod</a>
+                                    </p>
                                 </div>
                             </section>
                         </section>
@@ -461,8 +855,67 @@
                                                     class="docutils literal notranslate"><span class="pre">get_available_isotopologues()</span></code></a>
                                             </li>
                                             <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
-                                                                                     href="#lumache.InvalidKindError"><code
-                                                    class="docutils literal notranslate"><span class="pre">InvalidKindError</span></code></a>
+                                                                                     href="#API.get_params_and_units"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_params_and_units()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_curated"><code
+                                                    class="docutils literal notranslate"><span
+                                                    class="pre">get_curated()</span></code></a></li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_spectra"><code
+                                                    class="docutils literal notranslate"><span
+                                                    class="pre">get_spectra()</span></code></a></li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_star_aliases"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_star_aliases()</span></code></a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                             href="#navigating-the-spexodisks-database">Navigating
+                                        the SpExoDisks Database</a>
+                                        <ul class="nav section-nav flex-column">
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.find_spectra_handle"><code
+                                                    class="docutils literal notranslate"><span class="pre">find_spectra_handle()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_curated_data"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_curated_data()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_all_spectra_handles"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_all_spectra_handles()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_wavelengths"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_wavelengths()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_fluxes"><code
+                                                    class="docutils literal notranslate"><span
+                                                    class="pre">get_fluxes()</span></code></a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                             href="#misc-functions">Misc Functions</a>
+                                        <ul class="nav section-nav flex-column">
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.get_stars_from_file"><code
+                                                    class="docutils literal notranslate"><span class="pre">get_stars_from_file()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.create_spectra_file"><code
+                                                    class="docutils literal notranslate"><span class="pre">create_spectra_file()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.download_spectrum"><code
+                                                    class="docutils literal notranslate"><span class="pre">download_spectrum()</span></code></a>
+                                            </li>
+                                            <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link"
+                                                                                     href="#API.plot_spectra"><code
+                                                    class="docutils literal notranslate"><span class="pre">plot_spectra()</span></code></a>
                                             </li>
                                         </ul>
                                     </li>
