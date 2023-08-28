@@ -176,7 +176,7 @@ def get_all_spectra_handles(spexodisks_handle: str) -> list:
     return handles
 
 
-def get_wavelengths(handle: str) -> dict:
+def get_wavelengths(handle: str) -> list:
     """
     Retrieves a dictionary of wavelengths for a given handle.
 
