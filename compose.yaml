@@ -1,14 +1,6 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./SpExWebsite
-    volumes:
-      - ./SpExWebsite:/usr/src/app
-  frontend:
-    build:
-      context: ./SpExo-FrontEnd/front-app
   nginx:
     image: nginx:latest
     ports:
@@ -16,8 +8,13 @@ services:
     volumes:
       - ./nginx/nginx-setup.conf:/etc/nginx/conf.d/default.conf:ro
       - /var/www/spexo/.well-known:/var/www/react/.well-known
-    depends_on:
-      - backend
-      - frontend
+  backend:
+    build:
+      context: ./SpExWebsite
+    volumes:
+      - ./SpExWebsite:/usr/src/app
+  frontend:
+    build:
+      context: ./SpExo-FrontEnd
 volumes:
   react_build:
