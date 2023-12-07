@@ -2,6 +2,8 @@ version: '3.9'
 
 services:
   nginx:
+    # need to use intel cpu
+    platform: linux/amd64
     image: nginx:latest
     ports:
       - "80:8080"
@@ -13,6 +15,8 @@ services:
       - "django-static:/django/static_root:ro"
     restart: "${RESTART_POLICY:-no}"
   backend:
+    # need to use intel cpu
+    platform: linux/amd64
     build:
       context: ./SpExWebsite
       args:
@@ -28,6 +32,8 @@ services:
       DJANGO_DEBUG: "${DJANGO_DEBUG:-true}"
     restart: "${RESTART_POLICY:-no}"
   frontend:
+    # need to use intel cpu
+    platform: linux/amd64
     build:
       context: ./SpExo-FrontEnd/front-app
     image: ghcr.io/spexod/frontend:LATEST
