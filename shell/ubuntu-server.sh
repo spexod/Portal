@@ -41,6 +41,10 @@
  # we now no longer need the http server, so we can get rid of it
  docker compose down
 
+ # set the environment variable to use the deployment version of NGINX server with SSL certificates
+  echo "NGINX_CONFIG_FILE='deploy.conf'" >> .env
+ echo "NGINX_CONFIG_FILE='deploy.conf'" >> .env
+
  # with a certificate we can now use the deployment version of the website.
  ./update-deploy.sh
 
