@@ -4,7 +4,7 @@ echo "SpExServer Deployment Build Script"
 # test the build on a local machine
 ./shell/write-deploy-configs.sh
 # try to build new images before taking down the old ones
-docker compose build
+./shell/frontend-buildcache.sh
 # stop here to look for error messages
 echo -e "\nDevelopment Build completed,"
 read -r -p "press any key to PUSH the new images to the container repository and continue..."
