@@ -5,6 +5,7 @@ services:
     # need to use intel cpu
     platform: linux/amd64
     image: nginx:latest
+    restart: "${RESTART_POLICY:-no}"
     ports:
       - "80:8080"
       - "443:8443"
@@ -13,7 +14,7 @@ services:
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
       - "django-static:/django/static_root:ro"
-    restart: "${RESTART_POLICY:-no}"
+
   backend:
     # need to use intel cpu
     platform: linux/amd64
@@ -21,21 +22,22 @@ services:
       context: ./SpExWebsite
       args:
         DATA_RESET_UPLOAD: false # False to only upload the files once during testing
+    image: ghcr.io/spexod/backend:LATEST
+    restart: "${RESTART_POLICY:-no}"
     volumes:
       - "./SpExWebsite:/usr/src/app"
       # django-static is written at build time by the SpExWebsite Dockerfile
       - "django-static:/django/static_root:rw"
-    image: ghcr.io/spexod/backend:LATEST
     environment:
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
       DJANGO_DEBUG: "${DJANGO_DEBUG:-true}"
-    restart: "${RESTART_POLICY:-no}"
+
   frontend:
     # need to use intel cpu
     platform: linux/amd64
     build:
-      context: ./SpExo-FrontEnd/front-app
+      context: ./SpExo-FrontEnd
     image: ghcr.io/spexod/frontend:LATEST
     restart: "${RESTART_POLICY:-no}"
 
