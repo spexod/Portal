@@ -1,6 +1,7 @@
 version: '3.9'
 
 services:
+
   nginx:
     # need to use intel cpu
     platform: linux/amd64
@@ -14,6 +15,26 @@ services:
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
       - "django-static:/django/static_root:ro"
+
+
+  mysqlDB:
+    image: mysql:8.1
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-password}"
+      MYSQL_DATABASE: "spexodisks"
+    ports:
+      - "3306:3306"
+    volumes:
+      # store data in a volume on the host for the MySQL database
+      - type: bind
+        source: ./mysql/local
+        target: /var/lib/mysql
+      # initialize the database from existing files in this directory
+      - type: bind
+        source: ./mysql/init
+        target: /docker-entrypoint-initdb.d
+    restart: "${RESTART_POLICY:-no}"
 
   backend:
     # need to use intel cpu
@@ -32,6 +53,8 @@ services:
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
       DJANGO_DEBUG: "${DJANGO_DEBUG:-true}"
+    depends_on:
+      - mysqlDB
 
   frontend:
     # need to use intel cpu
