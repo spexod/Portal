@@ -3,6 +3,10 @@ clear
 echo "SpExServer Deployment Build Script"
 # test the build on a local machine
 ./shell/write-deploy-configs.sh
+# take and currently running containers offline and delete any volumes from the last build
+docker compose down --volumes
+# build the API, NGINX server first
+docker compose build backend
 # try to build new images before taking down the old ones
 ./shell/frontend-buildcache.sh
 # stop here to look for error messages
