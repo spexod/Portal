@@ -7,13 +7,9 @@ git pull origin main
 git checkout main
 cd ../
 
-
-echo "Updating SpExWebsite Repository"
 cd SpExWebsite
 git restore .
 git pull origin main
 git checkout main
-
-./update-repos.sh
 cd ../
 echo "completed: SpExServer Update Script"

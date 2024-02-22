@@ -1,0 +1,22 @@
+import os
+
+from science.analyze.prescriptions import update_schemas
+from science.analyze.spectrum import var_is_true
+from science.db.data_status import set_data_status_mysql, get_data_status_mysql
+
+
+DATA_MIGRATE_FROM_STAGED = var_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", False))
+# read the status variables from the MySQL server
+new_data_staged, updated_mysql = get_data_status_mysql()
+
+
+def do_migration():
+    # migrate the metadata and spectra tables.
+    update_schemas()
+    # update the states in the MySQL service
+    set_data_status_mysql(new_data_staged_to_set=False, updated_mysql_to_set=True)
+
+
+if __name__ == '__main__':
+    if DATA_MIGRATE_FROM_STAGED and new_data_staged:
+        do_migration()

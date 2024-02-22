@@ -31,9 +31,12 @@ services:
     # need to use intel cpu
     platform: linux/amd64
     build:
-      context: ./SpExWebsite
+      context: ./backend
       args:
         DATA_RESET_UPLOAD: false # False to only upload the files once during testing
+        MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
+        MYSQL_USER: "${MYSQL_USER:-root}"
+        MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
     image: ghcr.io/spexod/backend:LATEST
     restart: "${RESTART_POLICY:-no}"
     volumes:

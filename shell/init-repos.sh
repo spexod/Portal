@@ -7,11 +7,8 @@ cd SpExo-FrontEnd
 git checkout main
 cd ../
 
-echo "Downloading SpExWebsite Repository"
-git clone https://github.com/spexod/SpExWebsite
 cd SpExWebsite
-git checkout main
-./init-spexodisks.sh
+git clone https://github.com/spexod/data
 cd ../
 
 echo "completed: SpExServer repository initialization script."
