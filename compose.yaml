@@ -2,26 +2,17 @@ version: '3.9'
 
 services:
 
-  nginx:
-    # need to use intel cpu
-    platform: linux/amd64
-    image: nginx:latest
-    restart: "${RESTART_POLICY:-no}"
-    ports:
-      - "80:8080"
-      - "443:8443"
-    volumes:
-      - "./nginx/${NGINX_CONFIG_FILE:-setup.conf}:/etc/nginx/conf.d/default.conf:ro"
-      - "/var/www/spexo/.well-known:/var/www/react/.well-known"
-      - "/etc/letsencrypt/:/etc/letsencrypt/"
-      - "django-static:/django/static_root:ro"
-
 
   mysqlDB:
     image: mysql:8.1
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-password}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
       MYSQL_DATABASE: "spexodisks"
     ports:
       - "3306:3306"
@@ -52,9 +43,16 @@ services:
     environment:
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
-      DJANGO_DEBUG: "${DJANGO_DEBUG:-true}"
+      DEBUG: "${DEBUG:-true}"
+      MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
+      MYSQL_USER: "${MYSQL_USER:-root}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
+      API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+
     depends_on:
-      - mysqlDB
+      mysqlDB:
+        condition: service_healthy
 
   frontend:
     # need to use intel cpu
@@ -63,6 +61,23 @@ services:
       context: ./SpExo-FrontEnd
     image: ghcr.io/spexod/frontend:LATEST
     restart: "${RESTART_POLICY:-no}"
+
+  nginx:
+    # need to use intel cpu
+    platform: linux/amd64
+    image: nginx:latest
+    restart: "${RESTART_POLICY:-no}"
+    ports:
+      - "80:8080"
+      - "443:8443"
+    volumes:
+      - "./nginx/${NGINX_CONFIG_FILE:-setup.conf}:/etc/nginx/conf.d/default.conf:ro"
+      - "/var/www/spexo/.well-known:/var/www/react/.well-known"
+      - "/etc/letsencrypt/:/etc/letsencrypt/"
+      - "django-static:/django/static_root:ro"
+    depends_on:
+        - backend
+        - frontend
 
 
 volumes:
