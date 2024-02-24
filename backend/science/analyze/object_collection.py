@@ -259,17 +259,21 @@ class ObjectCollection:
                                       spectra_output_dir=self.spectra_output_dir)
         if self.simbad_lib is None:
             self.simbad_lib = self.all_spectra.simbad_lib
-        for spec_set_handle in self.all_spectra.handle_list:
-            spectral_set = self.all_spectra.__getattribute__(spec_set_handle)
-            for object_handle in spectral_set.handle_list:
-                spectrum_object = spectral_set.__getattribute__(object_handle)
-                spexodisks_handle = spectrum_object.spexodisks_handle
-                if spexodisks_handle not in self.available_spexodisks_handles:
-                    self.available_spexodisks_handles.add(spexodisks_handle)
-                    self.__setattr__(spexodisks_handle, SingleObject(spexodisks_handle, self.pop_names_lib,
-                                                                     verbose=self.verbose,
-                                                                     spectra_output_dir=self.spectra_output_dir))
-                self.__getattribute__(spexodisks_handle).add_spectrum(spectrum_object)
+        if self.verbose:
+            print("  Importing Spectra and connecting to the database to register handles for new spectra")
+        with LoadSQL(verbose=self.verbose) as load_qsl:
+            for spec_set_handle in self.all_spectra.handle_list:
+                spectral_set = self.all_spectra.__getattribute__(spec_set_handle)
+                for object_handle in spectral_set.handle_list:
+                    spectrum_object = spectral_set.__getattribute__(object_handle)
+                    spexodisks_handle = spectrum_object.spexodisks_handle
+
+                    if spexodisks_handle not in self.available_spexodisks_handles:
+                        self.available_spexodisks_handles.add(spexodisks_handle)
+                        self.__setattr__(spexodisks_handle, SingleObject(spexodisks_handle, self.pop_names_lib,
+                                                                         verbose=self.verbose,
+                                                                         spectra_output_dir=self.spectra_output_dir))
+                    self.__getattribute__(spexodisks_handle).add_spectrum(output_sql=load_qsl, spectrum_object=spectrum_object)
 
         # do some database wide stats
         self.inst_spectra_count = {}

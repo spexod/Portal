@@ -30,6 +30,8 @@ query_parameters_str = f'SELECT param_handle, units FROM {schema_prefix}spexodis
 
 # # get the raw Query information
 with OutputSQL() as output_sql:
+    # check if the tables exist
+
     available_isotopologues_raw = output_sql.query(sql_query_str=query_iso_str)
     available_spectra_raw = output_sql.query(sql_query_str=query_spectra_str)
     available_params_raw = output_sql.query(sql_query_str=query_parameters_str)

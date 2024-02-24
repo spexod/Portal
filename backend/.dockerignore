@@ -1,7 +1,8 @@
 /env
 /.git
 /.gitignore
-venv
 .idea
 .git
 Dockerfile*
+output
+venv*

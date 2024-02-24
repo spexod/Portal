@@ -7,6 +7,7 @@ from ref.ref import instrument_metadata
 from ref.star_names import star_name_format
 from science.load.units import UnitsObjectParams
 from science.analyze.spectrum import Spectrum
+from science.db.sql import OutputSQL
 
 class SingleObject:
     def __init__(self, spexodisks_handle, pop_names_lib, verbose=True, spectra_output_dir=None):
@@ -29,17 +30,39 @@ class SingleObject:
         self.is_target = False
         self.esa_sky = None
 
-    def add_spectrum(self, spectrum_object):
+    def checkout_spectrum_handle(self, output_sql: OutputSQL, single_spectrum,
+                                 table_name="spectrum_handle_registration",
+                                 database='spexodisks', count=0):
+        if not output_sql.check_if_table_exists(table_name=table_name, database=database):
+            output_sql.creat_table(table_name=table_name, database=database, drop_if_exists=False)
+        spectrum_handle = single_spectrum.set_type + "_" + single_spectrum.range_str + "_" + self.spexodisks_handle
+        if count > 0:
+            spectrum_handle += "_" + str("%02i" % count)
+        spectrum_handle_registered = output_sql.get_matching_data(
+            column_name='spectrum_handle', match_value=spectrum_handle, table_name=table_name, database=database)
+        if spectrum_handle_registered:
+            row_data = spectrum_handle_registered[0]
+            _found_handle, source_file, inst_handle = row_data
+            # does the register handle have the same source file?
+            if source_file == single_spectrum.basename and inst_handle == single_spectrum.set_type:
+                # Yes, it is the same spectrum
+                return spectrum_handle
+            else:
+                # No, it is a different spectrum and needs a new handle
+                return self.checkout_spectrum_handle(output_sql=output_sql, single_spectrum=single_spectrum,
+                                                     table_name=table_name, count=count+1)
+        else:
+            output_sql.insert_into_table(data={'spectrum_handle': spectrum_handle,
+                                               'source_file': single_spectrum.basename,
+                                               'inst_handle': single_spectrum.set_type,
+                                               },
+                                         table_name=table_name,  database=database)
+            return spectrum_handle
+
+    def add_spectrum(self, spectrum_object, output_sql: OutputSQL):
         self.object_names_dict.update(spectrum_object.object_names_dict)
         single_spectrum = Spectrum(self.pop_name, spectrum_object, self.spectra_output_dir)
-        spectral_handle = single_spectrum.set_type + "_" + single_spectrum.range_str + "_" + self.spexodisks_handle
-        if spectral_handle in self.available_spectral_handles:
-            count = 0
-            while spectral_handle in self.available_spectral_handles:
-                if count == 0:
-                    spectral_handle += "___"
-                count += 1
-                spectral_handle = spectral_handle[:-2] + str("%02i" % count)
+        spectral_handle = self.checkout_spectrum_handle(output_sql=output_sql, single_spectrum=single_spectrum)
         single_spectrum.__setattr__('spectrum_handle', spectral_handle)
         single_spectrum.__setattr__('spexodisks_handle', self.spexodisks_handle)
         self.available_spectral_handles.add(spectral_handle)

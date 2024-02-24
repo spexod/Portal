@@ -5,7 +5,7 @@ read -r -p "SpExServer TEST Build Script, press any key to continue..."
 # take and currently running containers offline and delete any volumes from the last build
 docker compose down --volumes
 # build the API, NGINX server first
-docker compose build --no-cache backend
+docker compose build backend
 ./shell/frontend-buildcache.sh
 # test the build on a local machine
 # stop here to look for error messages

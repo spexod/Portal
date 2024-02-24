@@ -135,6 +135,7 @@ def init_django_tables(new_schema=True):
     if new_schema:
         database = 'new_' + database
     with LoadSQL(auto_connect=True, verbose=True) as output_sql:
+        output_sql.create_schema(schema_name=database, run_silent=False)
         for table_name in django_tables:
             output_sql.creat_table(table_name=table_name, database=database)
 

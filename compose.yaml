@@ -5,6 +5,7 @@ services:
 
   mysqlDB:
     image: mysql:8.1
+    container_name: mysqlDB
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
       interval: 5s
@@ -32,11 +33,6 @@ services:
     platform: linux/amd64
     build:
       context: ./backend
-      args:
-        DATA_RESET_UPLOAD: false # False to only upload the files once during testing
-        MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
-        MYSQL_USER: "${MYSQL_USER:-root}"
-        MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
     image: ghcr.io/spexod/backend:LATEST
     restart: "${RESTART_POLICY:-no}"
     volumes:
@@ -44,6 +40,7 @@ services:
       # django-static is written at build time by the SpExWebsite Dockerfile
       - "django-static:/django/static_root:rw"
     environment:
+      DATA_RESET_UPLOAD: false
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
       DEBUG: "${DEBUG:-true}"

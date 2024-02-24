@@ -176,11 +176,12 @@ class OutputSQL:
             database = sql_database
         self.cursor.execute(F"DROP TABLE IF EXISTS {database}.{table_name};")
 
-    def creat_table(self, table_name, database=None, dynamic_type=None, run_silent=False):
+    def creat_table(self, table_name, database=None, dynamic_type=None, run_silent=False, drop_if_exists=True):
         if database is None:
             database = sql_database
         self.open_if_closed()
-        self.drop_if_exists(table_name=table_name, database=database, run_silent=run_silent)
+        if drop_if_exists:
+            self.drop_if_exists(table_name=table_name, database=database, run_silent=run_silent)
         if self.verbose and not run_silent:
             print("  Creating the SQL Table: '" + table_name + "' in the database: " + database)
         self.cursor.execute("USE " + database + ";")
@@ -189,6 +190,36 @@ class OutputSQL:
         else:
             table_str = "CREATE TABLE `" + table_name + "` " + dynamically_named_tables[dynamic_type]
         self.cursor.execute(table_str)
+
+    def check_if_table_exists(self, table_name, database=None):
+        if database is None:
+            database = sql_database
+        self.open_if_closed()
+        return bool(self.query(f"""SELECT EXISTS(SELECT * FROM information_schema.tables WHERE
+                          table_schema = '{database}' AND table_name = '{table_name}');""")[0][0])
+
+    def check_key_exists(self, table_name, key_name, database=None):
+        if database is None:
+            database = sql_database
+        self.open_if_closed()
+        self.cursor.execute(F"SHOW KEYS FROM {database}.{table_name} WHERE Key_name = '{key_name}';")
+        return bool(self.cursor.fetchone())
+
+    def get_matching_data(self, column_name: str, match_value: str, table_name: str, database: str = None):
+        if database is None:
+            database = sql_database
+        self.open_if_closed()
+        select_str = f"""SELECT * FROM {database}.{table_name} WHERE 
+             {column_name} = '{match_value}';;"""
+
+        return self.query(select_str)
+
+    def create_schema(self, schema_name, run_silent=False):
+        if self.verbose and not run_silent:
+            print("  Creating the SQL Schema: '" + schema_name + "'")
+        self.open_if_closed()
+        self.cursor.execute(F"CREATE SCHEMA IF NOT EXISTS {schema_name};")
+        self.connection.commit()
 
     def insert_into_table(self, table_name, data, database=None):
         if database is None:

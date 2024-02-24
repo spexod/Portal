@@ -79,11 +79,18 @@ h20_table_header = "(`index_H2O` int(11) NOT NULL AUTO_INCREMENT, " + \
                     ") ENGINE=InnoDB;"
 
 
-create_tables = {'object_name_aliases': "CREATE TABLE `object_name_aliases` (`alias` " + name_specs +
-                                                                            "`spexodisks_handle` " + name_specs +
-                                                                            "PRIMARY KEY (`alias`)" +
-                                                                            ") " +
+create_tables = {'object_name_aliases': "CREATE TABLE `object_name_aliases` ("
+                                        "`alias` " + name_specs +
+                                        "`spexodisks_handle` " + name_specs +
+                                        "PRIMARY KEY (`alias`)" +
+                                        ") " +
                                         "ENGINE=InnoDB;",
+                 'spectrum_handle_registration': "CREATE TABLE `spectrum_handle_registration` (" +
+                                                 "`spectrum_handle` " + spectrum_handle +
+                                                 "`source_file` " + output_filename +
+                                                 "`inst_handle` " + str_param +
+                                                 "PRIMARY KEY (`spectrum_handle`)"
+                                                 ") ENGINE=InnoDB;",
                  "object_params_str": "CREATE TABLE `object_params_str` "
                                         "(`str_index_params` int(11) NOT NULL AUTO_INCREMENT," +
                                          "`spexodisks_handle` " + name_specs +
