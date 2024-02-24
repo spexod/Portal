@@ -4,5 +4,4 @@
 .idea
 .git
 Dockerfile*
-output
 venv*

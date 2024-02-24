@@ -36,9 +36,11 @@ services:
     image: ghcr.io/spexod/backend:LATEST
     restart: "${RESTART_POLICY:-no}"
     volumes:
-      - "./SpExWebsite:/usr/src/app"
       # django-static is written at build time by the SpExWebsite Dockerfile
       - "django-static:/django/static_root:rw"
+      - "./uploads:/django/uploads"
+      - "./output:/django/output"
+      # - "./data:/django/data"
     environment:
       DATA_RESET_UPLOAD: false
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"

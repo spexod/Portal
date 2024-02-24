@@ -1,6 +1,4 @@
 #!/bin/bash
-# process the data and upload staged tables to the database
-# python science/db/process.py
 # collect the static files
 RUN python manage.py collectstatic --clear --noinput
 # add the cron jobs to the Django management, but only after the data is upload to mysql

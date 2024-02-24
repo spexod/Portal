@@ -66,7 +66,9 @@ class Dispatch:
 
     def write_upload_files(self):
         if os.path.exists(self.output_dir):
-            shutil.rmtree(self.output_dir)
+            for file_or_dir in os.listdir(self.output_dir):
+                file_or_starname_dir = os.path.join(self.output_dir, file_or_dir)
+                shutil.rmtree(file_or_starname_dir)
         standard(write_txt=True, write_fits=True, upload_sql=False, write_plots=False, target_file=None,
                  spectra_output_dir=self.output_dir)
 

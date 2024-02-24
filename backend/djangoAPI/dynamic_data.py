@@ -23,17 +23,28 @@ def del_upload_zip(token: str):
     dispatch.zip_del(username=token)
 
 
+schema_name = f'{schema_prefix}spexodisks'
+table_name_iso = 'available_isotopologues'
+table_name_spectra = 'spectra'
+table_name_params = 'available_params_and_units'
 # # The Query requests from MySQL Server
-query_iso_str = f'SELECT molecule, name FROM {schema_prefix}spexodisks.available_isotopologues'
-query_spectra_str = f'SELECT spectrum_handle FROM {schema_prefix}spexodisks.spectra'
-query_parameters_str = f'SELECT param_handle, units FROM {schema_prefix}spexodisks.available_params_and_units WHERE for_display = 1'
+query_iso_str = f'SELECT molecule, name FROM {schema_name}.{table_name_iso}'
+query_spectra_str = f'SELECT spectrum_handle FROM {schema_name}.{table_name_spectra}'
+query_parameters_str = f'SELECT param_handle, units FROM {schema_name}.{table_name_params} WHERE for_display = 1'
 
-# # get the raw Query information
+# get the raw information needed to dynamically build model classes for tables.
 with OutputSQL() as output_sql:
+    # check if the schema exists
+    output_sql.create_schema(schema_name=schema_name)
     # check if the tables exist
-
+    if not output_sql.table_exists(schema_name, table_name_iso):
+        output_sql.create_table(schema_name, table_name_iso)
     available_isotopologues_raw = output_sql.query(sql_query_str=query_iso_str)
+    if not output_sql.table_exists(schema_name, table_name_spectra):
+        output_sql.create_table(schema_name, table_name_spectra)
     available_spectra_raw = output_sql.query(sql_query_str=query_spectra_str)
+    if not output_sql.table_exists(schema_name, table_name_params):
+        output_sql.create_table(schema_name, table_name_params)
     available_params_raw = output_sql.query(sql_query_str=query_parameters_str)
 
 # # Reshape and format the data for import in other parts of the project

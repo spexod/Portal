@@ -71,6 +71,9 @@ simbad_reference = "Simbad Database (simbad.u-strasbg.fr/simbad)"
 # for the Tess Input Catalog
 tic_ref_filename = os.path.join(ref_dir, "tic_ref.csv")
 
+# key file for syncing data
+rsync_key_file = os.path.join(working_dir, "spexod-us-est-1.pem")
+
 # for the name correction files
 annoying_names_filename = os.path.join(ref_dir, "annoying_names.csv")
 popular_names_filename = os.path.join(ref_dir, "popular_names.csv")
