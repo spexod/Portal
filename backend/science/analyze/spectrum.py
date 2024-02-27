@@ -14,11 +14,12 @@ from astropy.utils.exceptions import AstropyUserWarning
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
-from ref.ref import data_pro_dir, plot_dir, spexodisks_ref, caleb_ref, k_c, instrument_metadata, today_str
+from ref.ref import plot_dir, spexodisks_ref, caleb_ref, k_c, instrument_metadata,  output_dir
 from ref.star_names import StringStarName
 from science.tools.julian import get_julian_datetime
 from science.load.hitran import hitran_line_header, make_hl_dict
 from science.load.line_flux import line_flux_header
+from science.db.file_sync import rsync_output
 from science.load.hitran import Hitran, isotopologue_to_color, isotopologue_to_molecule
 
 
@@ -31,7 +32,7 @@ for inst_handle, inst_name, inst_name_short, show_by_default in instrument_metad
     handle_to_inst_dict[inst_handle] = {'inst_handle': inst_handle, 'inst_name': inst_name,
                                         'inst_name_short': inst_name_short, 'show_by_default': show_by_default}
 
-spectra_output_dir_default = os.path.join(data_pro_dir, today_str)
+spectra_output_dir_default = output_dir
 true_set = {True, 'true', "True", 'TRUE', 'T', 't', 'y', 'Y', 'Yes', 'yes', 'YES', '1', 1, 'on', 'On', 'ON'}
 
 default_ls = ['solid', 'dotted', 'dashed', 'dashdot']
@@ -513,7 +514,7 @@ class Spectrum:
         if verbose:
             print("  ...figure closed.")
 
-    def write_txt(self, single_object, spectrum_handle=None):
+    def write_txt(self, single_object, spectrum_handle=None, do_sync: bool = False):
         if spectrum_handle is not None:
             self.output_txt_filename = os.path.join(os.path.dirname(self.output_filename),
                                                     f'{spectrum_handle.lower()}.txt')
@@ -683,8 +684,10 @@ class Spectrum:
             for text_line in file_text:
                 f.write(text_line + "\n")
         print(f'Wrote Spectrum TXT output file at: {self.output_txt_filename}')
+        if do_sync:
+            rsync_output(dir_or_file=self.output_fits_filename, verbose=True)
 
-    def write_fits(self, single_object, spectrum_handle=None):
+    def write_fits(self, single_object, spectrum_handle=None, do_sync=False):
         hdu_list = []
         if spectrum_handle is not None:
             self.output_fits_filename = os.path.join(os.path.dirname(self.output_filename),
@@ -692,7 +695,7 @@ class Spectrum:
         """
         Static HDU Extensions
         """
-        # # The  SpExoDisks Header, hdul[0]
+        # # The SpExoDisks Header, hdul[0]
         spexod_header = fits.Header()
         # add all the star names to the header
         spexod_header['POPNAME'] = single_object.pop_name
@@ -921,6 +924,8 @@ class Spectrum:
         hdul = fits.HDUList(hdu_list)
         hdul.writeto(self.output_fits_filename, overwrite=True, output_verify='fix')
         print(f'Wrote Spectrum FITS output file at: {self.output_fits_filename}')
+        if do_sync:
+            rsync_output(dir_or_file=self.output_fits_filename, verbose=True)
 
 
 def set_single_output_spectra(param_dict):

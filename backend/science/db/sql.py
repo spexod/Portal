@@ -254,8 +254,7 @@ class OutputSQL:
     def creat_database(self, database):
         if self.verbose:
             print("  Creating the SQL Database: '" + database + "'.")
-        self.open_if_closed()
-        self.cursor.execute("CREATE DATABASE `" + database + "`;")
+        self.cursor.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;")
 
     def drop_database(self, database):
         if self.verbose:

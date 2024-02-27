@@ -42,7 +42,7 @@ services:
       - "./output:/django/output"
       # - "./data:/django/data"
     environment:
-      DATA_RESET_UPLOAD: false
+      DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
       DEBUG: "${DEBUG:-true}"
@@ -51,6 +51,7 @@ services:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
       DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+      UPLOAD_DIR: "/opt/bitnami/projects/backend/output/"
 
     depends_on:
       mysqlDB:

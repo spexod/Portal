@@ -64,6 +64,12 @@ def sql_update(write_txt=True, write_fits=True, upload_sql=True, write_plots=Tru
     return output_collection
 
 
+def web_update(update_mode: bool = False):
+    oc = standard()
+    oc.write_sql(update_mode=update_mode, do_sync=True)
+    update_schemas()
+
+
 def max_data(write_txt=False, write_fits=False, upload_sql=False, write_plots=False):
     object_collection = ObjectCollection(verbose=True, simbad_go_fast=False)
     object_collection.standard_process(per_isotopologues_filter=None,

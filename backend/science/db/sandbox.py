@@ -8,7 +8,7 @@ from typing import NamedTuple, Union
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
 from science.db.sql import django_tables, LoadSQL
-from ref.ref import repo_parent_dir, data_pro_dir, today_str
+from ref.ref import uploads_dir, data_pro_dir, today_str
 from science.analyze.prescriptions import standard, sql_update, update_schemas
 
 
@@ -150,7 +150,7 @@ def zip_test(spectrum_handles=None, date_str=None):
     if date_str is None:
         date_str = today_str
     dispatch = Dispatch(verbose=True, output_dir=os.path.join(data_pro_dir, date_str),
-                        uploads_dir=os.path.join(repo_parent_dir, 'uploads'))
+                        uploads_dir=uploads_dir)
     dispatch.zip_upload('test', spectrum_handles)
 
 

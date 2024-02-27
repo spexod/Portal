@@ -9,6 +9,7 @@ from science.load.units import UnitsObjectParams
 from science.analyze.spectrum import Spectrum
 from science.db.sql import OutputSQL
 
+
 class SingleObject:
     def __init__(self, spexodisks_handle, pop_names_lib, verbose=True, spectra_output_dir=None):
         self.verbose = verbose
@@ -34,6 +35,7 @@ class SingleObject:
                                  table_name="spectrum_handle_registration",
                                  database='spexodisks', count=0):
         if not output_sql.check_if_table_exists(table_name=table_name, database=database):
+            output_sql.creat_database(database=database)
             output_sql.creat_table(table_name=table_name, database=database, drop_if_exists=False)
         spectrum_handle = single_spectrum.set_type + "_" + single_spectrum.range_str + "_" + self.spexodisks_handle
         if count > 0:
@@ -67,7 +69,7 @@ class SingleObject:
         single_spectrum.__setattr__('spexodisks_handle', self.spexodisks_handle)
         self.available_spectral_handles.add(spectral_handle)
         self.__setattr__(spectral_handle, single_spectrum)
-        # for counting and self statistics
+        # for counting and self-statistics
         set_type = single_spectrum.set_type
         if set_type not in self.spectra_by_set_type.keys():
             self.spectra_by_set_type[set_type] = set()

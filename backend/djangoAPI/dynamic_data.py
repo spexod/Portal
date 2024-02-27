@@ -1,6 +1,6 @@
 import os
 
-from science.db.sql import OutputSQL
+from science.db.sql import LoadSQL
 from science.db.sandbox import Dispatch
 from science.analyze.spectrum import var_is_true
 
@@ -33,19 +33,19 @@ query_spectra_str = f'SELECT spectrum_handle FROM {schema_name}.{table_name_spec
 query_parameters_str = f'SELECT param_handle, units FROM {schema_name}.{table_name_params} WHERE for_display = 1'
 
 # get the raw information needed to dynamically build model classes for tables.
-with OutputSQL() as output_sql:
+with LoadSQL() as load_sql:
     # check if the schema exists
-    output_sql.create_schema(schema_name=schema_name)
+    load_sql.create_schema(schema_name=schema_name)
     # check if the tables exist
-    if not output_sql.table_exists(schema_name, table_name_iso):
-        output_sql.create_table(schema_name, table_name_iso)
-    available_isotopologues_raw = output_sql.query(sql_query_str=query_iso_str)
-    if not output_sql.table_exists(schema_name, table_name_spectra):
-        output_sql.create_table(schema_name, table_name_spectra)
-    available_spectra_raw = output_sql.query(sql_query_str=query_spectra_str)
-    if not output_sql.table_exists(schema_name, table_name_params):
-        output_sql.create_table(schema_name, table_name_params)
-    available_params_raw = output_sql.query(sql_query_str=query_parameters_str)
+    if not load_sql.check_if_table_exists(schema_name, table_name_iso):
+        load_sql.creat_table(database=schema_name, table_name=table_name_iso)
+    available_isotopologues_raw = load_sql.query(sql_query_str=query_iso_str)
+    if not load_sql.check_if_table_exists(schema_name, table_name_spectra):
+        load_sql.creat_table(database=schema_name, table_name=table_name_spectra)
+    available_spectra_raw = load_sql.query(sql_query_str=query_spectra_str)
+    if not load_sql.check_if_table_exists(schema_name, table_name_params):
+        load_sql.create_units_table(database=schema_name)
+    available_params_raw = load_sql.query(sql_query_str=query_parameters_str)
 
 # # Reshape and format the data for import in other parts of the project
 # available_isotopologues

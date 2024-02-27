@@ -29,13 +29,14 @@ web_default_spectrum = 'ishell_4517nm_5240nm_Vstar_V1003_OPH'
 base_dir = os.path.dirname(os.path.realpath(__file__))
 star_names_dir = base_dir
 try:
-    repo_parent_dir = os.path.dirname(base_dir)
+    backend_dir = os.path.dirname(base_dir)
 except ValueError:
     warn(f'Could not find the SpExoDisks DataScience package directory')
-    repo_parent_dir = '/django'
-
-working_dir = os.path.join(repo_parent_dir, "science")
-input_data_dir = os.path.join(repo_parent_dir, "data")
+    backend_dir = '/django'
+working_dir = os.path.join(backend_dir, "science")
+input_data_dir = os.path.join(backend_dir, "data")
+uploads_dir = os.path.join(backend_dir, "uploads")
+output_dir = os.path.join(backend_dir, "output")
 ref_dir = os.path.join(input_data_dir, "reference_data")
 spectra_dir = os.path.join(input_data_dir, "spectral_data")
 data_pro_dir = os.path.join(input_data_dir, "data_products")
@@ -72,7 +73,7 @@ simbad_reference = "Simbad Database (simbad.u-strasbg.fr/simbad)"
 tic_ref_filename = os.path.join(ref_dir, "tic_ref.csv")
 
 # key file for syncing data
-rsync_key_file = os.path.join(working_dir, "spexod-us-est-1.pem")
+rsync_key_file = os.path.join(backend_dir, "spexod-us-est-1.pem")
 
 # for the name correction files
 annoying_names_filename = os.path.join(ref_dir, "annoying_names.csv")

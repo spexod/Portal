@@ -80,6 +80,11 @@ def ra_dec_web_format(ra_epoch_j2000_deg, dec_epoch_j2000_deg):
     return web_string
 
 
+def get_stacked_line_handle(isotopologue: str, transition: str, spectrum_handle: str) -> str:
+    return str(isotopologue + "_" + transition.replace("-", "to") +
+               "_" + spectrum_handle).lower()
+
+
 def spectrum_sql_upload_old(output_sql, single_spectrum, database=spectra_schema, table_name=None):
     spectrum_handle = single_spectrum.spectrum_handle
     if table_name is None:
@@ -194,7 +199,8 @@ class ObjectCollection:
                 all_inst_handle_and_names_str += f'{inst_handle}:{inst_name}|'
 
         for inst_handle in sorted(self.available_spexodisks_instruments):
-            instruments[inst_handle] = handle_to_inst_dict[inst_handle] | {'spectra_count': self.inst_spectra_count[inst_handle]}
+            instruments[inst_handle] = handle_to_inst_dict[inst_handle] | {
+                'spectra_count': self.inst_spectra_count[inst_handle]}
         return totals, instruments
 
     def __len__(self):
@@ -267,13 +273,13 @@ class ObjectCollection:
                 for object_handle in spectral_set.handle_list:
                     spectrum_object = spectral_set.__getattribute__(object_handle)
                     spexodisks_handle = spectrum_object.spexodisks_handle
-
                     if spexodisks_handle not in self.available_spexodisks_handles:
                         self.available_spexodisks_handles.add(spexodisks_handle)
                         self.__setattr__(spexodisks_handle, SingleObject(spexodisks_handle, self.pop_names_lib,
                                                                          verbose=self.verbose,
                                                                          spectra_output_dir=self.spectra_output_dir))
-                    self.__getattribute__(spexodisks_handle).add_spectrum(output_sql=load_qsl, spectrum_object=spectrum_object)
+                    self.__getattribute__(spexodisks_handle).add_spectrum(output_sql=load_qsl,
+                                                                          spectrum_object=spectrum_object)
 
         # do some database wide stats
         self.inst_spectra_count = {}
@@ -669,7 +675,8 @@ class ObjectCollection:
                             # there is available parameter data to put in this column
                             write_line += f",{str(single_param.value).replace(',', '|')}"
                             for secondary_type in secondary_types:
-                                secondary_type_value = str(single_param.__getattribute__(secondary_type)).replace(',', '|')
+                                secondary_type_value = str(single_param.__getattribute__(secondary_type)).replace(',',
+                                                                                                                  '|')
                                 if secondary_type_value is None:
                                     write_line += ','
                                 else:
@@ -783,39 +790,32 @@ class ObjectCollection:
             return spexodisks_handles, found_name_data, internal_name_data, spectral_data, object_data
         return None
 
-    def write_sql(self, early_stop=None, upload_all_params: bool = False):
-        # early_stop is an artificial stop to stop loading per-star and per-spectrum dat after the N + 1 star
-        if early_stop is None:
-            early_stop = float('inf')
+    def write_metadata(self, upload_all_params: bool = False):
         max_star_name_size = 0
         references_per_parameter = {}
         star_params = {}
         star_params_curated = {}
         if self.verbose:
             print("\nWriting SpExoDisks Data to MySQL Server")
-        with LoadSQL(auto_connect=True, verbose=self.verbose) as output_sql:
+        with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
             # faster upload of data to MySQL server, only implemented for spectral data
             uploader = UploadSQL()
-            # clear old databases and tables and create empty versions
-            output_sql.clear_database(database=spexo_schema)
-            output_sql.clear_database(database=spectra_schema)
-            output_sql.clear_database(database=stacked_line_schema)
             # create the statistics tables
-            output_sql.create_stats_total_table(database=spexo_schema)
-            output_sql.create_stats_inst_table(database=spexo_schema)
+            load_sql.create_stats_total_table(database=spexo_schema)
+            load_sql.create_stats_inst_table(database=spexo_schema)
             # create the stellar names and parameters tables
-            output_sql.creat_table(table_name='object_name_aliases', database=spexo_schema)
+            load_sql.creat_table(table_name='object_name_aliases', database=spexo_schema)
             if upload_all_params:
-                output_sql.creat_table(table_name="object_params_float", database=spexo_schema)
-                output_sql.creat_table(table_name="object_params_str", database=spexo_schema)
+                load_sql.creat_table(table_name="object_params_float", database=spexo_schema)
+                load_sql.creat_table(table_name="object_params_str", database=spexo_schema)
             # create the per spectra data tables
-            output_sql.creat_table(table_name="flux_calibration", database=spexo_schema)
-            output_sql.creat_table(table_name="line_fluxes_co", database=spexo_schema)
-            output_sql.creat_table(table_name="spectra", database=spexo_schema)
-            output_sql.creat_table(table_name="stacked_line_spectra", database=spexo_schema)
+            load_sql.creat_table(table_name="flux_calibration", database=spexo_schema)
+            load_sql.creat_table(table_name="line_fluxes_co", database=spexo_schema)
+            load_sql.creat_table(table_name="spectra", database=spexo_schema)
+            load_sql.creat_table(table_name="stacked_line_spectra", database=spexo_schema)
 
             # stellar params and units table
-            output_sql.create_units_table(database=spexo_schema)
+            load_sql.create_units_table(database=spexo_schema)
             known_string_param = []
             known_float_params = []
             for param in params_check.params_order:
@@ -825,9 +825,8 @@ class ObjectCollection:
                     known_string_param.append(param)
                 else:
                     known_float_params.append(param)
-                output_sql.insert_into_table(table_name='available_params_and_units',
+                load_sql.insert_into_table(table_name='available_params_and_units',
                                              data=param_dict, database=spexo_schema)
-
             # load a default spectrum and spectrum info for an initial display on the website's ExploreData page
             default_object = self.get_star_from_spectrum_handle(self.default_spectrum)
             default_spectrum = default_object.__getattribute__(self.default_spectrum)
@@ -837,13 +836,13 @@ class ObjectCollection:
                                     flux_error=default_spectrum.flux_error,
                                     bandwidth_fraction_for_null=bandwidth_fraction_for_null,
                                     schema=spexo_schema)
-            output_sql.creat_table(table_name='default_spectrum_info', database=spexo_schema)
+            load_sql.creat_table(table_name='default_spectrum_info', database=spexo_schema)
             spectrum_data = spectrum_data_for_sql(single_spectrum=default_spectrum)
-            output_sql.insert_into_table(table_name='default_spectrum_info', data=spectrum_data, database=spexo_schema)
+            load_sql.insert_into_table(table_name='default_spectrum_info', data=spectrum_data, database=spexo_schema)
 
             # add a single entry for the overall database stats table
             totals, instruments = self.get_stats()
-            output_sql.insert_into_table(table_name='stats_total', database=spexo_schema,
+            load_sql.insert_into_table(table_name='stats_total', database=spexo_schema,
                                          data=totals)
             # add one entry to an instrument stats (stats_instrument) table for each instrument found
             inst_handles_in_order = []
@@ -851,17 +850,17 @@ class ObjectCollection:
                 if inst_handle in self.available_spexodisks_instruments:
                     inst_handles_in_order.append(inst_handle)
             for inst_handle in inst_handles_in_order:
-                output_sql.insert_into_table(table_name='stats_instrument', database=spexo_schema,
+                load_sql.insert_into_table(table_name='stats_instrument', database=spexo_schema,
                                              data=instruments[inst_handle])
 
             # put data in the MySQL tables, per-star and per-spectra data
             # # object_params_float, object_params_str
             if upload_all_params:
-                output_sql.buffer_insert_init(table_name="object_params_str",
+                load_sql.buffer_insert_init(table_name="object_params_str",
                                               columns=["spexodisks_handle", "str_param_type", "str_value",
                                                        "str_error", 'str_ref', 'str_units', 'str_notes'],
                                               database=spexo_schema, run_silent=True, buffer_num=1)
-                output_sql.buffer_insert_init(table_name="object_params_float",
+                load_sql.buffer_insert_init(table_name="object_params_float",
                                               columns=["spexodisks_handle", "float_param_type", "float_value",
                                                        "float_error_low", 'float_error_high', 'float_ref',
                                                        'float_units', 'float_notes'],
@@ -872,7 +871,7 @@ class ObjectCollection:
                 if self.verbose and star_count % print_faction == 0:
                     raw_percentage = star_count / percent_divider
                     print(f"    {('%05.2f' % raw_percentage)}%" +
-                          f" of SQL table data written for per-star and per-spectra data at {datetime.now()}")
+                          f" of SQL table data written for per-star and per-spectra metadata at {datetime.now()}")
                 single_object = self.__getattribute__(spexodisks_handle)
                 # The object_name_aliases table
                 max_star_name_size = max(max_star_name_size, len(spexodisks_handle))
@@ -882,7 +881,7 @@ class ObjectCollection:
                     for id in list(id_set):
                         simbad_name = StringStarName((name_type, id)).string_name
                         max_star_name_size = max(max_star_name_size, len(simbad_name))
-                        output_sql.insert_into_table(table_name='object_name_aliases', database=spexo_schema,
+                        load_sql.insert_into_table(table_name='object_name_aliases', database=spexo_schema,
                                                      data={"alias": simbad_name,
                                                            "spexodisks_handle": spexodisks_handle})
                 object_params = single_object.object_params
@@ -894,7 +893,7 @@ class ObjectCollection:
                         references_per_parameter[param_type] = set()
                     for single_param in list(object_params[param_type]):
                         value, err, ref, units, notes = single_param.value, single_param.err, single_param.ref, \
-                                                        single_param.units, single_param.notes
+                            single_param.units, single_param.notes
                         # truncate the value to the correct number of decimals specified in the units.csv files
                         value = params_check.value_format(param_type, value)
                         err = params_check.err_format(param_type, err)
@@ -919,7 +918,7 @@ class ObjectCollection:
                             str_data = {"str_" + key: data[key] for key in data.keys()}
                             str_data["spexodisks_handle"] = spexodisks_handle
                             if upload_all_params:
-                                output_sql.buffer_insert_value(values=[spexodisks_handle, param_type, value,
+                                load_sql.buffer_insert_value(values=[spexodisks_handle, param_type, value,
                                                                        err, ref, units, notes], buffer_num=1)
                             output_data = {key.replace('str_', ''): str_data[key] for key in str_data.keys()}
                         elif isinstance(value, float):
@@ -937,7 +936,7 @@ class ObjectCollection:
                             float_data = {"float_" + key: data[key] for key in data.keys()}
                             float_data["spexodisks_handle"] = spexodisks_handle
                             if upload_all_params:
-                                output_sql.buffer_insert_value(values=[spexodisks_handle, param_type, value,
+                                load_sql.buffer_insert_value(values=[spexodisks_handle, param_type, value,
                                                                        error_low, error_high, ref, units, notes],
                                                                buffer_num=2)
                             output_data = {key.replace('float_', ''): float_data[key] for key in float_data.keys()}
@@ -954,7 +953,7 @@ class ObjectCollection:
                     # Spectrum table
                     single_spectrum = single_object.__getattribute__(spectrum_handle)
                     spectrum_data = spectrum_data_for_sql(single_spectrum=single_spectrum)
-                    output_sql.insert_into_table(table_name="spectra", database=spexo_schema, data=spectrum_data)
+                    load_sql.insert_into_table(table_name="spectra", database=spexo_schema, data=spectrum_data)
                     # Flux Calibration
                     if single_spectrum.flux_cals is not None:
                         for flux_cal in single_spectrum.flux_cals:
@@ -965,7 +964,7 @@ class ObjectCollection:
                                 flux_cal_data["ref"] = flux_cal.ref
                             if flux_cal.err is not None:
                                 flux_cal_data["flux_cal_error"] = flux_cal.err
-                            output_sql.insert_into_table(table_name="flux_calibration", database=spexo_schema,
+                            load_sql.insert_into_table(table_name="flux_calibration", database=spexo_schema,
                                                          data=flux_cal_data)
                     # Line Fluxes CO
                     if single_spectrum.line_fluxes is not None:
@@ -992,88 +991,47 @@ class ObjectCollection:
                                                              "branch": hitran_line.upper_level.branch,
                                                              "lower_vibrational": hitran_line.lower_level.vibrational,
                                                              "lower_rotational": hitran_line.lower_level.rotational}
-                                output_sql.insert_into_table(table_name="line_fluxes_co",  database=spexo_schema,
+                                load_sql.insert_into_table(table_name="line_fluxes_co", database=spexo_schema,
                                                              data=single_measured_flux_data)
-                    """
-                    Dynamic table creation for storing Spectra and similar arrays
-                    """
-                    # The Primary Spectrum
-                    uploader.upload_spectra(table_name=spectrum_handle.lower(),
-                                            wavelength_um=single_spectrum.wavelength_um,
-                                            flux=single_spectrum.flux,
-                                            flux_error=single_spectrum.flux_error,
-                                            bandwidth_fraction_for_null=bandwidth_fraction_for_null,
-                                            schema=spectra_schema)
                     # Stacked Line Spectra
                     if single_spectrum.stacked_lines is not None:
                         for extra_science_product_path in single_spectrum.stacked_lines.keys():
                             isotopologue, transition, _path = extra_science_product_path
-                            stack_line_handle = str(isotopologue + "_" + transition.replace("-", "to") +
-                                                    "_" + spectrum_handle).lower()
+                            stack_line_handle = get_stacked_line_handle(isotopologue=isotopologue,
+                                                                        transition=transition,
+                                                                        spectrum_handle=spectrum_handle)
                             stacked_line_id_data = {"stack_line_handle": stack_line_handle,
                                                     "spectrum_handle": spectrum_handle.lower(),
                                                     "spexodisks_handle": spexodisks_handle,
                                                     "transition": transition,
                                                     "isotopologue": isotopologue,
                                                     "molecule": isotopologue_to_molecule[isotopologue]}
-                            output_sql.insert_into_table(table_name="stacked_line_spectra", data=stacked_line_id_data,
+                            load_sql.insert_into_table(table_name="stacked_line_spectra", data=stacked_line_id_data,
                                                          database=spexo_schema)
-                            stack_line_spectrum = single_spectrum.stacked_lines[extra_science_product_path].spectrum
-                            output_sql.creat_table(table_name=stack_line_handle, database=stacked_line_schema,
-                                                   dynamic_type="stacked_spectrum", run_silent=True)
-                            output_sql.buffer_insert_init(table_name=stack_line_handle,
-                                                          columns=["velocity_kmps", "flux", "flux_error"],
-                                                          database=stacked_line_schema,
-                                                          run_silent=True)
-                            for velocity_kmps, flux, flux_error in zip(stack_line_spectrum.velocity_kmps,
-                                                                       stack_line_spectrum.flux,
-                                                                       stack_line_spectrum.flux_error):
-                                single_row_values = [velocity_kmps]
-                                if is_good_num(flux):
-                                    single_row_values.append(flux)
-                                else:
-                                    single_row_values.append(None)
-                                if is_good_num(flux_error):
-                                    single_row_values.append(flux_error)
-                                else:
-                                    single_row_values.append(None)
-                                output_sql.buffer_insert_value(values=single_row_values)
-                            else:
-                                output_sql.buffer_insert_execute(run_silent=True)
-
-                if star_count > early_stop:
-                    # this is an optional test point to end this loop early
-                    if upload_all_params:
-                        output_sql.buffer_insert_execute(run_silent=True, buffer_num=1)
-                        output_sql.buffer_insert_execute(run_silent=True, buffer_num=2)
-                    if self.verbose:
-                        print(f" Early stop after {star_count} stars when writing SQL tables for per-star and " +
-                              f"per-spectra data")
-                    break
             else:
                 # below is last thing the loop does if no 'break' statement is encountered.
                 if upload_all_params:
-                    output_sql.buffer_insert_execute(run_silent=True, buffer_num=1)
-                    output_sql.buffer_insert_execute(run_silent=True, buffer_num=2)
+                    load_sql.buffer_insert_execute(run_silent=True, buffer_num=1)
+                    load_sql.buffer_insert_execute(run_silent=True, buffer_num=2)
                 if self.verbose:
-                    print(" Completed writing SQL tables for per-star and per-spectra data")
+                    print(" Completed writing SQL tables for per-star and per-spectra metadata")
             # Make the curated table and other tables that recast the data to per star and per spectrum data
             if upload_all_params:
-                output_sql.params_tables(database=spexo_schema)
+                load_sql.params_tables(database=spexo_schema)
                 # make the curated table of data
                 str_params = sorted([item[0] for item in
-                                     output_sql.query(
+                                     load_sql.query(
                                          sql_query_str=F"SELECT str_params "
                                                        F"FROM {spexo_schema}.available_str_params")])
 
                 float_params = sorted([item[0] for item in
-                                       output_sql.query(
+                                       load_sql.query(
                                            sql_query_str=F"SELECT float_params "
                                                          F"FROM {spexo_schema}.available_float_params")])
             else:
                 float_params = known_float_params
                 str_params = known_string_param
-            all_column_names = output_sql.create_curated_table(float_params=float_params, str_params=str_params,
+            all_column_names = load_sql.create_curated_table(float_params=float_params, str_params=str_params,
                                                                database=spexo_schema)
             # Curated data: rearrange the data to be by star, then by parameter
             star_params_curated_by_star = {}
@@ -1154,23 +1112,102 @@ class ObjectCollection:
                     if 'ref' in output_data.keys():
                         curated_record[F"{column_name}_ref"] = output_data['ref']
                 # export the curated data to the MySQL server table.
-                output_sql.insert_into_table(table_name='curated', database=spexo_schema, data=curated_record)
+                load_sql.insert_into_table(table_name='curated', database=spexo_schema, data=curated_record)
 
-            # Hitran Data
-            columns_CO = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
-                          "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
-                          "g_statistical_weight_lower_level", "upper_vibrational", "upper_rotational", "branch",
-                          "lower_vibrational", "lower_rotational"]
-            columns_H2O = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
-                           "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
-                           "g_statistical_weight_lower_level", "upper_vibrational1", "upper_vibrational2",
-                           "upper_vibrational3", "upper_rotational", "upper_ka", "upper_kc", "lower_vibrational1",
-                           "lower_vibrational2", "lower_vibrational3", "lower_rotational", "lower_ka", "lower_kc"]
-            values_CO = []
-            values_H2O = []
-            values_isos = {}
-            one_tenth = int(np.round(len(self.hitran_ref.data) / 10.0))
-            percent_divider = len(self.hitran_ref.data) / 100.0
+        # Finishing up (outside the 'with' statement)
+        if self.verbose:
+            print("Data output written to MySQL server.\n")
+
+        # output a file to see what references are used by what parameters.
+        with open(references_per_parameter_path, 'w') as f:
+            for column_name in sorted(references_per_parameter.keys()):
+                ref_values = ''
+                for ref in sorted(references_per_parameter[column_name], reverse=True):
+                    ref_values += F"{ref}|"
+                f.write(F"{column_name}:{ref_values[:-1]}\n")
+
+    def write_spectra(self, update_mode: bool = True, do_sync: bool = True):
+        with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
+            if update_mode and load_sql.check_if_table_exists(table_name="spectra", database='spexodisks'):
+                handles_to_skip = {row[0] for row in load_sql.query(
+                    sql_query_str="""SELECT spectrum_handle FROM spexodisks.spectra""")}
+            else:
+                handles_to_skip = set()
+            # faster upload of data to MySQL server, only implemented for spectral data
+            uploader = UploadSQL()
+            percent_divider = len(self.available_spexodisks_handles) / 100.0
+            for spectrum_count, spectrum_handle in list(enumerate(sorted(self.available_spectrum_handles))):
+                if spectrum_handle.lower() in handles_to_skip:
+                    if self.verbose:
+                        print(F"Skipping {spectrum_handle} as it already exists in the database.")
+                    continue
+                if self.verbose:
+                    raw_percentage = spectrum_count / percent_divider
+                    print(f"    {('%05.2f' % raw_percentage)}%" +
+                          f" data uploaded for spectra at {datetime.now()}, next spectra: {spectrum_handle}")
+                single_star = self.get_star_from_spectrum_handle(spectrum_handle)
+                single_spectrum = single_star.__getattribute__(spectrum_handle)
+                # The Primary Spectrum
+                uploader.upload_spectra(table_name=spectrum_handle.lower(),
+                                        wavelength_um=single_spectrum.wavelength_um,
+                                        flux=single_spectrum.flux,
+                                        flux_error=single_spectrum.flux_error,
+                                        bandwidth_fraction_for_null=bandwidth_fraction_for_null,
+                                        schema=spectra_schema)
+                single_spectrum.write_txt(single_object=single_star, spectrum_handle=spectrum_handle, do_sync=do_sync)
+                single_spectrum.write_fits(single_object=single_star, spectrum_handle=spectrum_handle, do_sync=do_sync)
+                # Stacked Line Spectra
+                if single_spectrum.stacked_lines is not None:
+                    for extra_science_product_path in single_spectrum.stacked_lines.keys():
+                        isotopologue, transition, _path = extra_science_product_path
+                        stack_line_handle = get_stacked_line_handle(isotopologue=isotopologue, transition=transition,
+                                                                    spectrum_handle=spectrum_handle)
+                        stack_line_spectrum = single_spectrum.stacked_lines[extra_science_product_path].spectrum
+                        load_sql.creat_table(table_name=stack_line_handle, database=stacked_line_schema,
+                                             dynamic_type="stacked_spectrum", run_silent=True)
+                        load_sql.buffer_insert_init(table_name=stack_line_handle,
+                                                    columns=["velocity_kmps", "flux", "flux_error"],
+                                                    database=stacked_line_schema,
+                                                    run_silent=True)
+                        for velocity_kmps, flux, flux_error in zip(stack_line_spectrum.velocity_kmps,
+                                                                   stack_line_spectrum.flux,
+                                                                   stack_line_spectrum.flux_error):
+                            single_row_values = [velocity_kmps]
+                            if is_good_num(flux):
+                                single_row_values.append(flux)
+                            else:
+                                single_row_values.append(None)
+                            if is_good_num(flux_error):
+                                single_row_values.append(flux_error)
+                            else:
+                                single_row_values.append(None)
+                            load_sql.buffer_insert_value(values=single_row_values)
+
+                    if self.verbose:
+                        print(" Completed writing SQL tables for spectra")
+
+    def write_hitran(self, update_mode: bool = True):
+        # Hitran Data
+        columns_CO = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
+                      "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
+                      "g_statistical_weight_lower_level", "upper_vibrational", "upper_rotational", "branch",
+                      "lower_vibrational", "lower_rotational"]
+        columns_H2O = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
+                       "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
+                       "g_statistical_weight_lower_level", "upper_vibrational1", "upper_vibrational2",
+                       "upper_vibrational3", "upper_rotational", "upper_ka", "upper_kc", "lower_vibrational1",
+                       "lower_vibrational2", "lower_vibrational3", "lower_rotational", "lower_ka", "lower_kc"]
+        values_CO = []
+        values_H2O = []
+        values_isos = {}
+        one_tenth = int(np.round(len(self.hitran_ref.data) / 10.0))
+        percent_divider = len(self.hitran_ref.data) / 100.0
+        with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
+            if update_mode and load_sql.check_if_table_exists(table_name="available_isotopologues", database='spexodisks'):
+                handles_to_skip = {row[0] for row in load_sql.query(
+                    sql_query_str="""SELECT name FROM spexodisks.available_isotopologues""")}
+            else:
+                handles_to_skip = set()
             for line_count, hitran_line in list(enumerate(self.hitran_ref.data)):
                 if self.verbose:
                     if line_count % one_tenth == 0:
@@ -1189,42 +1226,8 @@ class ObjectCollection:
                     values_isos[isotopologue] = [make_hl_dict(hitran_line=hitran_line)
                                                  for hitran_line in isotopologue_hitran.ordered_data]
 
-            # CO
-            output_sql.creat_table(table_name="co", database=spexo_schema)
-            output_sql.buffer_insert_init(table_name="co", columns=columns_CO, database=spexo_schema, run_silent=False)
-            one_tenth = int(np.round(len(values_CO) / 10.0))
-            percent_divider = len(values_CO) / 100.0
-            for line_count, single_line_values_dict in list(enumerate(values_CO)):
-                if self.verbose:
-                    if line_count % one_tenth == 0:
-                        raw_percentage = line_count / percent_divider
-                        print(F"    {'%05.2f' % raw_percentage}%" +
-                              " of CO molecular data written to buffer.")
-                output_sql.buffer_insert_value(values=[single_line_values_dict[column_name]
-                                                       for column_name in columns_CO])
-            else:
-                output_sql.buffer_insert_execute(run_silent=False)
-            # H2O
-            output_sql.creat_table(table_name="h2o", database=spexo_schema)
-            output_sql.buffer_insert_init(table_name="h2o", columns=columns_H2O,
-                                          database=spexo_schema, run_silent=False)
-            fraction = int(np.round(len(values_H2O) / 30.0))
-            percent_divider = len(values_H2O) / 100.0
-            for line_count, single_line_values_dict in list(enumerate(values_H2O)):
-                if line_count % fraction == 1:
-                    output_sql.buffer_insert_execute(run_silent=True)
-                    output_sql.buffer_insert_init(table_name="h2o", columns=columns_H2O,
-                                                  database=spexo_schema, run_silent=True)
-                    raw_percentage = line_count / percent_divider
-                    print(F"    {'%05.2f' % raw_percentage}%" +
-                          " of H2O molecular data written")
-                output_sql.buffer_insert_value(values=[single_line_values_dict[column_name]
-                                                            for column_name in columns_H2O])
-            else:
-                output_sql.buffer_insert_execute(run_silent=False)
-
             # the isotopologue tables
-            output_sql.creat_table(table_name='available_isotopologues', database=spexo_schema,)
+            load_sql.creat_table(table_name='available_isotopologues', database=spexo_schema)
             for isotopologue in values_isos.keys():
                 molecule = isotopologue_to_molecule[isotopologue].lower()
                 if molecule == 'h2o':
@@ -1247,42 +1250,46 @@ class ObjectCollection:
                                              'min_wavelength_um': min_wavelength_um,
                                              'max_wavelength_um': max_wavelength_um,
                                              'total_lines': len(isotopologue_ordered_data)}
-                output_sql.insert_into_table(table_name='available_isotopologues', data=isotopologue_summary_data,
-                                             database=spexo_schema)
+                load_sql.insert_into_table(table_name='available_isotopologues', data=isotopologue_summary_data,
+                                           database=spexo_schema)
+                if isotopologue.lower() in handles_to_skip:
+                    if self.verbose:
+                        print(F"Skipping {isotopologue} as it already exists in the database.")
+                    continue
                 # insert the per isotopologue hitran  line data
                 table_name = f'isotopologue_{isotopologue.lower()}'
-                output_sql.creat_table(table_name=table_name, database=spexo_schema, dynamic_type=molecule)
-                output_sql.buffer_insert_init(table_name=table_name, columns=columns,
-                                              database=spexo_schema, run_silent=False)
+                load_sql.creat_table(table_name=table_name, database=spexo_schema, dynamic_type=molecule)
+                load_sql.buffer_insert_init(table_name=table_name, columns=columns,
+                                            database=spexo_schema, run_silent=False)
                 values_hitran = values_isos[isotopologue]
                 fraction = int(np.round(len(values_hitran) / 30.0))
                 percent_divider = len(values_hitran) / 100.0
                 for line_count, single_line_values_dict in list(enumerate(values_hitran)):
                     if line_count % fraction == 1:
-                        output_sql.buffer_insert_execute(run_silent=True)
-                        output_sql.buffer_insert_init(table_name=table_name, columns=columns,
-                                                      database=spexo_schema, run_silent=True)
+                        load_sql.buffer_insert_execute(run_silent=True)
+                        load_sql.buffer_insert_init(table_name=table_name, columns=columns,
+                                                    database=spexo_schema, run_silent=True)
                         raw_percentage = line_count / percent_divider
                         print(F"    {'%05.2f' % raw_percentage}%" +
                               f" of {isotopologue} isotopologue table data written")
-                    output_sql.buffer_insert_value(values=[single_line_values_dict[column_name]
-                                                           for column_name in columns])
+                    load_sql.buffer_insert_value(values=[single_line_values_dict[column_name]
+                                                         for column_name in columns])
                 else:
-                    output_sql.buffer_insert_execute(run_silent=False)
-            if self.verbose:
-                print(" Completed writing SQL tables for Hitran molecular data")
-
-        # Finishing up (outside the 'with' statement)
+                    load_sql.buffer_insert_execute(run_silent=False)
         if self.verbose:
-            print("Data output written to MySQL server.\n")
+            print(" Completed writing SQL tables for Hitran molecular data")
 
-        # output a file to see what references are used by what parameters.
-        with open(references_per_parameter_path, 'w') as f:
-            for column_name in sorted(references_per_parameter.keys()):
-                ref_values = ''
-                for ref in sorted(references_per_parameter[column_name], reverse=True):
-                    ref_values += F"{ref}|"
-                f.write(F"{column_name}:{ref_values[:-1]}\n")
+    def write_sql(self, upload_all_params: bool = False, update_mode: bool = True, do_sync: bool = False):
+        with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
+            load_sql.create_schema(schema_name=spexo_schema)
+            load_sql.clear_database(database=spexo_schema)
+            load_sql.create_schema(schema_name=stacked_line_schema)
+            load_sql.clear_database(database=spectra_schema)
+            load_sql.create_schema(schema_name=spectra_schema)
+            load_sql.clear_database(database=stacked_line_schema)
+        self.write_metadata(upload_all_params=upload_all_params)
+        self.write_spectra(update_mode=update_mode, do_sync=do_sync)
+        self.write_hitran()
 
     def calculate_summary(self):
         self.summary = Summary()
