@@ -4,3 +4,4 @@ venv
 *.DS_Store*
 .env
 *pem
+.git_token.txt

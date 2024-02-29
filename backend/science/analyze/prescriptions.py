@@ -2,14 +2,14 @@ import os
 from getpass import getuser
 
 from ref.ref import working_dir, target_file_default
-from science.analyze.object_collection import ObjectCollection
-from science.analyze.output_collection import OutputObjectCollection
+from science.db.sql import LoadSQL
 from science.load.hitran import isotopologue_key
 from science.analyze.spectrum import spectra_output_dir_default
-from science.db.sql import LoadSQL
+from science.analyze.object_collection import ObjectCollection
+from science.analyze.output_collection import OutputObjectCollection
 
 
-def standard(write_txt=False, write_fits=False, upload_sql=False, write_plots=False, target_file=None,
+def standard(upload_sql=False, write_plots=False, target_file=None,
              spectra_output_dir=None):
     if spectra_output_dir is None:
         spectra_output_dir = spectra_output_dir_default
@@ -31,19 +31,17 @@ def standard(write_txt=False, write_fits=False, upload_sql=False, write_plots=Fa
                                         "lower_vibrational_levels_co": None,
                                         "lower_rotational_levels_co": None}
     # get the data from this instance of OutputStarData
-    output_collection = OutputObjectCollection(verbose=True, simbad_go_fast=False,
-                                               spectra_output_dir=spectra_output_dir)
+    output_collection = OutputObjectCollection(verbose=True, simbad_go_fast=False, spectra_output_dir=spectra_output_dir)
     # a copy of this instance
-    output_collection.standard_process(per_isotopologues_filter=isotopologues_filter,
-                                       write_txt=False, write_fits=False, upload_sql=False, write_plots=False)
+    output_collection.standard_process(per_isotopologues_filter=isotopologues_filter, upload_sql=False,
+                                       write_plots=False)
     # if the target file is not None, then we will return only a subset of the data that has
     # the requested targets.
     if target_file is not None:
         output_collection.read_target_list(target_file=target_file)
         output_collection.remove_non_targets()
 
-    output_collection.standard_output(write_txt=write_txt, write_fits=write_fits,
-                                      upload_sql=upload_sql, write_plots=write_plots)
+    output_collection.standard_output(upload_sql=upload_sql, write_plots=write_plots)
     return output_collection
 
 
@@ -54,27 +52,17 @@ def update_schemas(delete_spectra_tables: bool = False):
         output_sql.update_schemas()
 
 
-def sql_update(write_txt=True, write_fits=True, upload_sql=True, write_plots=True, target_file=None,
+def sql_update(upload_sql=True, write_plots=True, target_file=None,
                do_update_schemas=False):
-    output_collection = standard(write_txt=write_txt, write_fits=write_fits,
-                                 upload_sql=upload_sql, write_plots=write_plots,
-                                 target_file=target_file)
+    output_collection = standard(upload_sql=upload_sql, write_plots=write_plots, target_file=target_file)
     if do_update_schemas:
         update_schemas()
     return output_collection
 
 
-def web_update(update_mode: bool = False):
-    oc = standard()
-    oc.write_sql(update_mode=update_mode, do_sync=True)
-    update_schemas()
-
-
-def max_data(write_txt=False, write_fits=False, upload_sql=False, write_plots=False):
+def max_data(upload_sql=False, write_plots=False):
     object_collection = ObjectCollection(verbose=True, simbad_go_fast=False)
     object_collection.standard_process(per_isotopologues_filter=None,
-                                       write_fits=write_fits,
-                                       write_txt=write_txt,
                                        upload_sql=upload_sql,
                                        write_plots=write_plots)
     return object_collection
@@ -116,15 +104,15 @@ if __name__ == "__main__":
         # what runs on Caleb's computers
         # with LoadSQL() as output_sql:
         #     output_sql.update_schemas()
-        oc = standard(write_txt=False, write_fits=False, upload_sql=True, write_plots=False, target_file=None)
+        oc = standard(upload_sql=True, write_plots=False, target_file=None)
         # oc = sql_update(write_txt=False, write_fits=False, upload_sql=True,
         #                 write_plots=False, target_file=None, return_oc=True)
     elif getuser() == "a_b1140":  # Andrea's computers
         # what runs on your computers (copy this statement and then edit the username above)
-        oc = standard(write_txt=True, write_fits=True, upload_sql=True, write_plots=False, target_file=None)
+        oc = standard(upload_sql=True, write_plots=False, target_file=None)
         # with LoadSQL() as output_sql:
         #    output_sql.update_schemas()
-        # oc = sql_update(write_txt=True, write_fits=True, upload_sql=True, write_plots=False, target_file=None)
+        # oc = sql_update(upload_sql=True, write_plots=False, target_file=None)
         # single_object = get_single_object(object_collection=oc, object_name='HD190073', do_plot=True,
         #                                  show_error_bars=True,
         #                                  min_wavelength_um=4.802,
@@ -134,11 +122,8 @@ if __name__ == "__main__":
         #                                  transition_text=True,
         #                                  x_fig_size=30, y_fig_size=8.0,
         #                                  text_rotation=30, x_ticks_min_number=20)
-        dsharp = standard(write_txt=False, write_fits=False, upload_sql=False, write_plots=False,
-                          target_file=dsharp_targets_file)
-        jwst = standard(write_txt=False, write_fits=False, upload_sql=False, write_plots=False,
-                        target_file=jwst_targets_file)
-
+        dsharp = standard(upload_sql=False, write_plots=False, target_file=dsharp_targets_file)
+        jwst = standard(upload_sql=False, write_plots=False, target_file=jwst_targets_file)
     else:
         # default statement
         print("Your username is:", getuser())

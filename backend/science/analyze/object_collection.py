@@ -1,5 +1,7 @@
 import os
 import copy
+import shutil
+
 import numpy as np
 from datetime import datetime
 from operator import attrgetter
@@ -10,7 +12,7 @@ from astropy.coordinates import SkyCoord, FK5
 
 from ref.ref import object_params_dir, spectra_schema, spexo_schema, stacked_line_schema, \
     references_per_parameter_path, instrument_metadata, sql_spectrum_types, \
-    bandwidth_fraction_for_null, simbad_reference, web_default_spectrum
+    bandwidth_fraction_for_null, simbad_reference, web_default_spectrum, output_dir
 from ref.star_names import star_name_format, StringStarName
 from autostar.simbad_query import StarDict, SimbadLib, handle_to_simbad, SimbadMainRef, simbad_coord_to_deg
 from autostar.read_gaia import GaiaLib
@@ -208,28 +210,20 @@ class ObjectCollection:
     def __len__(self):
         return len(self.available_spexodisks_handles)
 
-    def standard_output(self, write_txt=True, write_fits=True, upload_sql=False, write_plots=False):
+    def standard_output(self, upload_sql=False, write_plots=False):
         """
         An amalgamated tool for outputting ObjectCollection Data
 
-        :param write_txt:
-        :param write_fits:
         :param upload_sql:
         :param write_plots:
         :return:
         """
-        if write_txt:
-            self.write_all_params()
-            self.write_individual_params()
-            self.write_spectral_output(write_txt=True, write_fits=False)
-        if write_fits:
-            self.write_spectral_output(write_txt=False, write_fits=True)
         if upload_sql:
             self.write_sql()
         if write_plots:
             self.plot_all()
 
-    def standard_process(self, per_isotopologues_filter=None, write_txt=True, write_fits=True,
+    def standard_process(self, per_isotopologues_filter=None,
                          upload_sql=False, write_plots=False):
         self.import_spectra()
         self.update_params()
@@ -238,7 +232,7 @@ class ObjectCollection:
         self.link_line_fluxes()
         self.do_stats()
         self.add_simbad_main_names()
-        self.standard_output(write_txt=write_txt, write_fits=write_fits, upload_sql=upload_sql, write_plots=write_plots)
+        self.standard_output(upload_sql=upload_sql, write_plots=write_plots)
 
     def get_single_star(self, hypatia_name, not_found_exception=False):
         if isinstance(hypatia_name, str):
@@ -1119,7 +1113,9 @@ class ObjectCollection:
         # Finishing up (outside the 'with' statement)
         if self.verbose:
             print("Data output written to MySQL server.\n")
-
+        # write the parameters to files
+        self.write_all_params()
+        self.write_individual_params()
         # output a file to see what references are used by what parameters.
         with open(references_per_parameter_path, 'w') as f:
             for column_name in sorted(references_per_parameter.keys()):
@@ -1297,6 +1293,8 @@ class ObjectCollection:
             load_sql.clear_database(database=spectra_schema)
             load_sql.create_schema(schema_name=spectra_schema)
             load_sql.clear_database(database=stacked_line_schema)
+        # delete all the files and folders in the output directory
+        shutil.rmtree(output_dir)
         self.write_metadata(upload_all_params=upload_all_params)
         self.write_spectra(update_mode=update_mode, do_sync=do_sync)
         self.write_hitran()

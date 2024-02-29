@@ -19,7 +19,7 @@ sql_user = os.environ.get("MYSQL_USER", "username")
 sql_password = os.environ.get("MYSQL_PASSWORD", "password")
 upload_dir = os.environ.get("UPLOAD_DIR", "/opt/bitnami/projects/backend/output")
 update_mode = str_is_true(os.environ.get("DATA_NEW_UPLOADS_ONLY", "true"))
-if str_is_true(os.environ.get("API_USE_NEW_TABLES", True)):
+if str_is_true(os.environ.get("API_USE_NEW_TABLES", 'true')):
     schema_prefix = 'new_'
 else:
     schema_prefix = ''

@@ -4,6 +4,7 @@ docker compose up --detach backend nginx
 read -r -p "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit
+rm -rf .next
 npm install
 npm run build
 cd ../ || exit

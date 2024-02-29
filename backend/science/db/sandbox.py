@@ -69,13 +69,11 @@ class Dispatch:
             for file_or_dir in os.listdir(self.output_dir):
                 file_or_starname_dir = os.path.join(self.output_dir, file_or_dir)
                 shutil.rmtree(file_or_starname_dir)
-        standard(write_txt=True, write_fits=True, upload_sql=False, write_plots=False, target_file=None,
-                 spectra_output_dir=self.output_dir)
+        standard(upload_sql=False, write_plots=False, target_file=None, spectra_output_dir=self.output_dir)
 
     @staticmethod
     def write_sql(do_update_schemas=False):
-        sql_update(write_txt=False, write_fits=False, upload_sql=True,
-                   write_plots=False, target_file=None, do_update_schemas=do_update_schemas)
+        sql_update(upload_sql=True, write_plots=False, target_file=None, do_update_schemas=do_update_schemas)
 
     def get_zipfile_path(self, username):
         username = username.replace(' ', '_')

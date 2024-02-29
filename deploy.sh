@@ -14,5 +14,7 @@ echo -e "\nDevelopment Build completed,"
 read -r -p "press any key to PUSH the new images to the container repository and continue..."
 ./shell/ghcr-login.sh
 docker compose push
+# ssh into the backend and restart the API
+ssh bitnami@spexodisks.com -i spexod-us-est-1.pem "/opt/bitnami/projects/shell/update.sh"
 read -r -p  "completed: SpExServer Deployment Build Script, press any key prune docker cache..."
 docker system prune --force --all
