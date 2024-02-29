@@ -19,7 +19,6 @@ from ref.star_names import StringStarName
 from science.tools.julian import get_julian_datetime
 from science.load.hitran import hitran_line_header, make_hl_dict
 from science.load.line_flux import line_flux_header
-from science.db.file_sync import rsync_output
 from science.load.hitran import Hitran, isotopologue_to_color, isotopologue_to_molecule
 
 
@@ -71,6 +70,16 @@ def get_more_ticks(xmin, xmax, x_ticks_min_number, ax):
     while tick_list[-1] < xmax:
         tick_list.append(tick_list[-1] + tick_step)
     return tick_list
+
+
+def get_spectrum_output_dir(spectra_output_dir: str, object_pop_name: str) -> str:
+    # only single spaces
+    while "  " in object_pop_name:
+        object_pop_name = object_pop_name.replace("  ", " ")
+    # remove leading and trailing spaces
+    object_pop_name = object_pop_name.strip()
+    # underscores for spaces, all lower case
+    return os.path.join(spectra_output_dir, object_pop_name.replace(" ", "_").lower())
 
 
 hitran_line_split_by = ["molecule", "isotopologue"]
@@ -231,6 +240,7 @@ class Spectrum:
         else:
             self.flux_is_calibrated = False
         self.ref_frame = spectrum_object.ref_frame
+        self.output_dir_this_object = get_spectrum_output_dir(self.spectra_output_dir, self.object_pop_name)
 
         # extra data products
         self.stacked_lines = spectrum_object.stacked_lines
@@ -245,7 +255,6 @@ class Spectrum:
         self.spectrum_display_name = None
 
         # file name and directory determination
-        self.output_dir_this_object = None
         self.output_filename = None
         self.output_txt_filename = None
         self.output_fits_filename = None
@@ -272,7 +281,6 @@ class Spectrum:
         self.spectrum_display_name = f'{self.observation_date.date()} ({min_wl_for_handle}-{max_wl_for_handle})'
 
         # file name and directory determination
-        self.output_dir_this_object = os.path.join(self.spectra_output_dir, self.object_pop_name)
         if not os.path.isdir(self.output_dir_this_object):
             os.mkdir(self.output_dir_this_object)
         self.output_filename = os.path.join(self.output_dir_this_object, self.set_type + "_" + self.range_str)
@@ -514,7 +522,7 @@ class Spectrum:
         if verbose:
             print("  ...figure closed.")
 
-    def write_txt(self, single_object, spectrum_handle=None, do_sync: bool = False):
+    def write_txt(self, single_object, spectrum_handle=None):
         if spectrum_handle is not None:
             self.output_txt_filename = os.path.join(os.path.dirname(self.output_filename),
                                                     f'{spectrum_handle.lower()}.txt')
@@ -684,10 +692,8 @@ class Spectrum:
             for text_line in file_text:
                 f.write(text_line + "\n")
         print(f'Wrote Spectrum TXT output file at: {self.output_txt_filename}')
-        if do_sync:
-            rsync_output(dir_or_file=self.output_fits_filename, verbose=True)
 
-    def write_fits(self, single_object, spectrum_handle=None, do_sync=False):
+    def write_fits(self, single_object, spectrum_handle=None):
         hdu_list = []
         if spectrum_handle is not None:
             self.output_fits_filename = os.path.join(os.path.dirname(self.output_filename),
@@ -924,8 +930,6 @@ class Spectrum:
         hdul = fits.HDUList(hdu_list)
         hdul.writeto(self.output_fits_filename, overwrite=True, output_verify='fix')
         print(f'Wrote Spectrum FITS output file at: {self.output_fits_filename}')
-        if do_sync:
-            rsync_output(dir_or_file=self.output_fits_filename, verbose=True)
 
 
 def set_single_output_spectra(param_dict):

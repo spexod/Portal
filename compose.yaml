@@ -38,9 +38,8 @@ services:
     volumes:
       # django-static is written at build time by the SpExWebsite Dockerfile
       - "django-static:/django/static_root:rw"
-      - "./uploads:/django/uploads"
-      - "./output:/django/output"
-      # - "./data:/django/data"
+      - "./backend/uploads:/django/uploads"
+      - "./backend/output:/django/output"
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"

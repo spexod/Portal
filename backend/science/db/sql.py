@@ -487,6 +487,9 @@ class LoadSQL(OutputSQL):
         return all_column_names
 
     def update_schemas(self):
+        self.create_schema('spectra')
+        self.create_schema('spexodisks')
+        self.create_schema('stacked_line_spectra')
         for target, source in update_schema_map:
             # get all the tables in the source schema
             source_tables = [one_ple[0] for one_ple in self.get_tables(database=source)]

@@ -57,15 +57,15 @@ for spectrum_handle in sorted(spectra_models.keys()):
     spectra_views_base[spectrum_handle] = spectrum_view
 
 
+spectrum_fields = ('wavelength_um', 'flux', 'flux_error')
+
+
 spectra_views = {}
 for spectrum_handle in sorted(spectra_models.keys()):
     def list(self, request):
-        serializer = self.serializer_class(self.queryset, many=True)
-        return Response(data={
-            "wavelength_um": [spectrum_datum["wavelength_um"] for spectrum_datum in serializer.data],
-            "flux": [spectrum_datum["flux"] for spectrum_datum in serializer.data],
-            "flux_error": [spectrum_datum["flux_error"] for spectrum_datum in serializer.data],
-        })
+        return Response(data={key: data_array for key, data_array in
+                              zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
+                        status=status.HTTP_200_OK)
 
 
     view_name = f'{spectrum_handle.lower()}ViewSet'
@@ -103,14 +103,9 @@ class DefaultSpectrumViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = DefaultSpectrumSerializer
 
     def list(self, request):
-        serializer = self.serializer_class(self.queryset, many=True)
-
-        data = {
-            "wavelength_um": [spectrum_datum["wavelength_um"] for spectrum_datum in serializer.data],
-            "flux": [spectrum_datum["flux"] for spectrum_datum in serializer.data],
-            "flux_error": [spectrum_datum["flux_error"] for spectrum_datum in serializer.data],
-        }
-        return Response(data=data)
+        return Response(data={key: data_array for key, data_array in
+                              zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
+                        status=status.HTTP_200_OK)
 
 
 class DefaultSpectrumInfoViewSet(viewsets.ReadOnlyModelViewSet):
@@ -332,54 +327,3 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-"""
-Depericated Tables
-"""
-# class MainViewSet(ModelViewSet):
-#     queryset = Main.objects.using('spexo').all()
-#     serializer_class = MainSerializer
-# class HandlesViewSet(ModelViewSet):
-#     queryset = Handles.objects.using('spexo').exclude(spectrum_handle='null').order_by('spectrum_handle')
-#     serializer_class = HandlesSerializer
-
-
-# Eventually return to for authenticated downloading
-# class download_spectra(APIView):
-#     """
-#     Get a list of strings from a user with the spectra they would like to download.
-#     """
-#     # permission_classes = [permissions.IsAuthenticated]
-#
-#     def get(self, request):
-#         """
-#         Get a list of strings from a user with the spectra they would like to download.
-#         Each spectra being seperated with a % character.
-#         """
-#         print(request)
-#         print(request.user)
-#         return Response(status=status.HTTP_200_OK)
-#         """
-#         try:
-#             spectra_list = request.query_params.get('spectra').split('%')
-#         except:
-#             return Response(status=status.HTTP_400_BAD_REQUEST)
-#
-#         # user_token = request.META.get('HTTP_AUTHORIZATION') # Get the users token
-#         # print(request.is_authenticated)
-#         print(request)
-#         print(f"{request.user} is authenticated: {request.user.is_authenticated}")
-#
-#         username = request.user.username
-#         zipfile_path = write_upload_zip(username=username, spectra_handles=spectra_list)
-#
-#         with open(zipfile_path[0], 'rb') as file_zip:
-#             # response = HttpResponse(file_zip, content_type='application/zip')
-#             response = Response(file_zip, content_type='application/zip', status = status.HTTP_200_OK)
-#             response['Content-Disposition'] = f'attachment; filename={username}.zip'
-#             return response"""
-#         # else:
-#         #     print('User is not authenticated')
-#         #     return Response(status=status.HTTP_400_BAD_REQUEST)
-if __name__ == '__main__':
-    SortedIso(viewsets)

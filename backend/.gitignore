@@ -1,26 +1,22 @@
-# a data configuration file that is gernerated by SpExServer
+# custom patterns
 core/data_config.py
 djangoAPI/data_config.py
 data/data_products/*
 .idea
 *.pem
-
-# custom patterns
-data/data_products/*
-
 science/db/new_configs/*
 .vscode
 *__pycache__*
 *.DS_Store*
 djangoAPI/migrations
-uploads
-output
 science/plots/output/*
 *.ipynb_checkpoints*
 autostar
 spexodisks.egg-info/
 ref/user.toml
 ref/data_status.toml
+uploads
+output
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

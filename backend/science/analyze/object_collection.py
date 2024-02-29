@@ -17,6 +17,8 @@ from autostar.read_gaia import GaiaLib
 from autostar.tic_query import TicQuery
 from autostar.table_read import num_format
 from autostar.object_params import SingleParam, set_single_param
+
+from science.db.file_sync import rsync_output
 from science.load.units import UnitsObjectParams, params_check
 from autostar.name_correction import verify_starname, PopNamesLib
 from science.load.import_spectra import AllSpectra
@@ -25,7 +27,7 @@ from science.load.hitran import HitranRef, isotopologue_to_molecule, isotopologu
     molecule_to_label, isotopologue_to_label, make_hl_dict
 from science.load.line_flux import LineFluxes
 from science.analyze.spectrum import SpectraSummary, set_single_output_spectra, \
-    spectra_output_dir_default, handle_to_inst_dict
+    spectra_output_dir_default, handle_to_inst_dict, get_spectrum_output_dir
 from science.load.ref_rank import rank_ref, rank_per_column
 from science.analyze.single_star import SingleObject
 from science.db.sql import LoadSQL
@@ -1135,56 +1137,64 @@ class ObjectCollection:
                 handles_to_skip = set()
             # faster upload of data to MySQL server, only implemented for spectral data
             uploader = UploadSQL()
-            percent_divider = len(self.available_spexodisks_handles) / 100.0
-            for spectrum_count, spectrum_handle in list(enumerate(sorted(self.available_spectrum_handles))):
-                if spectrum_handle.lower() in handles_to_skip:
+            percent_divider = len(self.available_spectrum_handles) / 100.0
+            spectrum_count = 0
+            for spexodisks_handle in sorted(self.available_spexodisks_handles):
+                single_star = self.__getattribute__(spexodisks_handle)
+                for spectrum_handle in sorted(single_star.available_spectral_handles):
+                    if spectrum_handle.lower() in handles_to_skip:
+                        if self.verbose:
+                            print(F"Skipping {spectrum_handle} as it already exists in the database.")
+                        continue
                     if self.verbose:
-                        print(F"Skipping {spectrum_handle} as it already exists in the database.")
-                    continue
-                if self.verbose:
-                    raw_percentage = spectrum_count / percent_divider
-                    print(f"    {('%05.2f' % raw_percentage)}%" +
-                          f" data uploaded for spectra at {datetime.now()}, next spectra: {spectrum_handle}")
-                single_star = self.get_star_from_spectrum_handle(spectrum_handle)
-                single_spectrum = single_star.__getattribute__(spectrum_handle)
-                # The Primary Spectrum
-                uploader.upload_spectra(table_name=spectrum_handle.lower(),
-                                        wavelength_um=single_spectrum.wavelength_um,
-                                        flux=single_spectrum.flux,
-                                        flux_error=single_spectrum.flux_error,
-                                        bandwidth_fraction_for_null=bandwidth_fraction_for_null,
-                                        schema=spectra_schema)
-                single_spectrum.write_txt(single_object=single_star, spectrum_handle=spectrum_handle, do_sync=do_sync)
-                single_spectrum.write_fits(single_object=single_star, spectrum_handle=spectrum_handle, do_sync=do_sync)
-                # Stacked Line Spectra
-                if single_spectrum.stacked_lines is not None:
-                    for extra_science_product_path in single_spectrum.stacked_lines.keys():
-                        isotopologue, transition, _path = extra_science_product_path
-                        stack_line_handle = get_stacked_line_handle(isotopologue=isotopologue, transition=transition,
-                                                                    spectrum_handle=spectrum_handle)
-                        stack_line_spectrum = single_spectrum.stacked_lines[extra_science_product_path].spectrum
-                        load_sql.creat_table(table_name=stack_line_handle, database=stacked_line_schema,
-                                             dynamic_type="stacked_spectrum", run_silent=True)
-                        load_sql.buffer_insert_init(table_name=stack_line_handle,
-                                                    columns=["velocity_kmps", "flux", "flux_error"],
-                                                    database=stacked_line_schema,
-                                                    run_silent=True)
-                        for velocity_kmps, flux, flux_error in zip(stack_line_spectrum.velocity_kmps,
-                                                                   stack_line_spectrum.flux,
-                                                                   stack_line_spectrum.flux_error):
-                            single_row_values = [velocity_kmps]
-                            if is_good_num(flux):
-                                single_row_values.append(flux)
-                            else:
-                                single_row_values.append(None)
-                            if is_good_num(flux_error):
-                                single_row_values.append(flux_error)
-                            else:
-                                single_row_values.append(None)
-                            load_sql.buffer_insert_value(values=single_row_values)
-
-                    if self.verbose:
-                        print(" Completed writing SQL tables for spectra")
+                        raw_percentage = spectrum_count / percent_divider
+                        print(f"    {('%05.2f' % raw_percentage)}%" +
+                              f" data uploaded for spectra at {datetime.now()}, next spectra: {spectrum_handle}")
+                    single_spectrum = single_star.__getattribute__(spectrum_handle)
+                    # The Primary Spectrum
+                    uploader.upload_spectra(table_name=spectrum_handle.lower(),
+                                            wavelength_um=single_spectrum.wavelength_um,
+                                            flux=single_spectrum.flux,
+                                            flux_error=single_spectrum.flux_error,
+                                            bandwidth_fraction_for_null=bandwidth_fraction_for_null,
+                                            schema=spectra_schema)
+                    single_spectrum.write_txt(single_object=single_star, spectrum_handle=spectrum_handle)
+                    single_spectrum.write_fits(single_object=single_star, spectrum_handle=spectrum_handle)
+                    # Stacked Line Spectra
+                    if single_spectrum.stacked_lines is not None:
+                        for extra_science_product_path in single_spectrum.stacked_lines.keys():
+                            isotopologue, transition, _path = extra_science_product_path
+                            stack_line_handle = get_stacked_line_handle(isotopologue=isotopologue, transition=transition,
+                                                                        spectrum_handle=spectrum_handle)
+                            stack_line_spectrum = single_spectrum.stacked_lines[extra_science_product_path].spectrum
+                            load_sql.creat_table(table_name=stack_line_handle, database=stacked_line_schema,
+                                                 dynamic_type="stacked_spectrum", run_silent=True)
+                            load_sql.buffer_insert_init(table_name=stack_line_handle,
+                                                        columns=["velocity_kmps", "flux", "flux_error"],
+                                                        database=stacked_line_schema,
+                                                        run_silent=True)
+                            for velocity_kmps, flux, flux_error in zip(stack_line_spectrum.velocity_kmps,
+                                                                       stack_line_spectrum.flux,
+                                                                       stack_line_spectrum.flux_error):
+                                single_row_values = [velocity_kmps]
+                                if is_good_num(flux):
+                                    single_row_values.append(flux)
+                                else:
+                                    single_row_values.append(None)
+                                if is_good_num(flux_error):
+                                    single_row_values.append(flux_error)
+                                else:
+                                    single_row_values.append(None)
+                                load_sql.buffer_insert_value(values=single_row_values)
+                    # end of the spectrum loop
+                    spectrum_count += 1
+                # per star data this syncs the whole star's spectra directory
+                if do_sync:
+                    rsync_output(dir_or_file=get_spectrum_output_dir(spectra_output_dir=self.spectra_output_dir,
+                                                                     object_pop_name=single_star.pop_name),
+                                 verbose=self.verbose)
+        if self.verbose:
+            print(" Completed writing SQL tables for spectra")
 
     def write_hitran(self, update_mode: bool = True):
         # Hitran Data
