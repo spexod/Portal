@@ -2,13 +2,8 @@ import os
 
 from science.db.sql import LoadSQL
 from science.db.sandbox import Dispatch
-from science.analyze.spectrum import var_is_true
+from science.db.sql_config import schema_prefix
 
-
-if var_is_true(os.environ.get("DJANGO_USE_NEW_TABLES", True)):
-    schema_prefix = 'new_'
-else:
-    schema_prefix = ''
 
 # # Find files that are available for users to download
 # verbose prints things to the screen, gives you more information
@@ -37,13 +32,13 @@ with LoadSQL() as load_sql:
     # check if the schema exists
     load_sql.create_schema(schema_name=schema_name)
     # check if the tables exist
-    if not load_sql.check_if_table_exists(schema_name, table_name_iso):
+    if not load_sql.check_if_table_exists(database=schema_name, table_name=table_name_iso):
         load_sql.creat_table(database=schema_name, table_name=table_name_iso)
     available_isotopologues_raw = load_sql.query(sql_query_str=query_iso_str)
-    if not load_sql.check_if_table_exists(schema_name, table_name_spectra):
+    if not load_sql.check_if_table_exists(database=schema_name, table_name=table_name_spectra):
         load_sql.creat_table(database=schema_name, table_name=table_name_spectra)
     available_spectra_raw = load_sql.query(sql_query_str=query_spectra_str)
-    if not load_sql.check_if_table_exists(schema_name, table_name_params):
+    if not load_sql.check_if_table_exists(database=schema_name, table_name=table_name_params):
         load_sql.create_units_table(database=schema_name)
     available_params_raw = load_sql.query(sql_query_str=query_parameters_str)
 

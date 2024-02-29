@@ -31,6 +31,7 @@ for molecule in sorted(views.isotopologue_views.keys()):
         router.register(f'isotopologue_{isotopologue.lower()}', views.isotopologue_views[molecule][isotopologue])
 
 # spectra
+print('spectrum Keys', views.spectra_views.keys())
 for spectrum_handle in sorted(views.spectra_views.keys()):
     router.register(f'{spectrum_handle.lower()}', views.spectra_views[spectrum_handle])
 
