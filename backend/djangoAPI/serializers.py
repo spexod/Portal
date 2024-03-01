@@ -3,18 +3,12 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from django.contrib.auth.models import User
 
-from .models import spectra_models, isotopologue_models, \
-    AvailableIsotopologues, Co, H2O, \
-    AvailableFloatParams, \
-    AvailableSpectrumParams, AvailableStrParams, ContactContact, Curated, DjangoContentType, \
-    DjangoMigrations, DjangoPlotlyDashDashapp, DjangoPlotlyDashStatelessapp, DjangoSession, FluxCalibration, \
-    LineFluxesCo, MainStatelessapp, ObjectNameAliases, ObjectParamsFloat, \
-    ObjectParamsStr, Spectra, StackedLineSpectra, Stars, AvailableParamsAndUnits, \
-    DefaultSpectrum, DefaultSpectrumInfo, StatsTotal, StatsInstrument
-
-
+from .models import (spectra_models, isotopologue_models,
+                     AvailableIsotopologues, AvailableFloatParams, AvailableSpectrumParams, AvailableStrParams, Curated,
+                     DjangoMigrations, FluxCalibration, LineFluxesCo, ObjectNameAliases, ObjectParamsFloat,
+                     ObjectParamsStr, Spectra, StackedLineSpectra, AvailableParamsAndUnits,
+                     DefaultSpectrum, DefaultSpectrumInfo, StatsTotal, StatsInstrument)
 
 """
 User authentication
@@ -88,6 +82,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
+
 """
 Dynamic ModelSerializers
 """
@@ -158,18 +153,6 @@ class AvailableIsotopologuesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CoSerializer(ModelSerializer):
-    class Meta:
-        model = Co
-        fields = '__all__'
-
-
-class H2OSerializer(ModelSerializer):
-    class Meta:
-        model = H2O
-        fields = '__all__'
-
-
 class AvailableFloatParamsSerializer(ModelSerializer):
     class Meta:
         model = AvailableFloatParams
@@ -188,44 +171,15 @@ class AvailableStrParamsSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class ContactContactSerializer(ModelSerializer):
-    class Meta:
-        model = ContactContact
-        fields = '__all__'
-
-
 class CuratedSerializer(ModelSerializer):
     class Meta:
         model = Curated
-        fields = '__all__'
-
-class DjangoContentTypeSerializer(ModelSerializer):
-    class Meta:
-        model = DjangoContentType
         fields = '__all__'
 
 
 class DjangoMigrationsSerializer(ModelSerializer):
     class Meta:
         model = DjangoMigrations
-        fields = '__all__'
-
-
-class DjangoPlotlyDashDashappSerializer(ModelSerializer):
-    class Meta:
-        model = DjangoPlotlyDashDashapp
-        fields = '__all__'
-
-
-class DjangoPlotlyDashStatelessappSerializer(ModelSerializer):
-    class Meta:
-        model = DjangoPlotlyDashStatelessapp
-        fields = '__all__'
-
-
-class DjangoSessionSerializer(ModelSerializer):
-    class Meta:
-        model = DjangoSession
         fields = '__all__'
 
 
@@ -238,13 +192,6 @@ class FluxCalibrationSerializer(ModelSerializer):
 class LineFluxesCoSerializer(ModelSerializer):
     class Meta:
         model = LineFluxesCo
-        fields = '__all__'
-
-
-
-class MainStatelessappSerializer(ModelSerializer):
-    class Meta:
-        model = MainStatelessapp
         fields = '__all__'
 
 
@@ -276,30 +223,3 @@ class StackedLineSpectraSerializer(ModelSerializer):
     class Meta:
         model = StackedLineSpectra
         fields = '__all__'
-
-
-class StarsSerializer(ModelSerializer):
-    class Meta:
-        model = Stars
-        fields = '__all__'
-
-
-"""
-class UnitsSerializer(ModelSerializer):
-
-    class Meta:
-        model = Units
-        fields = '__all__'
-"""
-
-"""
-Depericated Tables
-"""
-# class MainSerializer(ModelSerializer):
-#     class Meta:
-#         model = Main
-#         fields = '__all__'
-# class HandlesSerializer(ModelSerializer):
-#     class Meta:
-#         model = Handles
-#         fields = '__all__'

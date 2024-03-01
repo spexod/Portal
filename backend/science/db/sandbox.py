@@ -122,22 +122,13 @@ def write_sql(do_update_schemas=False):
     dispatch.write_sql(do_update_schemas=do_update_schemas)
 
 
-def copy_django_tables():
-    with LoadSQL(auto_connect=True, verbose=True) as output_sql:
+def move_django_tables():
+    with LoadSQL(auto_connect=True, verbose=True) as load_sql:
+        load_sql.create_schema(schema_name='users')
         for table_name in django_tables:
-            create_str = f"""CREATE TABLE `new_spectra`.`{table_name}` AS SELECT * FROM `spectra`.`{table_name}`;"""
-            output_sql.cursor.execute(create_str)
-            output_sql.connection.commit()
-
-
-def init_django_tables(new_schema=True):
-    database = 'spectra'
-    if new_schema:
-        database = 'new_' + database
-    with LoadSQL(auto_connect=True, verbose=True) as output_sql:
-        output_sql.create_schema(schema_name=database, run_silent=False)
-        for table_name in django_tables:
-            output_sql.creat_table(table_name=table_name, database=database)
+            command_str = f"""ALTER TABLE spectra.{table_name} rename users.{table_name}"""
+            load_sql.cursor.execute(command_str)
+            load_sql.connection.commit()
 
 
 def zip_test(spectrum_handles=None, date_str=None):
@@ -208,13 +199,6 @@ if __name__ == '__main__':
                         help='Deletes old zip files from the uploads directory.')
     parser.add_argument('--no-zip-delete-old', dest='zip_delete_old', action='store_false', default=True,
                         help='Default - Does NOT delete old zip files from the uploads directory.')
-    parser.add_argument('--django-copy', dest='django_copy', action='store_true',
-                        help='Copy the django data tables from the spectra database to the ' +
-                             'new_spectra database. Good for testing the website with a copy of the ' +
-                             'production user database.')
-    parser.add_argument('--no-django-copy', dest='django_copy', action='store_false', default=True,
-                        help='Default - Does NOT copy the django data tables from the spectra database to the ' +
-                             'new_spectra database.')
 
     # parse the arguments
     args = parser.parse_args()
@@ -230,7 +214,6 @@ if __name__ == '__main__':
         zip_test()
     if args.zip_delete_old:
         zip_delete_old()
-    if args.django_copy:
-        copy_django_tables()
 
     print(f'Done with the script in {os.path.basename(__file__)}, args: {args}')
+    # move_django_tables()

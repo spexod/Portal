@@ -20,6 +20,7 @@ from autostar.tic_query import TicQuery
 from autostar.table_read import num_format
 from autostar.object_params import SingleParam, set_single_param
 
+from science.db.data_status import set_data_status_mysql
 from science.db.file_sync import rsync_output
 from science.load.units import UnitsObjectParams, params_check
 from autostar.name_correction import verify_starname, PopNamesLib
@@ -137,12 +138,14 @@ def spectrum_data_for_sql(single_spectrum):
 
 
 class ObjectCollection:
-    def __init__(self, verbose=True, simbad_go_fast=False, spectra_output_dir=spectra_output_dir_default):
+    def __init__(self, verbose=True, simbad_go_fast=False, spectra_output_dir=spectra_output_dir_default,
+                 update_mode: bool = False):
         self.verbose = verbose
         if self.verbose:
             print("Initializing SpExoDisks Database")
         self.simbad_go_fast = simbad_go_fast
         self.spectra_output_dir = spectra_output_dir
+        self.update_mode = update_mode
         if not os.path.isdir(self.spectra_output_dir):
             os.mkdir(self.spectra_output_dir)
         self.params_output_dir = os.path.join(self.spectra_output_dir, '!params')
@@ -515,6 +518,9 @@ class ObjectCollection:
         else:
             delimiter = ","
             secondary_delimiter = "|"
+        dirname = os.path.dirname(file_name)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
         output_dict, object_params_for_header, output_params_dict = self.assemble_output_data()
         primary_object_params = set(object_params_for_header.keys())
         header_key_list = ['pop_name', 'name']
@@ -1124,9 +1130,9 @@ class ObjectCollection:
                     ref_values += F"{ref}|"
                 f.write(F"{column_name}:{ref_values[:-1]}\n")
 
-    def write_spectra(self, update_mode: bool = True, do_sync: bool = True):
+    def write_spectra(self,  do_sync: bool = True):
         with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
-            if update_mode and load_sql.check_if_table_exists(table_name="spectra", database='spexodisks'):
+            if self.update_mode and load_sql.check_if_table_exists(table_name="spectra", database='spexodisks'):
                 handles_to_skip = {row[0] for row in load_sql.query(
                     sql_query_str="""SELECT spectrum_handle FROM spexodisks.spectra""")}
             else:
@@ -1137,6 +1143,11 @@ class ObjectCollection:
             spectrum_count = 0
             for spexodisks_handle in sorted(self.available_spexodisks_handles):
                 single_star = self.__getattribute__(spexodisks_handle)
+                star_dir_to_sync = get_spectrum_output_dir(spectra_output_dir=self.spectra_output_dir,
+                                                           object_pop_name=single_star.pop_name)
+                if not os.path.exists(star_dir_to_sync):
+                    os.mkdir(star_dir_to_sync)
+                needs_update = False
                 for spectrum_handle in sorted(single_star.available_spectral_handles):
                     if spectrum_handle.lower() in handles_to_skip:
                         if self.verbose:
@@ -1184,15 +1195,14 @@ class ObjectCollection:
                                 load_sql.buffer_insert_value(values=single_row_values)
                     # end of the spectrum loop
                     spectrum_count += 1
+                    needs_update = True
                 # per star data this syncs the whole star's spectra directory
-                if do_sync:
-                    rsync_output(dir_or_file=get_spectrum_output_dir(spectra_output_dir=self.spectra_output_dir,
-                                                                     object_pop_name=single_star.pop_name),
-                                 verbose=self.verbose)
+                if do_sync and needs_update:
+                    rsync_output(dir_or_file=star_dir_to_sync, verbose=self.verbose)
         if self.verbose:
             print(" Completed writing SQL tables for spectra")
 
-    def write_hitran(self, update_mode: bool = True):
+    def write_hitran(self):
         # Hitran Data
         columns_CO = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
                       "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
@@ -1209,7 +1219,7 @@ class ObjectCollection:
         one_tenth = int(np.round(len(self.hitran_ref.data) / 10.0))
         percent_divider = len(self.hitran_ref.data) / 100.0
         with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
-            if update_mode and load_sql.check_if_table_exists(table_name="available_isotopologues", database='spexodisks'):
+            if self.update_mode and load_sql.check_if_table_exists(table_name="available_isotopologues", database='spexodisks'):
                 handles_to_skip = {row[0] for row in load_sql.query(
                     sql_query_str="""SELECT name FROM spexodisks.available_isotopologues""")}
             else:
@@ -1285,7 +1295,7 @@ class ObjectCollection:
         if self.verbose:
             print(" Completed writing SQL tables for Hitran molecular data")
 
-    def write_sql(self, upload_all_params: bool = False, update_mode: bool = True, do_sync: bool = False):
+    def write_sql(self, upload_all_params: bool = False):
         with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
             load_sql.create_schema(schema_name=spexo_schema)
             load_sql.clear_database(database=spexo_schema)
@@ -1294,10 +1304,15 @@ class ObjectCollection:
             load_sql.create_schema(schema_name=spectra_schema)
             load_sql.clear_database(database=stacked_line_schema)
         # delete all the files and folders in the output directory
-        shutil.rmtree(output_dir)
+        for root, dirs, files in os.walk(output_dir):
+            for f in files:
+                os.unlink(os.path.join(root, f))
+            for d in dirs:
+                shutil.rmtree(os.path.join(root, d))
         self.write_metadata(upload_all_params=upload_all_params)
-        self.write_spectra(update_mode=update_mode, do_sync=do_sync)
+        self.write_spectra()
         self.write_hitran()
+        set_data_status_mysql(new_data_staged_to_set=True, updated_mysql_to_set=False)
 
     def calculate_summary(self):
         self.summary = Summary()

@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 
-from science.db.sql_config import sql_host, sql_port, sql_database, sql_user,  sql_password
+from science.db.sql import MYSQL_HOST, sql_port, sql_database, MYSQL_USER,  MYSQL_PASSWORD
 
 
-uri_base = f"mysql+pymysql://{sql_user}:{sql_password}@{sql_host}:{sql_port}/"
+uri_base = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{sql_port}/"
 
 
 def is_good_num(a_float):

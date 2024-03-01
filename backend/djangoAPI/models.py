@@ -10,7 +10,6 @@ Feel free to rename the models, but don't rename db_table values or field names.
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.dispatch import receiver
-from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.core.mail import send_mail
 from rest_framework import serializers
@@ -183,8 +182,6 @@ for molecule in sorted(available_isotopologues.keys()):
         table_name = f'isotopologue_{isotopologue}'
 
 
-        # construct the Meta class
-
         class Meta:
             managed = False
             db_table = table_name
@@ -312,27 +309,6 @@ class AvailableStrParams(models.Model):
         db_table = 'available_str_params'
 
 
-class ContactContact(models.Model):
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    message = models.TextField()
-    email = models.CharField(max_length=254)
-
-    class Meta:
-        managed = False
-        db_table = 'contact_contact'
-
-
-class DjangoContentType(models.Model):
-    app_label = models.CharField(max_length=100)
-    model = models.CharField(max_length=100)
-
-    class Meta:
-        managed = False
-        db_table = 'django_content_type'
-        unique_together = (('app_label', 'model'),)
-
-
 class DjangoMigrations(models.Model):
     app = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -341,39 +317,6 @@ class DjangoMigrations(models.Model):
     class Meta:
         managed = False
         db_table = 'django_migrations'
-
-
-class DjangoPlotlyDashDashapp(models.Model):
-    instance_name = models.CharField(unique=True, max_length=100)
-    slug = models.CharField(unique=True, max_length=110)
-    base_state = models.TextField()
-    creation = models.DateTimeField()
-    update = models.DateTimeField()
-    save_on_change = models.IntegerField()
-    stateless_app = models.ForeignKey('DjangoPlotlyDashStatelessapp', models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'django_plotly_dash_dashapp'
-
-
-class DjangoPlotlyDashStatelessapp(models.Model):
-    app_name = models.CharField(unique=True, max_length=100)
-    slug = models.CharField(unique=True, max_length=110)
-
-    class Meta:
-        managed = False
-        db_table = 'django_plotly_dash_statelessapp'
-
-
-class DjangoSession(models.Model):
-    session_key = models.CharField(primary_key=True, max_length=40)
-    session_data = models.TextField()
-    expire_date = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_session'
 
 
 class FluxCalibration(models.Model):
@@ -414,35 +357,6 @@ class LineFluxesCo(models.Model):
     class Meta:
         managed = False
         db_table = 'line_fluxes_co'
-
-
-# class MainItem(models.Model):
-#     text = models.CharField(max_length=300)
-#     complete = models.IntegerField()
-#     todolist = models.ForeignKey('MainTodolist', models.DO_NOTHING,
-#                                  db_column='ToDoList_id')  # Field name made lowercase.
-#
-#     class Meta:
-#         managed = False
-#         db_table = 'main_item'
-
-
-class MainStatelessapp(models.Model):
-    app_name = models.CharField(unique=True, max_length=100)
-    slug = models.CharField(unique=True, max_length=110)
-
-    class Meta:
-        managed = False
-        db_table = 'main_statelessapp'
-
-
-# class MainTodolist(models.Model):
-#     name = models.CharField(max_length=200)
-#     user = models.ForeignKey(AuthUser, models.DO_NOTHING, blank=True, null=True)
-#
-#     class Meta:
-#         managed = False
-#         db_table = 'main_todolist'
 
 
 class ObjectNameAliases(models.Model):
@@ -549,23 +463,6 @@ class StackedLineSpectra(models.Model):
         db_table = 'stacked_line_spectra'
 
 
-class Stars(models.Model):
-    spexodisks_handle = models.CharField(primary_key=True, max_length=50)
-    pop_name = models.CharField(max_length=50)
-    preferred_simbad_name = models.CharField(max_length=50)
-    simbad_link = models.CharField(max_length=123)
-    ra_dec = models.CharField(max_length=35)
-    ra_dec_ref = models.CharField(max_length=50)
-    ra = models.FloatField()
-    dec = models.FloatField()
-    esa_sky = models.CharField(max_length=200)
-    spectra_summary = models.CharField(max_length=2000)
-
-    class Meta:
-        managed = False
-        db_table = 'stars'
-
-
 class AvailableIsotopologues(models.Model):
     name = models.CharField(max_length=20, blank=True, null=False, primary_key=True)
     label = models.CharField(max_length=100, blank=True, null=True)
@@ -582,62 +479,9 @@ class AvailableIsotopologues(models.Model):
         db_table = 'available_isotopologues'
 
 
-class Co(models.Model):
-    index_co = models.BigAutoField(db_column='index_CO', primary_key=True)  # Field name made lowercase.
-    wavelength_um = models.FloatField()
-    isotopologue = models.CharField(max_length=20, blank=True, null=True)
-    upper_level = models.CharField(max_length=30, blank=True, null=True)
-    lower_level = models.CharField(max_length=30, blank=True, null=True)
-    transition = models.CharField(max_length=30, blank=True, null=True)
-    einstein_a = models.FloatField(db_column='einstein_A')  # Field name made lowercase.
-    upper_level_energy = models.FloatField()
-    lower_level_energy = models.FloatField()
-    g_statistical_weight_upper_level = models.FloatField()
-    g_statistical_weight_lower_level = models.FloatField()
-    upper_vibrational = models.IntegerField(blank=True, null=True)
-    upper_rotational = models.IntegerField(blank=True, null=True)
-    branch = models.CharField(max_length=1, blank=True, null=True)
-    lower_vibrational = models.IntegerField(blank=True, null=True)
-    lower_rotational = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'co'
-
-
-class H2O(models.Model):
-    index_h2o = models.BigAutoField(db_column='index_H2O', primary_key=True)  # Field name made lowercase.
-    wavelength_um = models.FloatField()
-    isotopologue = models.CharField(max_length=20, blank=True, null=True)
-    upper_level = models.CharField(max_length=30, blank=True, null=True)
-    lower_level = models.CharField(max_length=30, blank=True, null=True)
-    transition = models.CharField(max_length=65, blank=True, null=True)
-    einstein_a = models.FloatField(db_column='einstein_A')  # Field name made lowercase.
-    upper_level_energy = models.FloatField()
-    lower_level_energy = models.FloatField()
-    g_statistical_weight_upper_level = models.FloatField()
-    g_statistical_weight_lower_level = models.FloatField()
-    upper_vibrational1 = models.IntegerField(blank=True, null=True)
-    upper_vibrational2 = models.IntegerField(blank=True, null=True)
-    upper_vibrational3 = models.IntegerField(blank=True, null=True)
-    upper_rotational = models.IntegerField(blank=True, null=True)
-    upper_ka = models.IntegerField(blank=True, null=True)
-    upper_kc = models.IntegerField(blank=True, null=True)
-    lower_vibrational1 = models.IntegerField(blank=True, null=True)
-    lower_vibrational2 = models.IntegerField(blank=True, null=True)
-    lower_vibrational3 = models.IntegerField(blank=True, null=True)
-    lower_rotational = models.IntegerField(blank=True, null=True)
-    lower_ka = models.IntegerField(blank=True, null=True)
-    lower_kc = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'h2o'
-
-
 class AvailableParamsAndUnits(models.Model):
-    order_index = models.IntegerField()
-    param_handle = models.CharField(max_length=100, blank=False, null=False, primary_key=True)
+    order_index = models.IntegerField(primary_key=True)
+    param_handle = models.CharField(max_length=100, blank=False, null=False)
     units = models.CharField(max_length=50, blank=True, null=True)
     short_label = models.CharField(max_length=50, blank=True, null=True)
     plot_axis_label = models.CharField(max_length=100, blank=True, null=True)

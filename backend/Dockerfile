@@ -13,8 +13,7 @@ RUN ["chmod", "+x", "/start.sh"]
 # update pip
 RUN pip install --upgrade pip
 # get the cron application installed
-RUN apt update
-RUN apt-get install cron rsync -y
+RUN apt-get update && apt-get install cron rsync -y
 # pip install the requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt

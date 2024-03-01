@@ -217,35 +217,6 @@ create_tables = {'object_name_aliases': "CREATE TABLE `object_name_aliases` ("
                            "`new_data_staged` TINYINT , " +
                            "`updated_mysql` TINYINT , " +
                            "PRIMARY KEY (`index_status`) ) ENGINE=InnoDB;",
-                 "djangoAPI_useraccount": "CREATE TABLE `djangoAPI_useraccount` " +
-                                          "(`id` int(11) NOT NULL AUTO_INCREMENT," +
-                                          "`spexodisks_handle`" + name_specs +
-                                          "`password` " + password_spec +
-                                          "`last_login` DATETIME(6), " +
-                                          "`is_superuser` " + bool_spec +
-                                          "`email` " + stacked_line_handle +
-                                          "`last_name` " + stacked_line_handle +
-                                          "`first_name` " + stacked_line_handle +
-                                          "`is_active` " + bool_spec +
-                                          "`is_staff` " + bool_spec +
-                                          "`institution` " + stacked_line_handle +
-                                          "PRIMARY KEY (`id`)" +
-                                          ") " +
-                                          "ENGINE=InnoDB;",
-                 "djangoAPI_useraccount_groups": "CREATE TABLE `djangoAPI_useraccount_groups` " +
-                                                 "(`id` int(11) NOT NULL AUTO_INCREMENT, " +
-                                                 "`useraccount_id` int(11) NOT NULL, " +
-                                                 "`group_id` int(11) NOT NULL, " +
-                                                 "PRIMARY KEY (`id`)" +
-                                                 ") " +
-                                                 "ENGINE=InnoDB;",
-                 "djangoAPI_useraccount_user_permissions": "CREATE TABLE `djangoAPI_useraccount_user_permissions` " +
-                                                            "(`id` int(11) NOT NULL AUTO_INCREMENT, " +
-                                                            "`useraccount_id` int(11) NOT NULL, " +
-                                                            "`permission_id` int(11) NOT NULL, " +
-                                                            "PRIMARY KEY (`id`)" +
-                                                            ") " +
-                                                            "ENGINE=InnoDB;",
                  }
 
 dynamically_named_tables = {"spectrum": "(`wavelength_um` " + double_param +

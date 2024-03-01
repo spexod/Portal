@@ -10,7 +10,7 @@ from science.analyze.output_collection import OutputObjectCollection
 
 
 def standard(upload_sql=False, write_plots=False, target_file=None,
-             spectra_output_dir=None):
+             spectra_output_dir=None, update_mode: bool = False):
     if spectra_output_dir is None:
         spectra_output_dir = spectra_output_dir_default
     isotopologues_filter = {}
@@ -31,7 +31,8 @@ def standard(upload_sql=False, write_plots=False, target_file=None,
                                         "lower_vibrational_levels_co": None,
                                         "lower_rotational_levels_co": None}
     # get the data from this instance of OutputStarData
-    output_collection = OutputObjectCollection(verbose=True, simbad_go_fast=False, spectra_output_dir=spectra_output_dir)
+    output_collection = OutputObjectCollection(verbose=True, simbad_go_fast=False,
+                                               spectra_output_dir=spectra_output_dir, update_mode=update_mode)
     # a copy of this instance
     output_collection.standard_process(per_isotopologues_filter=isotopologues_filter, upload_sql=False,
                                        write_plots=False)
@@ -53,8 +54,9 @@ def update_schemas(delete_spectra_tables: bool = False):
 
 
 def sql_update(upload_sql=True, write_plots=True, target_file=None,
-               do_update_schemas=False):
-    output_collection = standard(upload_sql=upload_sql, write_plots=write_plots, target_file=target_file)
+               do_update_schemas=False, update_mode: bool = False):
+    output_collection = standard(upload_sql=upload_sql, write_plots=write_plots,
+                                 target_file=target_file, update_mode=update_mode)
     if do_update_schemas:
         update_schemas()
     return output_collection

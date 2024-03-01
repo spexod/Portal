@@ -1,11 +1,7 @@
-import os
-
 from science.analyze.prescriptions import update_schemas
-from science.analyze.spectrum import var_is_true
 from science.db.data_status import set_data_status_mysql, get_data_status_mysql
 
 
-DATA_MIGRATE_FROM_STAGED = var_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", False))
 # read the status variables from the MySQL server
 new_data_staged, updated_mysql = get_data_status_mysql()
 
@@ -18,5 +14,6 @@ def do_migration():
 
 
 if __name__ == '__main__':
+    from science.db.sql import DATA_MIGRATE_FROM_STAGED
     if DATA_MIGRATE_FROM_STAGED and new_data_staged:
         do_migration()

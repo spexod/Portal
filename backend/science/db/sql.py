@@ -1,20 +1,46 @@
-from science.db.sql_tables import name_specs, param_ref, max_star_name_size, double_param, double_param_error, \
-    str_param, str_param_error, update_schema_map
-
-django_tables = ['djangoAPI_useraccount', 'djangoAPI_useraccount_groups', 'djangoAPI_useraccount_user_permissions']
-django_tables_set = set(django_tables)
-
 import os
 import string
 import secrets
 from datetime import datetime
 
-from numpy import float32, float64
+import dotenv
 import mysql.connector
+from numpy import float32, float64
 
-from science.db.sql_config import sql_host, sql_user, sql_database, sql_password, sql_port
+from science.db.sql_tables import (name_specs, param_ref, max_star_name_size, double_param, double_param_error,
+                                   str_param, str_param_error, update_schema_map, create_tables,
+                                   dynamically_named_tables)
 
-from science.db.sql_tables import create_tables, dynamically_named_tables
+
+# Load the environment variables
+repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+env_path = os.path.join(repo_dir, '.env')
+if os.path.exists(env_path):
+    dotenv.load_dotenv(env_path)
+
+
+def str_is_true(s: str) -> bool:
+    return s.lower() in ["true", "yes", "1"]
+
+
+sql_port = "3306"
+sql_database = "spexodisks"
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "spexodisks.com")
+MYSQL_USER = os.environ.get("MYSQL_USER", "username")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "password")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/opt/bitnami/projects/backend/output")
+update_mode = str_is_true(os.environ.get("DATA_NEW_UPLOADS_ONLY", "true"))
+API_USE_NEW_TABLES = str_is_true(os.environ.get("API_USE_NEW_TABLES", 'true'))
+DEBUG = str_is_true(os.environ.get("DEBUG", "true"))
+DATA_MIGRATE_FROM_STAGED = str_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", 'false'))
+
+
+# fundamental casting and naming operations
+django_tables = ['auth_group', 'auth_group_permissions', 'auth_permission',
+                 'django_admin_log', 'django_content_type', 'django_migrations',
+                 'django_rest_passwordreset_resetpasswordtoken', 'django_session',
+                 'djangoAPI_useraccount', 'djangoAPI_useraccount_groups', 'djangoAPI_useraccount_user_permissions']
+django_tables_set = set(django_tables)
 
 
 def make_insert_columns_str(table_name, columns, database):
@@ -73,24 +99,24 @@ def generate_sql_config_file(user_name, password):
     new_configs_dir = os.path.join(dir_path, 'new_configs')
     if not os.path.isdir(new_configs_dir):
         os.mkdir(new_configs_dir)
-    config_file_name = os.path.join(new_configs_dir, '../sql_config.py')
+    config_file_name = os.path.join(new_configs_dir, f'{user_name}_sql_config.py')
     with open(config_file_name, 'w') as f:
-        f.write(F"""sql_host = "{sql_host}"\n""")
+        f.write(F"""sql_host = "{MYSQL_HOST}"\n""")
         f.write(F"""sql_port = "{sql_port}"\n""")
         f.write(F"""sql_database = "{sql_database}"\n""")
-        f.write(F"""sql_user = "{user_name}"\n""")
-        f.write(F"""sql_password = '''{password}'''\n""")
-    print(F"New sql_config.py file at to: {config_file_name}")
+        f.write(F"""MYSQL_USER = "{user_name}"\n""")
+        f.write(F"""MYSQL_PASSWORD = '''{password}'''\n""")
+    print(F"New configuration file at file at to: {config_file_name}")
     print(F"For user: {user_name}")
 
 
 class OutputSQL:
     def __init__(self, auto_connect=True, verbose=True):
         self.verbose = verbose
-        self.host = sql_host
-        self.user = sql_user
+        self.host = MYSQL_HOST
+        self.user = MYSQL_USER
         self.port = sql_port
-        self.password = sql_password
+        self.password = MYSQL_PASSWORD
         if auto_connect:
             self.open()
         else:
@@ -101,8 +127,8 @@ class OutputSQL:
 
     def open(self):
         if self.verbose:
-            print("  Opening connection to the SQL Host Server:", sql_host)
-            print("  under the user:", sql_user)
+            print("  Opening connection to the SQL Host Server:", self.host)
+            print("  under the user:", self.user)
         self.connection = mysql.connector.connect(host=self.host,
                                                   user=self.user,
                                                   port=self.port,
@@ -197,6 +223,13 @@ class OutputSQL:
         self.open_if_closed()
         return bool(self.query(f"""SELECT EXISTS(SELECT * FROM information_schema.tables WHERE
                           table_schema = '{database}' AND table_name = '{table_name}');""")[0][0])
+
+    def get_all_tables(self, database=None):
+        if database is None:
+            database = sql_database
+        self.open_if_closed()
+        str_cmd = f"""SELECT table_name FROM information_schema.tables WHERE table_schema='{database}';"""
+        return [row[0] for row in self.query(str_cmd)]
 
     def check_key_exists(self, table_name, key_name, database=None):
         if database is None:
@@ -524,4 +557,4 @@ class LoadSQL(OutputSQL):
 
 if __name__ == '__main__':
     with LoadSQL() as load_sql:
-        load_sql.delete_spectra()
+        print(load_sql.get_all_tables(database='users'))

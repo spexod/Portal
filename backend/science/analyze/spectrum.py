@@ -38,10 +38,6 @@ default_ls = ['solid', 'dotted', 'dashed', 'dashdot']
 warnings.filterwarnings('ignore', category=AstropyUserWarning, append=True)
 
 
-def var_is_true(var):
-    return var in true_set
-
-
 def um_to_vel(wavelength_um, zero_velocity_wavelength_um):
     del_wavelength_um = wavelength_um - zero_velocity_wavelength_um
     velocity_mps = (del_wavelength_um / zero_velocity_wavelength_um) * k_c

@@ -31,7 +31,6 @@ for molecule in sorted(views.isotopologue_views.keys()):
         router.register(f'isotopologue_{isotopologue.lower()}', views.isotopologue_views[molecule][isotopologue])
 
 # spectra
-print('spectrum Keys', views.spectra_views.keys())
 for spectrum_handle in sorted(views.spectra_views.keys()):
     router.register(f'{spectrum_handle.lower()}', views.spectra_views[spectrum_handle])
 
@@ -42,8 +41,6 @@ Tables with duplicated information in other tables, these are raw versions of th
 
 # router.register(r'objectparamsfloat', views.ObjectParamsFloatViewSet)
 # router.register(r'objectparamsstr', views.ObjectParamsStrViewSet)
-# router.register(r'co', views.CoViewSet)
-# router.register(r'h2o', views.H2OViewSet)
 # router.register(r'availablefloatparams', views.AvailableFloatParamsViewSet)
 # router.register(r'availablespectrumparams', views.AvailableSpectrumParamsViewSet)
 # router.register(r'availablestrparams', views.AvailableStrParamsViewSet)
