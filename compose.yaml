@@ -1,6 +1,69 @@
 version: '3.9'
 
 services:
+
+
+  mysqlDB:
+    image: mysql:8.1
+    container_name: mysqlDB
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      MYSQL_DATABASE: "spexodisks"
+    ports:
+      - "3306:3306"
+    volumes:
+      # store data in a volume on the host for the MySQL database
+      - type: bind
+        source: ./mysql/local
+        target: /var/lib/mysql
+      # initialize the database from existing files in this directory
+      - type: bind
+        source: ./mysql/init
+        target: /docker-entrypoint-initdb.d
+    restart: "${RESTART_POLICY:-no}"
+
+  backend:
+    # need to use intel cpu
+    platform: linux/amd64
+    build:
+      context: ./backend
+    image: ghcr.io/spexod/backend:LATEST
+    restart: "${RESTART_POLICY:-no}"
+    volumes:
+      # django-static is written at build time by the SpExWebsite Dockerfile
+      - "django-static:/django/static_root:rw"
+      - "./backend/uploads:/django/uploads"
+      - "./backend/output:/django/output"
+    environment:
+      DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
+      DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
+      DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
+      DEBUG: "${DEBUG:-true}"
+      MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
+      MYSQL_USER: "${MYSQL_USER:-root}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
+      API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+      UPLOAD_DIR: "/opt/bitnami/projects/backend/output/"
+
+    depends_on:
+      mysqlDB:
+        condition: service_healthy
+
+  frontend:
+    # need to use intel cpu
+    platform: linux/amd64
+    build:
+      context: ./SpExo-FrontEnd
+    image: ghcr.io/spexod/frontend:LATEST
+    restart: "${RESTART_POLICY:-no}"
+
   nginx:
     # need to use intel cpu
     platform: linux/amd64
@@ -14,32 +77,8 @@ services:
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
       - "django-static:/django/static_root:ro"
-
-  backend:
-    # need to use intel cpu
-    platform: linux/amd64
-    build:
-      context: ./SpExWebsite
-      args:
-        DATA_RESET_UPLOAD: false # False to only upload the files once during testing
-    image: ghcr.io/spexod/backend:LATEST
-    restart: "${RESTART_POLICY:-no}"
-    volumes:
-      - "./SpExWebsite:/usr/src/app"
-      # django-static is written at build time by the SpExWebsite Dockerfile
-      - "django-static:/django/static_root:rw"
-    environment:
-      DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
-      DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
-      DJANGO_DEBUG: "${DJANGO_DEBUG:-true}"
-
-  frontend:
-    # need to use intel cpu
-    platform: linux/amd64
-    build:
-      context: ./SpExo-FrontEnd
-    image: ghcr.io/spexod/frontend:LATEST
-    restart: "${RESTART_POLICY:-no}"
+    depends_on:
+        - backend
 
 
 volumes:

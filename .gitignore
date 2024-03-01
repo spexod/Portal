@@ -3,3 +3,5 @@ venv
 *sql_config.py*
 *.DS_Store*
 .env
+*pem
+.git_token.txt

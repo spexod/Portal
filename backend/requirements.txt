@@ -1,0 +1,40 @@
+wheel
+channels
+channels-redis
+click
+constantly
+cryptography
+cycler
+daphne
+whitenoise
+drf-generators
+django-rest-multiple-models
+django_rest_passwordreset
+Django
+django-crispy-forms
+django-cors-headers
+django-bootstrap4
+django-crontab
+dpd-static-support
+mysql-connector-python
+numpy
+djangorestframework
+mysqlclient
+gunicorn
+djangorestframework-simplejwt
+pytz
+python-dotenv
+# the spexodisks 'science' app
+toml
+scipy
+matplotlib
+astropy
+Unidecode
+pandas
+sqlalchemy
+pymysql
+# # Caleb Wheeler's utility repositories
+# For Seting out and maintaing databases
+autostar>=0.1.2
+# The SpExoDisks Community FITs file tools
+spexod>=0.1.1

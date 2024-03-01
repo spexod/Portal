@@ -269,3 +269,56 @@ docker compose up --build
 ```angular2html
 docker compose ps
 ```
+
+# Rare Database actions
+
+## Exporting to an SQL Dump File for data initialization. 
+
+Once we exported data from a production server to a new production server. This was done in two steps:
+
+1. Export the data from the production server to an SQL dump file.
+2. Load the data from the SQL into a new docker SQL image.
+
+### Exporting the data from the production server to an SQL dump file.
+
+For this we need to use the [MySQL Workbench](https://dev.mysql.com/downloads/workbench/), a GUI for MySQL. 
+
+On the top menu plain select Server -> Data Export 
+
+![The menu location for the MySQL data-export command](./static/ExportCommand.png "Export Command")
+
+Remember to check the box for **Include Create Schema**. 
+This will make sure that the schema are created when the data is imported into the new database.
+
+![The control panel in MySQl Workbench that shows the Include-Create-Schema's box as checked. Otherwise this view shows the default options selected. ](./static/ExportDataView.png "Export Data View")
+
+Save this file to **mysql/local/** directory in this repository.
+
+> [!WARNING]
+> This directory will use all the files in the directory to initialize the database.
+> Make sure you only have the SQL dump files you want to use in this directory.
+
+
+### Loading the data from the SQL into a new docker SQL image.
+
+When you initialize this repository, the **mysql/local/** and **mysql/init/** directories are empty
+expect for a single file ".gitignore" in each.
+
+> [!WARNING]
+> You must delete all files and directories in mysql/local/ **except** for the .gitignore file
+> before you run any commands in this section. 
+> You may also need to delete files to retry after failed commands.
+
+The directory **mysql/init/** is where the SQL dump file will be placed. This file is only read
+when the docker image is initialized for the first time, so this data is only loaded once.
+
+To initialize a new MySQL docker image with the data from the SQL dump file, run the following
+
+```angular2html
+docker compose up mysqlDB
+```
+
+This will start the MySQL docker image and load the data from the SQL dump file. 
+This process takes a few minutes extra to load the data.
+Once it completes, the new database will be running as a server on your local machine. 
+This is a good time to test logging into the database with [MySQL Workbench](https://dev.mysql.com/downloads/workbench/).
