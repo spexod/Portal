@@ -79,7 +79,6 @@ services:
       - "django-static:/django/static_root:ro"
     depends_on:
         - backend
-        - frontend
 
 
 volumes:
