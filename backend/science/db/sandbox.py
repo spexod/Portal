@@ -5,6 +5,7 @@ import zipfile
 import datetime
 from typing import NamedTuple, Union
 
+import mysql.connector
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
 from science.db.sql import django_tables, LoadSQL
@@ -127,8 +128,11 @@ def move_django_tables():
         load_sql.create_schema(schema_name='users')
         for table_name in django_tables:
             command_str = f"""ALTER TABLE spectra.{table_name} rename users.{table_name}"""
-            load_sql.cursor.execute(command_str)
-            load_sql.connection.commit()
+            try:
+                load_sql.cursor.execute(command_str)
+                load_sql.connection.commit()
+            except mysql.connector.errors.ProgrammingError:
+                print(f'Could not move table {table_name} to users schema.')
 
 
 def zip_test(spectrum_handles=None, date_str=None):
@@ -216,4 +220,3 @@ if __name__ == '__main__':
         zip_delete_old()
 
     print(f'Done with the script in {os.path.basename(__file__)}, args: {args}')
-    # move_django_tables()
