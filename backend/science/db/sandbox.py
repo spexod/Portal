@@ -50,11 +50,13 @@ class Dispatch:
 
     def refresh(self):
         self.output_datum_by_spectrum_handle = {}
+        print(f'output_dir: {self.output_dir}')
         for file_or_dir in os.listdir(self.output_dir):
             starname_dir = os.path.join(self.output_dir, file_or_dir)
             if file_or_dir[0] != '!' and os.path.isdir(starname_dir):
                 starname = file_or_dir
                 for output_file in os.listdir(starname_dir):
+                    print('output_file', output_file)
                     spectrum_handle, extension = output_file.rsplit('.', 1)
                     if extension.lower() in self.allowed_extensions:
                         output_path = os.path.join(starname_dir, output_file)
