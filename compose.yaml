@@ -42,6 +42,7 @@ services:
       - "django-static:/django/static_root:rw"
       - "./backend/uploads:/django/uploads"
       - "./backend/output:/django/output"
+      - "./backend/data:/django/data"
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
