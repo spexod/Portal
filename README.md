@@ -183,7 +183,7 @@ Instructions for AWS:
 2) click on their "Connect using SSH"
 
 These steps are same:
-3) cd /opt/bitnami/projects
+3) cd /home/ubuntu/SpExServer
 4) sudo ./update-deploy.sh
 5) will ask you Git username and token (will ask twice, but second time you can just hit enter)
 6) this will start the process of uploading the newly made image to the server from Git repository, then bring live website down, and this one up; at the end will tell you "SpExServer Server Update Script"

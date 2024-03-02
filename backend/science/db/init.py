@@ -26,7 +26,7 @@ def init_units_table(load_sql: LoadSQL, database: str):
 
 
 def init_databases():
-    with LoadSQL(verbose=False) as load_sql:
+    with LoadSQL(verbose=True) as load_sql:
         # create the schema if it does not exist
         load_sql.create_schema(schema_name='users')
         for is_new in [False, True]:

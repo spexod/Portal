@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 echo "SpExServer Update Script"
-cd /opt/bitnami/projects/ || exit
+cd /home/ubuntu/SpExServer/ || exit
 user='chw3k5'
 # # permission must be set for the token to pull from the repo, this toke is only for the container registry
 # auth_token=$(cat .git_token.txt)

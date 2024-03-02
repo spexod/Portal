@@ -5,6 +5,9 @@ echo "SpExServer Deployment Build Script"
 ./shell/write-deploy-configs.sh
 # take and currently running containers offline and delete any volumes from the last build
 docker compose down --volumes
+# delete the output and upload directory contents
+rm -rf ./backend/output/*
+rm -rf ./backend/uploads/*
 # build the API, NGINX server first
 docker compose build backend
 # try to build new images before taking down the old ones
@@ -15,6 +18,6 @@ read -r -p "press any key to PUSH the new images to the container repository and
 ./shell/ghcr-login.sh
 docker compose push
 # ssh into the backend and restart the API
-ssh bitnami@spexodisks.com -i spexod-us-est-1.pem "/opt/bitnami/projects/shell/update.sh"
+ssh ubuntu@35.169.66.245 -i spexod-us-est-1.pem "/home/ubuntu/SpExServer/shell/update.sh"
 read -r -p  "completed: SpExServer Deployment Build Script, press any key prune docker cache..."
 docker system prune --force --all

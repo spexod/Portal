@@ -34,6 +34,11 @@ services:
     build:
       context: ./backend
     image: ghcr.io/spexod/backend:LATEST
+#    healthcheck:
+#      test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 5
     restart: "${RESTART_POLICY:-no}"
     volumes:
       # django-static is written at build time by the SpExWebsite Dockerfile
@@ -50,7 +55,7 @@ services:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
       DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
-      UPLOAD_DIR: "/opt/bitnami/projects/backend/output/"
+      UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
 
     depends_on:
       mysqlDB:
