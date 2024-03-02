@@ -1,13 +1,13 @@
 #!/bin/bash
 echo "SpExServer Update Script"
 echo "Updating SpExo-FrontEnd Repository"
-cd SpExo-FrontEnd
+cd SpExo-FrontEnd || exit
 git restore .
 git pull origin main
 git checkout main
 cd ../
 
-cd SpExWebsite
+cd backend || exit
 git restore .
 git pull origin main
 git checkout main

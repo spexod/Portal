@@ -11,3 +11,5 @@ docker compose down --volumes
 docker compose run --build backend python update.py
 # bring down the backend
 docker compose down --volumes
+# upload the fits and text files
+rsync -avz -e "ssh -i spexod-us-est-1.pem" ./backend/output ubuntu@35.169.66.245:/home/ubuntu/SpExServer/backend/output

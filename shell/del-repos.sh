@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "Deleting the SpExServer Repositories"
 
 rm -rf SpExo-FrontEnd
