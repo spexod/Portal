@@ -8,7 +8,7 @@ new_data_staged, updated_mysql = get_data_status_mysql()
 
 def do_migration():
     # migrate the metadata and spectra tables.
-    update_schemas()
+    update_schemas(delete_spectra_tables=False)
     # update the states in the MySQL service
     set_data_status_mysql(new_data_staged_to_set=False, updated_mysql_to_set=True)
 

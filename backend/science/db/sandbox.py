@@ -10,7 +10,7 @@ from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
 from science.db.sql import django_tables, LoadSQL
 from ref.ref import uploads_dir, data_pro_dir, today_str
-from science.analyze.prescriptions import standard, sql_update, update_schemas
+from science.analyze.prescriptions import standard, sql_update
 
 
 class OutputDatum(NamedTuple):
@@ -193,12 +193,6 @@ if __name__ == '__main__':
     parser.add_argument('--no-test-run', dest='test_run', action='store_false', default=True,
                         help='Default - Upload to the MySQL production database after a successful writing to the ' +
                              'test database.')
-    parser.add_argument('--update-schemas', dest='update_schemas', action='store_true',
-                        help='Overrides other values to only update the schemas of the MySQL database.' +
-                             'This for moving a successful test-run data upload into the main MySQL database schemas.')
-    parser.add_argument('--no-update-schemas', dest='update_schemas', action='store_false', default=True,
-                        help='Default - Does NOT Overrides other values to only update the schemas of the ' +
-                             'MySQL database.')
     parser.add_argument('--zip-delete-old', dest='zip_delete_old', action='store_true',
                         help='Deletes old zip files from the uploads directory.')
     parser.add_argument('--no-zip-delete-old', dest='zip_delete_old', action='store_false', default=True,
@@ -210,8 +204,6 @@ if __name__ == '__main__':
     # do the work
     if args.write_upload:
         write_upload_files()
-    if args.update_schemas:
-        update_schemas()
     elif args.write_sql:
         write_sql(do_update_schemas=not args.test_run)
     if args.zip_test:

@@ -33,6 +33,7 @@ update_mode = str_is_true(os.environ.get("DATA_NEW_UPLOADS_ONLY", "true"))
 API_USE_NEW_TABLES = str_is_true(os.environ.get("API_USE_NEW_TABLES", 'true'))
 DEBUG = str_is_true(os.environ.get("DEBUG", "true"))
 DATA_MIGRATE_FROM_STAGED = str_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", 'false'))
+print(f'DATA_MIGRATE_FROM_STAGED: {DATA_MIGRATE_FROM_STAGED}')
 
 
 # fundamental casting and naming operations

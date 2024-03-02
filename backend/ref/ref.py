@@ -57,7 +57,7 @@ reference_preference_path = os.path.join(ref_dir, 'reference_preference.txt')
 target_file_default = os.path.join(working_dir, "load", 'target_list.csv')
 
 
-# for the simbad Query Class
+# for the SIMBAD Query Class
 sb_save_file_name = os.path.join(ref_dir, "simbad_query_data.pkl")
 sb_save_coord_file_name = os.path.join(ref_dir, "simbad_coord_data.pkl")
 sb_ref_file_name = os.path.join(ref_dir, "simbad_ref_data.psv")

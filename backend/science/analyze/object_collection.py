@@ -1243,7 +1243,7 @@ class ObjectCollection:
                                                  for hitran_line in isotopologue_hitran.ordered_data]
 
             # the isotopologue tables
-            load_sql.creat_table(table_name='available_isotopologues', database=spexo_schema)
+            load_sql.creat_table(table_name='available_isotopologues', database=spexo_schema, drop_if_exists=True)
             for isotopologue in values_isos.keys():
                 molecule = isotopologue_to_molecule[isotopologue].lower()
                 if molecule == 'h2o':
@@ -1296,6 +1296,7 @@ class ObjectCollection:
             print(" Completed writing SQL tables for Hitran molecular data")
 
     def write_sql(self, upload_all_params: bool = False):
+        set_data_status_mysql(new_data_staged_to_set=False, updated_mysql_to_set=False)
         with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
             load_sql.create_schema(schema_name=spexo_schema)
             load_sql.clear_database(database=spexo_schema)

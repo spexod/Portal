@@ -54,11 +54,9 @@ def update_schemas(delete_spectra_tables: bool = False):
 
 
 def sql_update(upload_sql=True, write_plots=True, target_file=None,
-               do_update_schemas=False, update_mode: bool = False):
+               update_mode: bool = False):
     output_collection = standard(upload_sql=upload_sql, write_plots=write_plots,
                                  target_file=target_file, update_mode=update_mode)
-    if do_update_schemas:
-        update_schemas()
     return output_collection
 
 
@@ -106,15 +104,15 @@ if __name__ == "__main__":
         # what runs on Caleb's computers
         # with LoadSQL() as output_sql:
         #     output_sql.update_schemas()
-        oc = standard(upload_sql=True, write_plots=False, target_file=None)
+        oc = standard(upload_sql=True, write_plots=False, target_file=None, update_mode=True)
         # oc = sql_update(write_txt=False, write_fits=False, upload_sql=True,
-        #                 write_plots=False, target_file=None, return_oc=True)
+        #                 write_plots=False, target_file=None, return_oc=True, update_mode=True)
     elif getuser() == "a_b1140":  # Andrea's computers
         # what runs on your computers (copy this statement and then edit the username above)
-        oc = standard(upload_sql=True, write_plots=False, target_file=None)
+        oc = standard(upload_sql=True, update_mode=True, write_plots=False, target_file=None)
         # with LoadSQL() as output_sql:
         #    output_sql.update_schemas()
-        # oc = sql_update(upload_sql=True, write_plots=False, target_file=None)
+        # oc = sql_update(upload_sql=True, update_mode=True, write_plots=False, target_file=None)
         # single_object = get_single_object(object_collection=oc, object_name='HD190073', do_plot=True,
         #                                  show_error_bars=True,
         #                                  min_wavelength_um=4.802,
@@ -124,8 +122,8 @@ if __name__ == "__main__":
         #                                  transition_text=True,
         #                                  x_fig_size=30, y_fig_size=8.0,
         #                                  text_rotation=30, x_ticks_min_number=20)
-        dsharp = standard(upload_sql=False, write_plots=False, target_file=dsharp_targets_file)
-        jwst = standard(upload_sql=False, write_plots=False, target_file=jwst_targets_file)
+        dsharp = standard(upload_sql=False, update_mode=True, write_plots=False, target_file=dsharp_targets_file)
+        jwst = standard(upload_sql=False, update_mode=True, write_plots=False, target_file=jwst_targets_file)
     else:
         # default statement
         print("Your username is:", getuser())

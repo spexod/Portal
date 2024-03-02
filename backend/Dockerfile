@@ -4,6 +4,10 @@ FROM python as build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /django
 ENV PYTHONPATH "${PYTHONPATH}:/django"
+# update pip
+RUN pip install --upgrade pip
+# get the cron application installed
+RUN apt-get update && apt-get install cron rsync -y
 # # setup a username and group
 RUN addgroup --system --gid 1001 python_group
 RUN adduser --system --uid 1001 python_user
@@ -13,13 +17,10 @@ RUN mkdir /nonexistent
 RUN touch /cronlogs/cron.log
 RUN chown python_user:python_group /cronlogs
 RUN chown python_user:python_group /nonexistent
+RUN chown python_user:python_group /var/run
 # set the permissions intialistation script for the container
 COPY --chown=python_user:python_group start.sh /
 RUN ["chmod", "+x", "/start.sh"]
-# update pip
-RUN pip install --upgrade pip
-# get the cron application installed
-RUN apt-get update && apt-get install cron rsync -y
 # pip install the requirements
 COPY --chown=python_user:python_group requirements.txt .
 RUN pip install -r requirements.txt
