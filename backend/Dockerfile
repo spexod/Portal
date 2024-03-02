@@ -26,7 +26,8 @@ COPY --chown=python_user:python_group requirements.txt .
 RUN pip install -r requirements.txt
 # Things that will need to update every time the code changes
 COPY --chown=python_user:python_group . .
-RUN python ref/ref.py
+RUN mkdir /django/data/data_products
+RUN mkdir /django/data/data_products/plots
 RUN chown -R python_user:python_group /django
 # set the user
 USER python_user
