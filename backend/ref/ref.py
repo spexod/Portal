@@ -26,13 +26,14 @@ instrument_metadata = [
 web_default_spectrum = 'ishell_4517nm_5240nm_Vstar_V1003_OPH'
 
 # directory tree used by SpExoDisks Database, including folder creation for things in .gitignore
-base_dir = os.path.dirname(os.path.realpath(__file__))
-star_names_dir = base_dir
+science_dir = os.path.dirname(os.path.realpath(__file__))
+star_names_dir = science_dir
 try:
-    backend_dir = os.path.dirname(base_dir)
+    backend_dir = os.path.dirname(science_dir)
 except ValueError:
     warn(f'Could not find the SpExoDisks DataScience package directory')
     backend_dir = '/django'
+base_dir = os.path.dirname(backend_dir)
 working_dir = os.path.join(backend_dir, "science")
 input_data_dir = os.path.join(backend_dir, "data")
 uploads_dir = os.path.join(backend_dir, "uploads")
@@ -43,11 +44,7 @@ data_pro_dir = os.path.join(input_data_dir, "data_products")
 object_params_dir = os.path.join(ref_dir, 'object_params')
 flux_cal_dir = os.path.join(ref_dir, "flux_cal")
 hitran_dir = os.path.join(ref_dir, "hitran")
-plot_dir = os.path.join(data_pro_dir, "plots")
-if not os.path.exists(data_pro_dir):
-    os.mkdir(data_pro_dir)
-if not os.path.exists(plot_dir):
-    os.mkdir(plot_dir)
+plot_dir = data_pro_dir
 
 # reference ranking
 references_per_parameter_path = os.path.join(ref_dir, 'references_per_parameter.txt')
