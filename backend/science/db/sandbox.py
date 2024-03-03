@@ -56,6 +56,8 @@ class Dispatch:
             if file_or_dir[0] != '!' and os.path.isdir(starname_dir):
                 starname = file_or_dir
                 for output_file in os.listdir(starname_dir):
+                    print('file_or_dir', file_or_dir)
+                    print('starname', starname_dir)
                     print('output_file', output_file)
                     spectrum_handle, extension = output_file.rsplit('.', 1)
                     if extension.lower() in self.allowed_extensions:
