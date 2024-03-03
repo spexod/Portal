@@ -40,7 +40,6 @@ services:
     volumes:
       # django-static is written at build time by the SpExWebsite Dockerfile
       - "django-static:/django/static_root:rw"
-      - "./backend/uploads:/django/uploads"
       - "./backend/output:/django/output"
       - "./backend/data:/django/data"
     environment:

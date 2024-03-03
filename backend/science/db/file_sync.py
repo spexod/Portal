@@ -8,7 +8,7 @@ def rsync_output(dir_or_file: str, verbose: bool = False):
     if os.path.exists(rsync_key_file):
         command_str = 'rsync -avz -e ' + \
                       f'"ssh -i {rsync_key_file}" ' + \
-                      f'"{dir_or_file}" ubuntu@35.169.66.245:"{UPLOAD_DIR}"'
+                      f'"{dir_or_file}" ubuntu@spexodisks.com:"{UPLOAD_DIR}"'
         os.system(command_str)
         if verbose:
             print(f"rsynced {dir_or_file} to spexodisks.com")
