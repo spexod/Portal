@@ -4,12 +4,7 @@ from science.db.sql import API_USE_NEW_TABLES
 
 # # Find files that are available for users to download
 # verbose prints things to the screen, gives you more information
-dispatch = Dispatch(verbose=True, output_dir=None, uploads_dir=None)
-
-
-def write_upload_zip(username: str, spectra_handles: list):
-    zipfile_path, failed_requests = dispatch.zip_upload(username=username, spectra_handles=spectra_handles)
-    return zipfile_path, failed_requests
+dispatch = Dispatch(verbose=True, output_dir=None)
 
 
 def package_iso_data(iso_data: list) -> dict:

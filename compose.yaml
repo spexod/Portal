@@ -30,6 +30,10 @@ services:
     platform: linux/amd64
     build:
       context: ./backend
+      args:
+        - MYSQL_HOST=${MYSQL_HOST:-mysqlDB}
+        - MYSQL_USER=${MYSQL_USER:-root}
+        - MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}
     image: ghcr.io/spexod/backend:LATEST
     healthcheck:
       test: ["CMD", "curl", "-f", "localhost:8000/api/stats_total/?format=json"]

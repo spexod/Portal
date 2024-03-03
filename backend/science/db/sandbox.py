@@ -3,13 +3,14 @@ import pathlib
 import shutil
 import zipfile
 import datetime
+from io import BytesIO
 from typing import NamedTuple, Union
 
 import mysql.connector
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
 from science.db.sql import django_tables, LoadSQL
-from ref.ref import uploads_dir, data_pro_dir, today_str
+from ref.ref import data_pro_dir, today_str
 from science.analyze.prescriptions import standard, sql_update
 
 
@@ -21,10 +22,9 @@ class OutputDatum(NamedTuple):
 
 class Dispatch:
     output_dir_default = os.path.join(os.getcwd(), 'output')
-    uploads_dir_default = os.path.join(os.getcwd(), 'uploads')
     allowed_extensions = {'txt', 'fits'}
 
-    def __init__(self, verbose=False, output_dir=None, uploads_dir=None):
+    def __init__(self, verbose=False, output_dir=None):
         self.verbose = verbose
         if output_dir is None:
             self.output_dir = self.output_dir_default
@@ -32,12 +32,6 @@ class Dispatch:
             self.output_dir = output_dir
         if not os.path.exists(self.output_dir):
             os.mkdir(self.output_dir)
-        if uploads_dir is None:
-            self.uploads_dir = self.uploads_dir_default
-        else:
-            self.uploads_dir = uploads_dir
-        if not os.path.exists(self.uploads_dir):
-            os.mkdir(self.uploads_dir)
         self.output_datum_by_spectrum_handle = None
         self.refresh()
         if verbose:
@@ -46,7 +40,6 @@ class Dispatch:
             else:
                 print(f'Dispatch initialized with {len(self.output_datum_by_spectrum_handle)} spectra.')
             print(f'Output directory: {self.output_dir}')
-            print(f'Uploads directory: {self.uploads_dir}')
 
     def refresh(self):
         self.output_datum_by_spectrum_handle = {}
@@ -76,18 +69,14 @@ class Dispatch:
         standard(upload_sql=False, write_plots=False, target_file=None, spectra_output_dir=self.output_dir)
 
     @staticmethod
-    def write_sql(do_update_schemas=False):
-        sql_update(upload_sql=True, write_plots=False, target_file=None, do_update_schemas=do_update_schemas)
+    def write_sql():
+        sql_update(upload_sql=True, write_plots=False, target_file=None)
 
-    def get_zipfile_path(self, username):
-        username = username.replace(' ', '_')
-        return os.path.join(self.uploads_dir, f'{username}.zip')
-
-    def zip_upload(self, username: str, spectra_handles: list):
+    def zip_upload(self, spectra_handles: list) -> bytes:
         failed_requests = []
-        zipfile_path = self.get_zipfile_path(username)
         file_count = 0
-        with zipfile.ZipFile(zipfile_path, 'w') as zip_ref:
+        mem_zip = BytesIO()
+        with zipfile.ZipFile(mem_zip, mode="w",) as zip_ref:
             # This python file is packaged with the FITS files so that users have a hope of reading them
             zip_ref.write(fitsfile_py_path, arcname=os.path.basename(fitsfile_py_path))
             # The markdown file is packaged with the FITS files so that users have a hope of reading them
@@ -102,28 +91,17 @@ class Dispatch:
                         file_count += 1
                 else:
                     failed_requests.append(spectra_handle)
-        if self.verbose:
-            print(f'Zip file made at: {zipfile_path}')
-            print(f'   with {file_count} files returned out of {len(spectra_handles)} requests.')
-
-        return zipfile_path, failed_requests
-
-    def zip_del(self, username: str):
-        zipfile_path = self.get_zipfile_path(username)
-        if os.path.exists(zipfile_path):
-            os.remove(zipfile_path)
-            if self.verbose:
-                print(f'Zip file deleted at: {zipfile_path}')
+        return mem_zip.getvalue()
 
 
 def write_upload_files():
-    dispatch = Dispatch(verbose=True, output_dir=None, uploads_dir=None)
+    dispatch = Dispatch(verbose=True, output_dir=None)
     dispatch.write_upload_files()
 
 
-def write_sql(do_update_schemas=False):
-    dispatch = Dispatch(verbose=True, output_dir=None, uploads_dir=None)
-    dispatch.write_sql(do_update_schemas=do_update_schemas)
+def write_sql():
+    dispatch = Dispatch(verbose=True, output_dir=None)
+    dispatch.write_sql()
 
 
 def move_django_tables():
@@ -136,37 +114,6 @@ def move_django_tables():
                 load_sql.connection.commit()
             except mysql.connector.errors.ProgrammingError:
                 print(f'Could not move table {table_name} to users schema.')
-
-
-def zip_test(spectrum_handles=None, date_str=None):
-    if spectrum_handles is None:
-        spectrum_handles = ['spitzer_9886nm_37157nm_hd_036112',
-                            'nirspec_2902nm_3698nm_hd_256013',
-                            'crires_2906nm_2990nm_vstar_an_sex']
-    if date_str is None:
-        date_str = today_str
-    dispatch = Dispatch(verbose=True, output_dir=os.path.join(data_pro_dir, date_str),
-                        uploads_dir=uploads_dir)
-    dispatch.zip_upload('test', spectrum_handles)
-
-
-def is_expired(path, delta_time):
-    timestamp = os.path.getmtime(str(path))
-    last_modified = datetime.datetime.fromtimestamp(timestamp)
-    delta_time_this_file = datetime.datetime.now() - last_modified
-    return delta_time_this_file > delta_time
-
-
-def zip_delete_old(delete_time_min: float = 15.0, uploads_dir: Union[str, pathlib.Path] = None):
-    if uploads_dir is None:
-        uploads_dir = Dispatch.uploads_dir_default
-    delta_time_for_delete = datetime.timedelta(minutes=delete_time_min)
-    only_files = [os.path.join(uploads_dir, f) for f in os.listdir(uploads_dir)
-                  if os.path.isfile(os.path.join(uploads_dir, f))]
-    for file in only_files:
-        if is_expired(path=file, delta_time=delta_time_for_delete):
-            os.remove(file)
-            print(f'Zip file deleted at: {file}')
 
 
 if __name__ == '__main__':
@@ -186,20 +133,12 @@ if __name__ == '__main__':
                         help="White the SQL tables the website uses to via the API.")
     parser.add_argument('--no-write-sql', dest='write_sql', action='store_false', default=True,
                         help="Default - Does NOT white the SQL tables the website uses to via the API.")
-    parser.add_argument('--zip-test', dest='zip_test', action='store_true',
-                        help="Creates test zip file.")
-    parser.add_argument('--no-zip-test', dest='zip_test', action='store_false', default=True,
-                        help="Default - Does NOT preform the test zip file creation.")
     parser.add_argument('--test-run', dest='test_run', action='store_true',
                         help='Only upload to the MySQL test database, but does not upload to the ' +
                              'production database.')
     parser.add_argument('--no-test-run', dest='test_run', action='store_false', default=True,
                         help='Default - Upload to the MySQL production database after a successful writing to the ' +
                              'test database.')
-    parser.add_argument('--zip-delete-old', dest='zip_delete_old', action='store_true',
-                        help='Deletes old zip files from the uploads directory.')
-    parser.add_argument('--no-zip-delete-old', dest='zip_delete_old', action='store_false', default=True,
-                        help='Default - Does NOT delete old zip files from the uploads directory.')
 
     # parse the arguments
     args = parser.parse_args()
@@ -208,10 +147,6 @@ if __name__ == '__main__':
     if args.write_upload:
         write_upload_files()
     elif args.write_sql:
-        write_sql(do_update_schemas=not args.test_run)
-    if args.zip_test:
-        zip_test()
-    if args.zip_delete_old:
-        zip_delete_old()
+        write_sql()
 
     print(f'Done with the script in {os.path.basename(__file__)}, args: {args}')

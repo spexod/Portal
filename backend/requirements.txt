@@ -14,7 +14,6 @@ Django
 django-crispy-forms
 django-cors-headers
 django-bootstrap4
-django-crontab
 dpd-static-support
 mysql-connector-python
 numpy

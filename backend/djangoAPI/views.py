@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 
-from .dynamic_data import (write_upload_zip, schema_prefix,
+from .dynamic_data import (dispatch, schema_prefix,
                            available_spectra_to_database, available_isotopologues_to_database)
 from .models import spectra_models, isotopologue_models, \
     AvailableIsotopologues, \
@@ -139,17 +139,14 @@ def download_spectra(request):
         spectra_list = request.query_params.get('spectra').split('%')
     except:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
     current_user = request.user
-    user_username = current_user.email.replace('@', '_at_').replace('.', '_dot_')
     if current_user:
-        zipfile_path = write_upload_zip(username=user_username, spectra_handles=spectra_list)
-        with open(zipfile_path[0], 'rb') as file_zip:
-            response = HttpResponse(file_zip, content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename={user_username}.zip'
-            return response
+        response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list),
+                                content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
+        return response
     else:
-        print(f'User {user_username}, is not authenticated')
+        print(f'User {current_user}, is not authenticated')
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
