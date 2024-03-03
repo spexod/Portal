@@ -30,7 +30,12 @@ sudo mkdir /var/www/spexo
 # clone the website repository
 git clone https://github.com/spexod/SpExServer && cd SpExServer || return
 # run the initialization script, which build and deploys the website with an http server
-./init.sh
+mkdir backend/data
+sudo chmod 777 backend/data
+cd backend/data || exit
+git clone https://github.com/spexod/data .
+
+docker compose up --detach
 
 # setup a cron job to renew the SSL certificate
 # get the certificate
@@ -44,7 +49,7 @@ echo "NGINX_CONFIG_FILE='deploy.conf'" >> .env
 
 
 # with a certificate we can now use the deployment version of the website.
-./update-deploy.sh
+shell/update.sh
 
 # Open the crontab to setup a new cron job
 sudo crontab -e

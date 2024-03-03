@@ -5,8 +5,7 @@ from autostar.table_read import row_dict
 from autostar.simbad_query import StarDict
 from autostar.object_params import SingleParam
 
-from ref.ref import ref_dir
-unit_filepath = os.path.join(ref_dir, 'units.csv')
+from ref.ref import unit_filepath
 
 
 def read_units_file():

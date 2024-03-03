@@ -18,6 +18,10 @@ RUN touch /cronlogs/cron.log
 RUN chown python_user:python_group /cronlogs
 RUN chown python_user:python_group /nonexistent
 RUN chown python_user:python_group /var/run
+RUN chown python_user:python_group /usr/sbin/cron
+RUN chown python_user:python_group /usr/sbin/cron
+# Optional
+# chmod g+s, u-s /usr/bin/crontab
 # set the permissions intialistation script for the container
 COPY --chown=python_user:python_group start.sh /
 RUN ["chmod", "+x", "/start.sh"]
@@ -26,8 +30,6 @@ COPY --chown=python_user:python_group requirements.txt .
 RUN pip install -r requirements.txt
 # Things that will need to update every time the code changes
 COPY --chown=python_user:python_group . .
-RUN mkdir /django/data/data_products
-RUN mkdir /django/data/data_products/plots
 RUN chown -R python_user:python_group /django
 # set the user
 USER python_user

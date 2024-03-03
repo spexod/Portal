@@ -56,6 +56,9 @@ reference_preference_path = os.path.join(ref_dir, 'reference_preference.txt')
 # target files for selecting a subset of stars
 target_file_default = os.path.join(working_dir, "load", 'target_list.csv')
 
+# for the unit file
+unit_filepath = os.path.join(ref_dir, 'units.csv')
+
 
 # for the SIMBAD Query Class
 sb_save_file_name = os.path.join(ref_dir, "simbad_query_data.pkl")
