@@ -1,8 +1,6 @@
 #!/bin/bash
 clear
 echo "SpExServer Deployment Build Script"
-# test the build on a local machine
-./shell/write-deploy-configs.sh
 # take and currently running containers offline and delete any volumes from the last build
 docker compose down --volumes
 # delete the output and upload directory contents
@@ -11,7 +9,8 @@ rm -rf ./backend/uploads/*
 # build the API, NGINX server first
 docker compose build backend || exit
 # try to build new images before taking down the old ones
-./shell/frontend-buildcache.sh
+./shell/frontend-build.sh
+# take down the old containers
 docker compose down --volumes
 # stop here to look for error messages
 echo -e "\nDevelopment Build completed,"

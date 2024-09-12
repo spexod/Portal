@@ -1,12 +1,11 @@
 #!/bin/bash
 clear
 read -r -p "SpExServer TEST Build Script, press any key to continue..."
-./shell/write-test-configs.sh
 # take and currently running containers offline and delete any volumes from the last build
 docker compose down --volumes
 # build the API, NGINX server first
 docker compose build backend
-./shell/frontend-buildcache.sh
+./shell/frontend-build.sh
 # test the build on a local machine
 # stop here to look for error messages
 echo " "

@@ -1,6 +1,6 @@
 # # Things that can be cached
 # Base Configurations
-FROM python as build
+FROM python AS build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /django
 ENV PYTHONPATH "${PYTHONPATH}:/django"

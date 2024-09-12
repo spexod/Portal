@@ -12,8 +12,6 @@ docker compose run --build --rm backend python update.py
 # bring down the backend
 docker compose down --volumes
 # upload the fits and text files
-
-# upload the fits and text files
-rsync -avz -e "ssh -i spexod-us-est-1.pem" ./backend/output ubuntu@spexodisks.com:/home/ubuntu/SpExServer/backend
+rsync -avz -e "ssh -i spexod-us-est-1.pem" ./backend/output ubuntu@spexodisks.com:/home/ubuntu/SpExServer/backend/output
 # upload data files
-rsync -avz -e "ssh -i spexod-us-est-1.pem" ./backend/data ubuntu@spexodisks.com:/home/ubuntu/SpExServer/backend
+rsync -avz -e "ssh -i spexod-us-est-1.pem" ./backend/data ubuntu@spexodisks.com:/home/ubuntu/SpExServer/backend/data

@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   mysqlDB:
     image: mysql:8.1
@@ -82,6 +80,7 @@ services:
     platform: linux/amd64
     build:
       context: ./SpExo-FrontEnd
+      network: host
     image: ghcr.io/spexod/frontend:LATEST
     restart: "${RESTART_POLICY:-no}"
     depends_on:
