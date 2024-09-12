@@ -1,6 +1,6 @@
 services:
   mysqlDB:
-    image: mysql:8.1
+    image: mysql:8.4
     container_name: mysqlDB
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
