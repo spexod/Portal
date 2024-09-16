@@ -1,8 +1,6 @@
 #!/bin/bash
 clear
 read -r -p "SpExServer Data Upload Script, press any key to continue..."
-# write test configs
-./shell/write-test-configs.sh
 # delete the old fits and text files
 rm -rf ./backend/output/*
 # take and currently running containers offline and delete any volumes from the last build

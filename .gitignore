@@ -5,3 +5,4 @@ venv
 .env
 *pem
 .git_token.txt
+.backup_email_codes.txt
