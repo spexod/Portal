@@ -48,6 +48,10 @@ services:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
+      DJANGO_EMAIL_HOST: "${DJANGO_EMAIL_HOST:-smtp.gmail.com}"
+      DJANGO_EMAIL_PORT: "${DJANGO_EMAIL_PORT:-587}"
+      DJANGO_EMAIL_USER: "${DJANGO_EMAIL_USER}"
+      DJANGO_EMAIL_APP_PASSWORD: "${DJANGO_EMAIL_APP_PASSWORD}"
       DEBUG: "${DEBUG:-true}"
       MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
       MYSQL_USER: "${MYSQL_USER:-root}"
@@ -72,9 +76,6 @@ services:
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
       - "django-static:/django/static_root:ro"
-    depends_on:
-        backend:
-          condition: service_healthy
 
   frontend:
     platform: linux/amd64
@@ -83,9 +84,6 @@ services:
       network: host
     image: ghcr.io/spexod/frontend:LATEST
     restart: "${RESTART_POLICY:-no}"
-    depends_on:
-      nginx:
-        condition: service_started
 
 volumes:
   django-static:

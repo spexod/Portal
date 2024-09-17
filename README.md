@@ -18,6 +18,30 @@ But these can be installed with:
 ./shell/init.sh
 ```
 
+## required files for development
+### .env
+
+An `.env` file is required in the root directory of the SpExServer repository.
+See the `.env.example` file for examples of the required fields.
+
+SpExoDisks developers will need to get credentials to
+connect to the MySQL server at spexodisks.com.
+
+Local database development is also possible. The first time the 
+initializes the MySQL database with the usernames and passwords in the `.env` file,
+that are then used for all future connections. For example:
+
+```
+MYSQL_USER="your-username-for-mysql"
+MYSQL_PASSWORD="your-password-for-mysql"
+## Host for inside the docker network
+MYSQL_HOST="mysqlDB"
+```
+
+
+### spexod-us-est-1.pem
+
+The private key for the AWS server. This is required to access the server.
 
 
 # SpExServer

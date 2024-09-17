@@ -37,7 +37,7 @@ print(f'DATA_MIGRATE_FROM_STAGED: {DATA_MIGRATE_FROM_STAGED}')
 EMAIL_HOST=os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT=os.environ.get("DJANGO_EMAIL_PORT", "587")
 EMAIL_USER=os.environ.get("DJANGO_EMAIL_USER", None)
-EMAIL_APP_PASSWORD=os.environ.get("DJANGO_EMAIL_PASSWORD", None)
+EMAIL_APP_PASSWORD=os.environ.get("DJANGO_EMAIL_APP_PASSWORD", None)
 
 
 # fundamental casting and naming operations
