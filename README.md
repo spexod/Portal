@@ -1,3 +1,25 @@
+# Install the available repositories
+
+## SpExServer (this public repository)
+
+```
+git clone https://github.com/spexod/SpExServer
+```
+
+and then enter the base repository with `cd SpExServer` for the following commands.
+
+
+## Additional repositories 
+
+These may require permissions as they are private repositories.
+But these can be installed with:
+
+```
+./shell/init.sh
+```
+
+
+
 # SpExServer
 This is an assembly repository that links the work of the SpExoDisks
 development teams. This repository contains the linking and manage files
