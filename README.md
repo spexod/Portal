@@ -32,16 +32,131 @@ initializes the MySQL database with the usernames and passwords in the `.env` fi
 that are then used for all future connections. For example:
 
 ```
+COMPOSE_PROFILES=db,api,frontend
 MYSQL_USER="your-username-for-mysql"
 MYSQL_PASSWORD="your-password-for-mysql"
 ## Host for inside the docker network
 MYSQL_HOST="mysqlDB"
 ```
 
-
 ### spexod-us-est-1.pem
 
 The private key for the AWS server. This is required to access the server.
+
+# Pipeline for Public Website
+
+For configuration, 
+local docker containers connect to the MySQL server at spexodisks.com.
+TThis MySQL Server is used public website and for this pipeline.
+
+## .evn File Configuration
+
+The `.env` will provided to you by the SpExoDisks administrators,
+if contains a number authentication credentials and other fields
+that need to be kept secret.
+
+```
+# Configuration
+COMPOSE_PROFILES=api,web
+MYSQL_HOST="spexodisks.com"
+DATA_NEW_UPLOADS_ONLY=true
+# Authentication
+MYSQL_USER="?YourUsername"
+MYSQL_PASSWORD="?AReallyLongPassword"
+DJANGO_EMAIL_USER="?not.very.secret.email.address@gmail.com"
+DJANGO_EMAIL_APP_PASSWORD="?super-sectet-passoword"
+```
+
+# Development using a Local MySQL Server
+
+> [!TIP]
+> `./mysql/reset.sh` is a hard reset for the local MySQL service.
+> If the MySQL container is started, 
+> it creates files that are viewable at `./mysql/local/`.
+> Use (or see this script) if you want to start fresh 
+> by deleting the persistent database files or resetting the username and password.
+
+## .evn File Configuration
+
+```
+COMPOSE_PROFILES=db,api
+MYSQL_USER="root"
+MYSQL_PASSWORD="do-not-use-keyboard-walking-passwords"
+```
+
+## Recommended Scripts for Local Database Development
+
+Create MySQL tables and FITs files for the SpExoDisks website with:
+
+```
+./data.sh
+```
+
+Build and display the frontend website locally with:
+
+```
+./display.sh
+```
+
+
+## Starting the MySQL Server
+
+Local development can be done with a MySQL server running in a Docker container.
+
+> [!WARNING]
+> This MySQL server is required at build-time for "backend" Docker images.
+> Local development users have two options to keep in mind. 
+> Consider these options to start the MySQL server in the background
+> before calling the primary shell scripts used build the Docker images
+> (`./data.sh`, `./display.sh`, `deploy.sh`).
+> 
+### Option 1: Start the MySQL Server with Docker Compose
+
+```
+docker compose up mysqlDB --detach
+```
+
+This starts the MySQL server in the background. 
+The server can be stopped with: `docker compose down`.
+
+### Option 2: Start the MySQL Server with the backend Docker Image
+
+This required uncommenting three lines in the compose.yaml 
+in the "backend" service, using the `depends_on` directive.
+
+```
+    # Optionally uncomment the following lines when using the "db" profile.
+    # Wait for the database to be ready before starting the backend.
+#    depends_on:
+#      mysqlDB:
+#        condition: service_healthy
+```
+
+> [!WARNING]
+> Do not commit uncommented line to the repository,
+> as causes the mysqlDB container to start in all situations
+> and not only when the "db" profile is used.
+> The production database pipeline does not use the "db" profile.
+
+# Environment Variables
+
+The `.env` file is used to store environment variables for the Docker Compose.
+
+## DATA_NEW_UPLOADS_ONLY
+
+This variable is used to control the data upload process. 
+When set to `true`, the data upload process will 
+only upload new spectra and files to the MySQL server.
+
+`true` is the default value for this variable, set in compose.yaml,
+that is when the variable is not set in the `.env` file.
+
+When set to `false`, the data upload process will re-upload all spectra and files.
+This could be a useful to update all spectra after formatting changes,
+such as to the changes to FITS files.
+
+```
+
 
 
 # SpExServer

@@ -6,3 +6,4 @@ venv
 *pem
 .git_token.txt
 .backup_email_codes.txt
+.env.backup

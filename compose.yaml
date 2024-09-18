@@ -2,6 +2,7 @@ services:
   mysqlDB:
     image: mysql:8.4
     container_name: mysqlDB
+    command: ['mysqld', '--mysql-native-password=ON']
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
       interval: 5s
@@ -23,13 +24,15 @@ services:
         source: ./mysql/init
         target: /docker-entrypoint-initdb.d
     restart: "${RESTART_POLICY:-no}"
+    profiles: ["db"]
 
   backend:
     platform: linux/amd64
     build:
       context: ./backend
+      network: host
       args:
-        - MYSQL_HOST=${MYSQL_HOST:-mysqlDB}
+        - MYSQL_HOST=${MYSQL_HOST:-localhost}
         - MYSQL_USER=${MYSQL_USER:-root}
         - MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}
     image: ghcr.io/spexod/backend:LATEST
@@ -50,19 +53,31 @@ services:
       DJANGO_USE_NEW_TABLES: "${DJANGO_USE_NEW_TABLES:-true}"
       DJANGO_EMAIL_HOST: "${DJANGO_EMAIL_HOST:-smtp.gmail.com}"
       DJANGO_EMAIL_PORT: "${DJANGO_EMAIL_PORT:-587}"
-      DJANGO_EMAIL_USER: "${DJANGO_EMAIL_USER}"
-      DJANGO_EMAIL_APP_PASSWORD: "${DJANGO_EMAIL_APP_PASSWORD}"
+      DJANGO_EMAIL_USER: "${DJANGO_EMAIL_USER:-None}"
+      DJANGO_EMAIL_APP_PASSWORD: "${DJANGO_EMAIL_APP_PASSWORD:-None}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
       DEBUG: "${DEBUG:-true}"
-      MYSQL_HOST: "${MYSQL_HOST:-mysqlDB}"
+      MYSQL_HOST: "${MYSQL_HOST:-localhost}"
       MYSQL_USER: "${MYSQL_USER:-root}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
-      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
+      IS_DOCKER_BUILD: "false"
+    profiles: ['api']
+    # Optionally uncomment the following lines when using the "db" profile.
+    # Wait for the database to be ready before starting the backend.
+#    depends_on:
+#      mysqlDB:
+#        condition: service_healthy
 
-    depends_on:
-      mysqlDB:
-        condition: service_healthy
+  frontend:
+    platform: linux/amd64
+    build:
+      context: ./SpExo-FrontEnd
+      network: host
+    image: ghcr.io/spexod/frontend:LATEST
+    restart: "${RESTART_POLICY:-no}"
+    profiles: ["web"]
 
   nginx:
     platform: linux/amd64
@@ -76,14 +91,30 @@ services:
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
       - "django-static:/django/static_root:ro"
+    profiles: ["api", "web"]
 
-  frontend:
-    platform: linux/amd64
-    build:
-      context: ./SpExo-FrontEnd
-      network: host
-    image: ghcr.io/spexod/frontend:LATEST
-    restart: "${RESTART_POLICY:-no}"
+  ipython:
+      build:
+          context: ./backend
+          dockerfile: ipython.Dockerfile
+      container_name: ipython
+      restart: "${RESTART_POLICY:-no}"
+      user: root
+      ports:
+          - "8888:8888"
+      environment:
+          JUPYTER_TOKEN: "${JUPYTER_TOKEN:-docker}"
+          GRANT_SUDO: "yes"
+          DOCKER_STACKS_JUPYTER_CMD: "lab"
+          DEBUG: "${DEBUG:-true}"
+          MYSQL_HOST: "${MYSQL_HOST:-localhost}"
+          MYSQL_USER: "${MYSQL_USER:-root}"
+          MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+          API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+      volumes:
+          - ./backend:/backend
+      profiles: ["ipython"]
+
 
 volumes:
   django-static:

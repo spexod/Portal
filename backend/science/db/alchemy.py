@@ -7,7 +7,7 @@ import sqlalchemy as sa
 from science.db.sql import MYSQL_HOST, sql_port, sql_database, MYSQL_USER,  MYSQL_PASSWORD
 
 
-uri_base = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{sql_port}/"
+uri_base = f"mysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{sql_port}/"
 
 
 def is_good_num(a_float):

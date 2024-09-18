@@ -10,6 +10,7 @@ ARG MYSQL_PASSWORD
 ENV MYSQL_PASSWORD $MYSQL_PASSWORD
 ARG MYSQL_USER
 ENV MYSQL_USER $MYSQL_USER
+ENV IS_DOCKER_BUILD true
 # update pip
 RUN pip install --upgrade pip
 # get the cron application installed

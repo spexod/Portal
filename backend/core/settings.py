@@ -16,9 +16,11 @@ from datetime import timedelta
 
 
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, sql_port, DEBUG,
-                            EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD)
+                            EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
+                            wait_for_mysql_to_start)
 
-
+if not wait_for_mysql_to_start():
+    raise Exception("Could not connect to MySQL database, please check your environment variables.")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 server_dir = BASE_DIR.parent

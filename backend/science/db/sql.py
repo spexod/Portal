@@ -1,6 +1,8 @@
 import os
+import time
 import string
 import secrets
+from warnings import warn
 from datetime import datetime
 
 import dotenv
@@ -12,20 +14,39 @@ from science.db.sql_tables import (name_specs, param_ref, max_star_name_size, do
                                    dynamically_named_tables)
 
 
+def str_is_true(s: str) -> bool:
+    return s.lower() in {"true", "yes", "1"}
+
+def str_or_none(s: str | None) -> str | None:
+    if s.lower() in {"none", "null", "", None}:
+        return None
+    return s
+
+
 # Load the environment variables
 repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 env_path = os.path.join(repo_dir, '.env')
 if os.path.exists(env_path):
     dotenv.load_dotenv(env_path)
-
-
-def str_is_true(s: str) -> bool:
-    return s.lower() in ["true", "yes", "1"]
+    is_docker = False
+else:
+    is_docker = True
+print(f'{os.environ.get("IS_DOCKER_BUILD", 'false')} os.environ.get("IS_DOCKER_BUILD", "false")')
+is_docker_build = str_is_true(os.environ.get("IS_DOCKER_BUILD", 'false'))
 
 
 sql_port = "3306"
 sql_database = "spexodisks"
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "spexodisks.com")
+if is_docker_build:
+    if MYSQL_HOST == "mysqlDB":
+        MYSQL_HOST = "localhost"
+        warn("Using MYSQL_HOST to 'localhost', it was detected that we are in a docker container at build-time.")
+elif MYSQL_HOST == "localhost" and is_docker:
+    # we already know that this is not build-time
+    warn("Using MYSQL_HOST to 'mysqlDB', it was detected that we are in a docker container.")
+    MYSQL_HOST = "mysqlDB"
+print(f"MYSQL_HOST: {MYSQL_HOST}, is_docker: {is_docker}, is_docker_build: {is_docker_build}")
 MYSQL_USER = os.environ.get("MYSQL_USER", "username")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "password")
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/home/ubuntu/SpExServer/backend/output")
@@ -34,10 +55,10 @@ API_USE_NEW_TABLES = str_is_true(os.environ.get("API_USE_NEW_TABLES", 'true'))
 DEBUG = str_is_true(os.environ.get("DEBUG", "true"))
 DATA_MIGRATE_FROM_STAGED = str_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", 'false'))
 print(f'DATA_MIGRATE_FROM_STAGED: {DATA_MIGRATE_FROM_STAGED}')
-EMAIL_HOST=os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT=os.environ.get("DJANGO_EMAIL_PORT", "587")
-EMAIL_USER=os.environ.get("DJANGO_EMAIL_USER", None)
-EMAIL_APP_PASSWORD=os.environ.get("DJANGO_EMAIL_APP_PASSWORD", None)
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = os.environ.get("DJANGO_EMAIL_PORT", "587")
+EMAIL_USER = str_or_none(os.environ.get("DJANGO_EMAIL_USER", "None"))
+EMAIL_APP_PASSWORD = str_or_none(os.environ.get("DJANGO_EMAIL_APP_PASSWORD", "None"))
 
 
 # fundamental casting and naming operations
@@ -558,6 +579,34 @@ class LoadSQL(OutputSQL):
         if self.verbose:
             print(f"Deleted all the spectra tables in ter 'spectra' schema ({len(spectra_tables)} tables) " +
                   "to start fresh.")
+
+
+
+def check_mysql_health():
+    try:
+        with OutputSQL(auto_connect=True) as sql:
+            # Create a cursor object
+            # Execute a simple query
+            sql.cursor.execute("SELECT 1")
+            # Fetch the result
+            result = sql.cursor.fetchone()
+            # Check if the query was successful
+            if result[0] == 1:
+                return True
+            else:
+                return False
+    except Exception as e:
+        warn(f"Could not connect to MySQL database, error: {e}")
+        return False
+
+
+def wait_for_mysql_to_start(timeout_seconds: int = 5, tries: int = 10):
+    while not check_mysql_health():
+        time.sleep(timeout_seconds)
+        tries -= 1
+        if tries == 0:
+            return False
+    return True
 
 
 if __name__ == '__main__':

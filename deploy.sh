@@ -9,7 +9,7 @@ rm -rf ./backend/uploads/*
 # build the API, NGINX server first
 docker compose build backend || exit
 # bring up the the backend and nginx server
-docker compose up --detach backend nginx
+docker compose --profile api up --detach || exit
 echo "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit
