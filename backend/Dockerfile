@@ -1,6 +1,6 @@
 # # Things that can be cached
 # Base Configurations
-FROM python AS build
+FROM python:3.12-alpine AS build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /django
 ENV PYTHONPATH "${PYTHONPATH}:/django"
@@ -13,18 +13,14 @@ ENV MYSQL_USER $MYSQL_USER
 ENV IS_DOCKER_BUILD true
 # update pip
 RUN pip install --upgrade pip
-# get the cron application installed
-RUN apt-get update
+# install mysql client and gcc compiler
+RUN apk update && apk add --no-cache mariadb-dev build-base
 # # setup a username and group
+# RUN addgroup -S python_user && adduser -S -D python_user -G python_user
 RUN addgroup --system --gid 1001 python_group
 RUN adduser --system --uid 1001 python_user
 RUN mkdir /nonexistent
 RUN chown python_user:python_group /nonexistent
-# Optional
-# chmod g+s, u-s /usr/bin/crontab
-# set the permissions intialistation script for the container
-COPY --chown=python_user:python_group start.sh /
-RUN ["chmod", "+x", "/start.sh"]
 # pip install the requirements
 COPY --chown=python_user:python_group requirements.txt .
 RUN pip install -r requirements.txt
@@ -43,5 +39,4 @@ RUN chown -R python_user:python_group /django
 # set the user
 USER python_user
 # what runs when the container is started
-CMD ["/start.sh"]
-# CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000"]

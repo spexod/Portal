@@ -2,7 +2,7 @@
 clear
 echo "SpExServer Deployment Build Script"
 # take and currently running containers offline and delete any volumes from the last build
-docker compose down --volumes
+docker compose --profile web --profile api down --volumes
 # delete the output and upload directory contents
 rm -rf ./backend/output/*
 rm -rf ./backend/uploads/*

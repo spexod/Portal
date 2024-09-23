@@ -4,7 +4,7 @@ read -r -p "SpExServer TEST Build Script, press any key to continue..."
 # take and currently running containers offline and delete any volumes from the last build
 docker compose --profile web --profile api down --volumes
 # bring up the the backend and nginx server
-docker compose --profile api up --build --detach
+docker compose --profile api up --build --detach || exit
 echo "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit

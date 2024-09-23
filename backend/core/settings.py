@@ -14,10 +14,11 @@ from pathlib import Path
 from warnings import warn
 from datetime import timedelta
 
-
+from science.db.migrate import do_migration, new_data_staged
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, sql_port, DEBUG,
                             EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
-                            wait_for_mysql_to_start)
+                            wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED)
+
 
 if not wait_for_mysql_to_start():
     raise Exception("Could not connect to MySQL database, please check your environment variables.")
@@ -27,6 +28,9 @@ server_dir = BASE_DIR.parent
 
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
+
+if DATA_MIGRATE_FROM_STAGED and new_data_staged:
+    do_migration()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",  'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c')

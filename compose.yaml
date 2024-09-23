@@ -37,16 +37,16 @@ services:
         - MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}
     image: ghcr.io/spexod/backend:LATEST
     healthcheck:
-      test: ["CMD", "curl", "-f", "localhost:8000/api/stats_total/?format=json"]
-      interval: 5s
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 6s
       timeout: 5s
       retries: 10
     restart: "${RESTART_POLICY:-no}"
     volumes:
       # django-static is written at build time by the SpExWebsite Dockerfile
-      - "django-static:/django/static_root:rw"
-      - "./backend/output:/django/output"
-      - "./backend/data:/django/data"
+      - "django-static:/django/static_root:${VOLUME_SPECIFICATION:-rw}"
+      - "./backend/output:/django/output:${VOLUME_SPECIFICATION:-rw}"
+      - "./backend/data:/django/data:${VOLUME_SPECIFICATION:-rw}"
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
