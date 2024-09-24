@@ -20,38 +20,8 @@ newgrp docker
 # start docker on boot
 sudo systemctl enable docker.service
 sudo systemctl enable containerd.service
-
-# Install Certbot for SSL certificates needed for https
-sudo apt-get install snapd
-sudo snap install --classic certbot
-sudo mkdir /var/www
-sudo mkdir /var/www/spexo
-
 # clone the website repository
-git clone https://github.com/spexod/SpExServer && cd SpExServer || return
+git clone https://github.com/spexod/Portal && cd Portal || exit
 # run the initialization script, which build and deploys the website with an http server
-mkdir backend/data
-sudo chmod 777 backend/data
-cd backend/data || exit
-git clone https://github.com/spexod/data .
-
-docker compose up --detach
-
-# setup a cron job to renew the SSL certificate
-# get the certificate
-sudo certbot certonly --webroot -w /var/www/spexo -d spexodisks.com -d www.spexodisks.com
-
-# we now no longer need the http server, so we can get rid of it
-docker compose down
-
- # set the environment variable to use the deployment version of NGINX server with SSL certificates
-echo "NGINX_CONFIG_FILE='deploy.conf'" >> .env
-
-
-# with a certificate we can now use the deployment version of the website.
-shell/update.sh
-
-# Open the crontab to setup a new cron job
-sudo crontab -e
-# We add a line cron tab file to check if the certificate needs to be renewed, it check once a day
-0 12 * * * sudo /usr/bin/certbot renew --quiet
+./shell/init.sh
+# see https://github.com/spexod/Portal/shell/ssl.md for the next steps

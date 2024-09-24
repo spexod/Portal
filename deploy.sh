@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-echo "SpExServer Deployment Build Script"
+echo "Portal Deployment Build Script"
 # take and currently running containers offline and delete any volumes from the last build
 docker compose --profile web --profile api down
 # delete the (to remake) the Django static files
@@ -31,7 +31,4 @@ echo -e "\nDevelopment Build completed,"
 echo -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
-# ssh into the server and pull the new images
-ssh ubuntu@spexodisks.com -i spexod-us-est-1.pem "/home/ubuntu/SpExServer/shell/update.sh"
-read -r -p  "completed: SpExServer Deployment Build Script, press any key prune docker cache..."
-docker system prune --force --all --volumes
+echo " completed the push to the container repository, continue the update with ./deploy_update.sh"

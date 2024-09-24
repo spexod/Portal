@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-read -r -p "SpExServer Data Processing Script, press any key to continue..."
+read -r -p "Portal Data Processing Script, press any key to continue..."
 # delete the old fits and text files
 rm -rf ./backend/output/* || exit
 # take and currently running containers offline

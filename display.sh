@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-read -r -p "SpExServer TEST Build Script, press any key to continue..."
+read -r -p "Portal TEST Build Script, press any key to continue..."
 # take and currently running containers offline and delete any volumes from the last build
 docker compose --profile web --profile api down
 # delete the (to remake) the Django static files
@@ -28,4 +28,4 @@ docker compose up
 # use control-c to stop the test website, then docker down is called
 docker compose --profile web --profile api down || exit
 echo " "
-echo "completed: SpExServer TEST Build Script"
+echo "completed: Portal TEST Build Script"

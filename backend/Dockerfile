@@ -13,6 +13,8 @@ ENV MYSQL_USER $MYSQL_USER
 ENV IS_DOCKER_BUILD true
 ARG MPLCONFIGDIR
 ENV MPLCONFIGDIR $MPLCONFIGDIR
+ARG DATA_OUTPUT_DIR
+ENV DATA_OUTPUT_DIR $DATA_OUTPUT_DIR
 # update pip
 RUN pip install --upgrade pip
 # install a virtual environment
@@ -29,6 +31,9 @@ RUN adduser --system --uid 1001 python_user --ingroup python_group
 ## make a cache directory for matplotlib
 RUN mkdir -p $MPLCONFIGDIR
 RUN chown python_user:python_group $MPLCONFIGDIR
+# make and output directory for data processing results
+RUN mkdir -p $DATA_OUTPUT_DIR
+RUN chown python_user:python_group $DATA_OUTPUT_DIR
 # pip install the requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt

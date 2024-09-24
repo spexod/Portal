@@ -32,9 +32,10 @@ services:
       network: host
       args:
         - MYSQL_HOST=${MYSQL_HOST:-localhost}
-        - MYSQL_USER=${MYSQL_USER:-root}
-        - MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}
-        - MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}
+        - "MYSQL_USER=${MYSQL_USER:-root}"
+        - "MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+        - "MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}"
+        - "DATA_OUTPUT_DIR=${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}"
     image: ghcr.io/spexod/backend:LATEST
     healthcheck:
       test: ["CMD", "python", "healthcheck.py"]
@@ -54,7 +55,7 @@ services:
       # Data input for processing
       - "./backend/data:/home/python_user/backend_app/data:${VOLUME_SPECIFICATION:-rw}"
       # Data output from processing
-      - "./backend/output:/home/python_user/backend_app/output:${VOLUME_SPECIFICATION:-rw}"
+      - "./backend/output:${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}:${VOLUME_SPECIFICATION:-rw}"
 
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
@@ -129,7 +130,7 @@ services:
     volumes:
       - ssl_keys:/etc/letsencrypt:rw
       - ssl_challenge:/var/www/certbot/.well-known:rw
-    command: [ "certonly", "--webroot", "--webroot-path=/var/www/certbot", "--email", "chw3k5@gmail.com", "--agree-tos", "--no-eff-email", "-d", "hypatiacatalog.com", "-d", "www.hypatiacatalog.com", "-d", "new.hypatiacatalog.com" ]
+    command: [ "certonly", "--webroot", "--webroot-path=/var/www/certbot", "--email", "chw3k5@gmail.com", "--agree-tos", "--no-eff-email", "-d", "spexodisks.com", "-d", "www.spexodisks.com"]
     depends_on:
       - nginx
     profiles: [ "ssl" ]

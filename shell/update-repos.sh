@@ -1,8 +1,8 @@
 #!/bin/bash
-echo "SpExServer Update Script"
-echo "Updating SpExServer Repository"
+echo "Portal Update Script"
+echo "Updating Portal Repository"
 # make sure the script is running from the correct directory
-cd ../SpExServer || exit
+cd ../Portal || exit
 git restore .
 git pull origin main
 git checkout main
@@ -19,4 +19,4 @@ git restore .
 git pull origin main
 git checkout main
 cd ../
-echo "completed: SpExServer Update Script"
+echo "completed: Portal Update Script"
