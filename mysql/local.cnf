@@ -1,0 +1,2 @@
+[mysqld]
+mysql-native-password=ON

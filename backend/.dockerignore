@@ -3,7 +3,7 @@
 /.gitignore
 .idea
 .git
-Dockerfile*
+*Dockerfile*
 venv*
 science/db/output
 science/db/upload

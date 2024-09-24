@@ -2,7 +2,9 @@
 clear
 echo "SpExServer Deployment Build Script"
 # take and currently running containers offline and delete any volumes from the last build
-docker compose --profile web --profile api down --volumes
+docker compose --profile web --profile api down
+# delete the (to remake) the Django static files
+./shell/rm_volumes.sh
 # delete the output and upload directory contents
 rm -rf ./backend/output/*
 rm -rf ./backend/uploads/*
@@ -23,7 +25,7 @@ cd ../ || exit
 echo -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."
 docker compose build frontend --no-cache || exit
 # take down the old containers
-docker compose down --volumes
+docker compose down
 # stop here to look for error messages
 echo -e "\nDevelopment Build completed,"
 echo -r -p "Pushing the new images to the container repository"

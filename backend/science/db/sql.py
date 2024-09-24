@@ -33,6 +33,18 @@ else:
     is_docker = True
 print(f'{os.environ.get("IS_DOCKER_BUILD", 'false')} os.environ.get("IS_DOCKER_BUILD", "false")')
 is_docker_build = str_is_true(os.environ.get("IS_DOCKER_BUILD", 'false'))
+local_key_dir = os.path.join(repo_dir, 'mysql', 'certs')
+
+
+def find_key_file(file_name: str) -> str | None:
+    local_key_path = os.path.join(local_key_dir,  file_name)
+    if os.path.exists(local_key_path):
+        return local_key_path
+    else:
+        docker_key_path = os.path.join(repo_dir, 'mysql.key')
+        if os.path.exists(docker_key_path):
+            return docker_key_path
+    return None
 
 
 sql_port = "3306"
@@ -60,6 +72,11 @@ EMAIL_PORT = os.environ.get("DJANGO_EMAIL_PORT", "587")
 EMAIL_USER = str_or_none(os.environ.get("DJANGO_EMAIL_USER", "None"))
 EMAIL_APP_PASSWORD = str_or_none(os.environ.get("DJANGO_EMAIL_APP_PASSWORD", "None"))
 
+
+
+MYSQL_KEY_FILE = find_key_file("mysql.key")
+MYSQL_CERT_FILE = find_key_file("mysql.crt")
+MYSQL_CA_FILE = find_key_file("ca.crt")
 
 # fundamental casting and naming operations
 django_tables = ['auth_group', 'auth_group_permissions', 'auth_permission',

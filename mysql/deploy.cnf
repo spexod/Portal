@@ -1,0 +1,5 @@
+[mysqld]
+ssl-ca=/etc/mysql/certs/ca.crt
+ssl-cert=/etc/mysql/certs/mysql.crt
+ssl-key=/etc/mysql/certs/mysql.key
+require_secure_transport=OFF

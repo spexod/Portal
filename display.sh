@@ -2,7 +2,9 @@
 clear
 read -r -p "SpExServer TEST Build Script, press any key to continue..."
 # take and currently running containers offline and delete any volumes from the last build
-docker compose --profile web --profile api down --volumes
+docker compose --profile web --profile api down
+# delete the (to remake) the Django static files
+./shell/rm_volumes.sh
 # bring up the the backend and nginx server
 docker compose --profile api up --build --detach || exit
 echo "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
@@ -24,6 +26,6 @@ read -r -p "Frontend Build completed, press any key to launch the test-website a
 # launch the test website
 docker compose up
 # use control-c to stop the test website, then docker down is called
-docker compose --profile web --profile api down --volumes
+docker compose --profile web --profile api down || exit
 echo " "
-read -r -p "completed: SpExServer TEST Build Script, press any key to continue..."
+echo "completed: SpExServer TEST Build Script"

@@ -116,5 +116,8 @@ autostar_toml = {'reference_data_dir': ref_dir,
                  'sb_desired_names': sb_desired_names}
 
 ref_module_dir = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(ref_module_dir, "user.toml"), 'w') as f:
-    toml.dump(autostar_toml, f)
+try:
+    with open(os.path.join(ref_module_dir, "user.toml"), 'w') as f:
+        toml.dump(autostar_toml, f)
+except OSError:
+    print(f"Could not write the user.toml file to {ref_module_dir}, read-only file system?")

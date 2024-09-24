@@ -2,7 +2,6 @@ services:
   mysqlDB:
     image: mysql:8.4
     container_name: mysqlDB
-    command: ['mysqld', '--mysql-native-password=ON']
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
       interval: 5s
@@ -16,13 +15,13 @@ services:
       - "3306:3306"
     volumes:
       # store data in a volume on the host for the MySQL database
-      - type: bind
-        source: ./mysql/local
-        target: /var/lib/mysql
+      - "./mysql/local:/var/lib/mysql:rw"
       # initialize the database from existing files in this directory
-      - type: bind
-        source: ./mysql/init
-        target: /docker-entrypoint-initdb.d
+      - "./mysql/init:/docker-entrypoint-initdb.d:ro"
+      # store SSL certificates in a volume on the host
+      - "./mysql/certs:/etc/mysql/certs:ro"
+      # Select between MySQL configuration files
+      - "./mysql/${MYSQL_CONFIG_FILE:-local.cnf}:/etc/mysql/my.cnf:ro"
     restart: "${RESTART_POLICY:-no}"
     profiles: ["db"]
 
@@ -35,6 +34,7 @@ services:
         - MYSQL_HOST=${MYSQL_HOST:-localhost}
         - MYSQL_USER=${MYSQL_USER:-root}
         - MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}
+        - MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}
     image: ghcr.io/spexod/backend:LATEST
     healthcheck:
       test: ["CMD", "python", "healthcheck.py"]
@@ -42,11 +42,20 @@ services:
       timeout: 5s
       retries: 10
     restart: "${RESTART_POLICY:-no}"
+    # the container is read-only, except for specific volumes
+    read_only: true
     volumes:
-      # django-static is written at build time by the SpExWebsite Dockerfile
-      - "django-static:/django/static_root:${VOLUME_SPECIFICATION:-rw}"
-      - "./backend/output:/django/output:${VOLUME_SPECIFICATION:-rw}"
-      - "./backend/data:/django/data:${VOLUME_SPECIFICATION:-rw}"
+      # django_static is written at build time by the SpExWebsite Dockerfile
+      - "django_static:/home/python_user/backend_app/static_root:${VOLUME_SPECIFICATION:-rw}"
+      # matplotlib_cache is recommended for matplotlib to work in a docker container
+      - "matplotlib_cache:${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}:rw"
+      # gunicorn to store temporary files
+      - "gunicorn_tmp:/var/tmp:rw"
+      # Data input for processing
+      - "./backend/data:/home/python_user/backend_app/data:${VOLUME_SPECIFICATION:-rw}"
+      # Data output from processing
+      - "./backend/output:/home/python_user/backend_app/output:${VOLUME_SPECIFICATION:-rw}"
+
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
@@ -90,7 +99,7 @@ services:
       - "./nginx/${NGINX_CONFIG_FILE:-setup.conf}:/etc/nginx/conf.d/default.conf:rw"
       - "/var/www/spexo/.well-known:/var/www/react/.well-known"
       - "/etc/letsencrypt/:/etc/letsencrypt/"
-      - "django-static:/django/static_root:ro"
+      - "django_static:/django/static_root:ro"
     profiles: ["api", "web"]
 
   ipython:
@@ -115,6 +124,40 @@ services:
           - ./backend:/backend
       profiles: ["ipython"]
 
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ssl_keys:/etc/letsencrypt:rw
+      - ssl_challenge:/var/www/certbot/.well-known:rw
+    command: [ "certonly", "--webroot", "--webroot-path=/var/www/certbot", "--email", "chw3k5@gmail.com", "--agree-tos", "--no-eff-email", "-d", "hypatiacatalog.com", "-d", "www.hypatiacatalog.com", "-d", "new.hypatiacatalog.com" ]
+    depends_on:
+      - nginx
+    profiles: [ "ssl" ]
+    networks:
+      - hynet
+
+  cert-gen:
+    image: alpine
+    volumes:
+      - ./mysql/certs:/certs:rw
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache openssl &&
+        openssl genpkey -algorithm RSA -out /certs/mysql.key -pkeyopt rsa_keygen_bits:2048 &&
+        openssl req -new -key /certs/mysql.key -out /certs/mysql.csr -subj "/CN=mysql/O=myorg/C=US" &&
+        openssl x509 -req -in /certs/mysql.csr -signkey /certs/mysql.key -out /certs/mysql.crt -days 365 &&
+        openssl genpkey -algorithm RSA -out /certs/ca.key -pkeyopt rsa_keygen_bits:2048 &&
+        openssl req -new -x509 -key /certs/ca.key -out /certs/ca.crt -days 1095 -subj "/CN=Certificate Authority/O=myorg/C=US" &&
+        chmod 600 /certs/* && chown 999:999 /certs/*
+    restart: "no"
+    profiles: [ "db-ssl" ]
+
 
 volumes:
-  django-static:
+  django_static:
+  matplotlib_cache:
+  gunicorn_tmp:
+  ssl_keys:
+  ssl_challenge:

@@ -5,6 +5,8 @@
 .git_token.txt
 .backup_email_codes.txt
 mysql/*.sql
+/backend/mysql.key
+/backend/mysql.crt
 
 
 # Byte-compiled / optimized / DLL files
@@ -164,4 +166,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-

@@ -7,7 +7,6 @@ For more information on this file, see
 https://docs.djangoproject.com/en/3.1/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
@@ -15,8 +14,8 @@ from warnings import warn
 from datetime import timedelta
 
 from science.db.migrate import do_migration, new_data_staged
-from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, sql_port, DEBUG,
-                            EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
+from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD,
+                            sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
                             wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED)
 
 
@@ -102,47 +101,33 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
+data_auth = {
+    'ENGINE': 'django.db.backends.mysql',
+    'USER': MYSQL_USER,
+    'PASSWORD': MYSQL_PASSWORD,
+    'PORT': sql_port,
+    'HOST': MYSQL_HOST,
+}
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': f'users',
-        'USER': MYSQL_USER,
-        'PASSWORD': MYSQL_PASSWORD,
-        'PORT': sql_port,
-        'HOST': MYSQL_HOST,
+        'NAME': 'users',
+        **data_auth,
     },
     'spectra': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': f'spectra',
-        'USER': MYSQL_USER,
-        'PASSWORD': MYSQL_PASSWORD,
-        'PORT': sql_port,
-        'HOST': MYSQL_HOST,
+        'NAME': 'spectra',
+        **data_auth,
     },
     'spexodisks': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': f'spexodisks',
-        'USER': MYSQL_USER,
-        'PASSWORD': MYSQL_PASSWORD,
-        'PORT': sql_port,
-        'HOST': MYSQL_HOST,
+        'NAME': 'spexodisks',
+        **data_auth,
     },
     'new_spectra': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': f'new_spectra',
-        'USER': MYSQL_USER,
-        'PASSWORD': MYSQL_PASSWORD,
-        'PORT': sql_port,
-        'HOST': MYSQL_HOST,
+        'NAME': 'new_spectra',
+        **data_auth,
     },
     'new_spexodisks': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': f'new_spexodisks',
-        'USER': MYSQL_USER,
-        'PASSWORD': MYSQL_PASSWORD,
-        'PORT': sql_port,
-        'HOST': MYSQL_HOST,
+        'NAME': 'new_spexodisks',
+        **data_auth,
     }
 
 }
