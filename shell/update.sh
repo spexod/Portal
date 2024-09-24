@@ -3,11 +3,8 @@ clear
 echo "SpExServer Update Script"
 cd /home/ubuntu/Portal/ || exit
 user='chw3k5'
-# # permission must be set for the token to pull from the repo, this token is only for the container registry
-# auth_token=$(cat .git_token.txt)
-# sudo git pull "https://${user}:${auth_token}@github.com/spexod/SpExServer"
-# git checkout main
-# git pull origin main
+# This is public repo, so we can pull without authentication, to update the compose file
+git pull origin main
 # log in to THe GitHub Container Registry
 cat .git_token.txt | docker login ghcr.io --username "${user}" --password-stdin
 # pull the fresh version from the container registry

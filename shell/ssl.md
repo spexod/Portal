@@ -115,6 +115,13 @@ but only for a data initialization script.
 
 ### Remote only
 
+> [!WARNING]
+> This script requires token file (*.git_token.txt*) to be in the Portal directory.
+> This file is expected to contain a GitHub token with 
+> read permissions to GitHub packages (which includes the container registry).
+> This token needs only minimal permissions needed read docker images
+> and must be set to expire in periodically. 
+
 ```
 deploy_upload.sh
 ```
