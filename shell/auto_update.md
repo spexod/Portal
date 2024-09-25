@@ -2,8 +2,7 @@
 This needs to be setup once on the server to allow automatic updates
 ## install packages (usually these are already installed)
 ```
-sudo apt install unattended-upgrades
-sudo apt install update-notifier-common
+sudo apt-get install unattended-upgrades update-notifier-common
 ```
 ## enable automatic updates (this launches an interactive prompt)
 See detailed in instructions: https://help.ubuntu.com/community/AutomaticSecurityUpdates
@@ -28,10 +27,15 @@ the final line should look like this:
 Unattended-Upgrade::Automatic-Reboot "true";'
 ```
 
+and
+
+```
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+```
+
 Save the file and exit.
 
 ## check the status of the automatic updates
-
 
 ```
 apt-config dump APT::Periodic::Unattended-Upgrade
@@ -40,8 +44,8 @@ apt-config dump APT::Periodic::Unattended-Upgrade
 Which should return something like:
 
 ```
-APT::Periodic::Unattended-Upgrade "1";
+>>> APT::Periodic::Unattended-Upgrade "1";
 ```
 
-At which point the server will automatically update
+Now the server will automatically update
 and reboot as needed.

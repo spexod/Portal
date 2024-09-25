@@ -149,17 +149,50 @@ docker compose up --detach
 docker compose up certbot
 ```
 
-# we now no longer need the http server, so we can get rid of it
+## we now no longer need the http server, so we can get rid of it
+
+```
 docker compose down
+```
 
- # set the environment variable to use the deployment version of NGINX server with SSL certificates
-echo "NGINX_CONFIG_FILE='deploy.conf'" >> .env
+## set the environment variable to use the deployment version of NGINX server with SSL certificates
 
 
-# with a certificate we can now use the deployment version of the website.
-shell/update.sh
+```
+NGINX_CONFIG_FILE="deploy.conf"
+```
 
-# Open the crontab to setup a new cron job
+It was previously set to `setup.conf` in the `.env` file.
+
+
+## with an SSL certificate we can now use the deployment version of the website.
+
+```
+docker compose up --detach
+```
+
+## Renewal With CronTab
+
+### install cron, probably already installed on Ubuntu
+```
+sudo apt-get install cron
+```
+
+### Enable the cron app to run in the background
+
+```
+sudo systemctl enable cron
+```
+
+### Open the crontab to setup a new cron job
+
+```
 sudo crontab -e
-# We add a line cron tab file to check if the certificate needs to be renewed, it check once a day
-0 12 * * * sudo /usr/bin/certbot renew --quiet
+```
+
+
+### We add a line cron tab file to check if the certificate needs to be renewed, it checks once a day at 3:00PM.
+
+```
+0 15 * * * docker compose --file /home/ubuntu/Portal/compose.yaml run certbot renew --quiet
+```
