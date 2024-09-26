@@ -230,7 +230,17 @@ SITE_NAME = 'SpExoDisks'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+        'core.throttling.BurstRateThrottle',
+        'core.throttling.SustainedRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'spectra': '5/min',
+        'burst': '25/min',
+        'sustained': '5000/day'
+    }
 }
 
 SIMPLE_JWT = {

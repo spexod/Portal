@@ -5,6 +5,4 @@
 .git
 *Dockerfile*
 venv*
-science/db/output
-science/db/upload
-data/data_products
+output

@@ -15,6 +15,8 @@ rm -rf .next || return
 # copy production environment variables
 rm .env.production || return
 cp .env.display .env.production || exit
+# update the packages in package-lock.json (this requires node https://nodejs.org/en/download/package-manager)
+npm update || exit
 cd ../ || exit
 # build in the docker container
 echo -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."

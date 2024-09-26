@@ -66,6 +66,7 @@ for spectrum_handle in sorted(spectra_models.keys()):
                                           dict(__module__='views',
                                                queryset=queryset,
                                                serializer_class=spectra_serializers[spectrum_handle],
+                                               throttle_scope='spectra',
                                                list=list))
 
 """
