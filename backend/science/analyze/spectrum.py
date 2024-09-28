@@ -254,6 +254,7 @@ class Spectrum:
         self.output_filename = None
         self.output_txt_filename = None
         self.output_fits_filename = None
+        self.sql_file_path = ''
         self.calculations()
 
         # parameters that are set elsewhere, such as in the methods of this class or ObjectCollection
@@ -282,6 +283,9 @@ class Spectrum:
         self.output_filename = os.path.join(self.output_dir_this_object, self.set_type + "_" + self.range_str)
         self.output_txt_filename = self.output_filename + ".txt"
         self.output_fits_filename = self.output_filename + ".fits"
+        parent_dirs, fits_file_name = os.path.split(self.output_fits_filename)
+        _, star_name_dir = os.path.split(parent_dirs)
+        self.sql_file_path = f'{star_name_dir}/{fits_file_name}'
         # Things that should not be allowed for proper data representation.
         if len(self.wavelength_um) != len(self.flux):
             error_msg = f'Flux array length {len(self.flux)} does not match wavelength array length ' + \
@@ -307,7 +311,7 @@ class Spectrum:
         self.velocity_kmps = um_to_vel(self.wavelength_um, self.zero_velocity_wavelength_um)
 
     def make_spectrum_summary(self):
-        self.spectrum_summary = SpectraSummary(file=self.output_filename,
+        self.spectrum_summary = SpectraSummary(file=self.sql_file_path,
                                                um_min=self.min_wavelength_um,
                                                um_max=self.max_wavelength_um,
                                                set_type=self.set_type,

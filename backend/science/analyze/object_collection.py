@@ -129,7 +129,10 @@ def spectrum_data_for_sql(single_spectrum):
                      "spexodisks_handle": single_spectrum.spexodisks_handle,
                      "spectrum_display_name": single_spectrum.spectrum_display_name}
     for an_attr in sql_spectrum_types:
-        value = single_spectrum.__getattribute__(an_attr)
+        if an_attr == 'output_filename':
+            value = single_spectrum.sql_file_path
+        else:
+            value = single_spectrum.__getattribute__(an_attr)
         if value is not None:
             if isinstance(value, bool):
                 value = int(value)
@@ -495,7 +498,7 @@ class ObjectCollection:
                     other_names_for_object += StringStarName((star_name_type, star_id)).string_name + "|"
             output_stars_dict[spexodisks_handle]["other_names"] = other_names_for_object[:-1]
 
-            # how many row will be needed for all the data available for this object.
+            # how many rows will be needed for all the data available for this object?
             output_stars_dict[spexodisks_handle]['rows_required'] = rows_required
         # now we make a per parameter centric output
         output_params_dict = {}
