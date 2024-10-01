@@ -22,8 +22,18 @@ services:
       - "./mysql/certs:/etc/mysql/certs:ro"
       # Select between MySQL configuration files
       - "./mysql/${MYSQL_CONFIG_FILE:-local.cnf}:/etc/mysql/my.cnf:ro"
-    restart: "${RESTART_POLICY:-no}"
     profiles: ["db"]
+    deploy:
+      resources:
+        limits:
+            memory: 1400M
+        reservations:
+            memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 2s
+        max_attempts: 3
+        window: 30s
 
   backend:
     platform: linux/amd64
@@ -42,7 +52,6 @@ services:
       interval: 6s
       timeout: 5s
       retries: 10
-    restart: "${RESTART_POLICY:-no}"
     # the container is read-only, except for specific volumes
     read_only: true
     volumes:
@@ -56,7 +65,6 @@ services:
       - "./backend/data:/home/python_user/backend_app/data:${VOLUME_SPECIFICATION:-rw}"
       # Data output from processing
       - "./backend/output:${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}:${VOLUME_SPECIFICATION:-rw}"
-
     environment:
       DATA_NEW_UPLOADS_ONLY: "${DATA_NEW_UPLOADS_ONLY:-true}"
       DATA_MIGRATE_FROM_STAGED: "${DATA_MIGRATE_FROM_STAGED:-false}"
@@ -74,6 +82,17 @@ services:
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
       IS_DOCKER_BUILD: "false"
     profiles: ['api']
+    deploy:
+      resources:
+        limits:
+          memory: 1800M
+        reservations:
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 180s
     # Optionally uncomment the following lines when using the "db" profile.
     # Wait for the database to be ready before starting the backend.
 #    depends_on:
@@ -86,13 +105,22 @@ services:
       context: ./SpExo-FrontEnd
       network: host
     image: ghcr.io/spexod/frontend:LATEST
-    restart: "${RESTART_POLICY:-no}"
     profiles: ["web"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 45s
 
   nginx:
     platform: linux/amd64
     image: nginx:latest
-    restart: "${RESTART_POLICY:-no}"
     ports:
       - "80:8080"
       - "443:8443"
@@ -104,13 +132,23 @@ services:
       - ssl_challenge:/var/www/certbot/.well-known:ro
       - "django_static:/django/static_root:ro"
     profiles: ["api", "web"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
 
   ipython:
       build:
           context: ./backend
           dockerfile: ipython.Dockerfile
       container_name: ipython
-      restart: "${RESTART_POLICY:-no}"
       user: root
       ports:
           - "8888:8888"
@@ -152,7 +190,6 @@ services:
         openssl genpkey -algorithm RSA -out /certs/ca.key -pkeyopt rsa_keygen_bits:2048 &&
         openssl req -new -x509 -key /certs/ca.key -out /certs/ca.crt -days 1095 -subj "/CN=Certificate Authority/O=myorg/C=US" &&
         chmod 600 /certs/* && chown 999:999 /certs/*
-    restart: "no"
     profiles: [ "db-ssl" ]
 
 
