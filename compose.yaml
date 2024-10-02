@@ -31,6 +31,7 @@ services:
             memory: 1G
       restart_policy:
         delay: 2s
+        condition: any
 
   backend:
     platform: linux/amd64
@@ -87,6 +88,7 @@ services:
           memory: 1G
       restart_policy:
         delay: 20s
+        condition: any
 
     # Optionally uncomment the following lines when using the "db" profile.
     # Wait for the database to be ready before starting the backend.
@@ -109,6 +111,7 @@ services:
           memory: 256M
       restart_policy:
         delay: 20s
+        condition: any
 
   nginx:
     platform: linux/amd64
@@ -132,6 +135,7 @@ services:
           memory: 128M
       restart_policy:
         delay: 2s
+        condition: any
 
   ipython:
       build:
