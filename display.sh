@@ -7,7 +7,7 @@ docker compose --profile web --profile api down
 ./shell/rm_volumes.sh
 # bring up the the backend and nginx server
 docker compose --profile api up --build --detach || exit
-echo "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
+echo "Build a local API (backend) and NGINX-server completed, building the frontend..."
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
@@ -19,7 +19,7 @@ cp .env.display .env.production || exit
 npm update || exit
 cd ../ || exit
 # build in the docker container
-echo -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."
+echo -r -p "Local Build for frontend completed (needed for fetch-cache), launching the test-website..."
 docker compose build frontend || exit
 # test the build on a local machine
 # stop here to look for error messages
