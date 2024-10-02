@@ -30,10 +30,7 @@ services:
         reservations:
             memory: 1G
       restart_policy:
-        condition: on-failure
         delay: 2s
-        max_attempts: 3
-        window: 30s
 
   backend:
     platform: linux/amd64
@@ -89,10 +86,8 @@ services:
         reservations:
           memory: 1G
       restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 180s
+        delay: 20s
+
     # Optionally uncomment the following lines when using the "db" profile.
     # Wait for the database to be ready before starting the backend.
 #    depends_on:
@@ -113,10 +108,7 @@ services:
         reservations:
           memory: 256M
       restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 45s
+        delay: 20s
 
   nginx:
     platform: linux/amd64
@@ -139,10 +131,7 @@ services:
         reservations:
           memory: 128M
       restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 10s
+        delay: 2s
 
   ipython:
       build:
