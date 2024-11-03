@@ -1,6 +1,6 @@
 # # Things that can be cached
 # Base Configurations
-FROM python:3.12-alpine AS build
+FROM python:3.13-alpine AS build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /home/python_user/backend_app
 ENV PYTHONPATH "${PYTHONPATH}:/home/python_user/backend_app"
