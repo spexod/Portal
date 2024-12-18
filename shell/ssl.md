@@ -193,5 +193,5 @@ sudo crontab -e
 ### We add a line cron tab file to check if the certificate needs to be renewed, it checks once a day at 3:00PM.
 
 ```
-0 15 * * * docker compose --file /home/ubuntu/Portal/compose.yaml run certbot renew --quiet
+0 15 * * * docker compose --file /home/ubuntu/Portal/compose.yaml run --rm certbot renew --quiet
 ```
