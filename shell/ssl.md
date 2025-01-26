@@ -194,4 +194,5 @@ sudo crontab -e
 
 ```
 0 15 * * * docker compose --file /home/ubuntu/Portal/compose.yaml run --rm certbot renew --quiet
+0 16 * * SUN,Tue,Thu docker compose --file /home/ubuntu/Portal/compose.yaml restart nginx
 ```
