@@ -30,6 +30,12 @@ suffixes = ['.txt', ".fits", ".dat"]
 file_name_replace_strings = {"plus": "+", "minus": '-'}
 acceptable_file_extensions = {"txt", "psv", 'csv', 'fits', 'toml'}
 
+miri_fits_types_to_spexo_fields = {
+    'wavelength': 'wavelength_um',
+    'fluxdensity': 'flux',
+    'fluxdensity_stddev': 'flux_error',
+}
+
 ExtraScienceProductPath = namedtuple("ExtraScienceProductPath", "isotopologue transition path")
 
 
@@ -144,8 +150,7 @@ def ishell(path):
     return spec_data
 
 
-@parser
-def miri(path):
+def miri_toml(path: str | os.PathLike) -> dict[str, any]:
     spec_data = toml.load(path)
     wavelength_um, flux = zip(*spec_data['wavelength_um_flux'])
     del spec_data['wavelength_um_flux']
@@ -154,6 +159,36 @@ def miri(path):
     spec_data['wavelength_um'] = np.array(wavelength_um)
     spec_data['flux'] = np.array(flux)
     return spec_data
+
+
+def miri_fits(path: str | os.PathLike) -> dict[str, any]:
+    spec_data = {'flux_calibrated': True, 'downloadable': True}
+    hdul = get_fits(path)
+    # header parsing
+    raw_header = hdul[1].header
+    parsed_header = fits_headers_to_dict(raw_header)
+    spec_data['header'] = parsed_header
+    spec_data['observation_date'] = datetime.fromisoformat(f"{parsed_header['DATE-END']}+00:00")
+    spec_data['pi'] = f"{parsed_header['PI_NAME']} (JWST GO program #{parsed_header['PROPOSID']})"
+    spec_data['object'] = parsed_header['HLSPTARG']
+    spec_data['reference'] = parsed_header['PUBL_REF']
+    # data parsing
+    raw_data = hdul[1].data
+    available_data_types = [miri_fits_types_to_spexo_fields[field_name]
+                            for field_name in list(raw_data.dtype.fields.keys())]
+    numeric_values = list(zip(*raw_data))
+    spec_data.update({dtype: np.array(data_column) for dtype, data_column in zip(available_data_types, numeric_values)})
+    return spec_data
+
+
+@parser
+def miri(path: str | os.PathLike) -> dict[str, any]:
+    if path.endswith('.fits'):
+        return miri_fits(path)
+    elif path.endswith('.toml'):
+        return miri_toml(path)
+    else:
+        raise ValueError(f'Unknown file Miri spectra Format type for {path}')
 
 
 @parser
