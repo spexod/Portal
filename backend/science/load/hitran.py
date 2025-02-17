@@ -9,6 +9,7 @@ from ref.ref import hitran_dir, data_pro_dir, k_h, k_c, k_k, conv, conv_cmk
 molecule_key = {1: "H2O", 2: "CO2", 3: "O3", 4: "N2O", 5: "CO", 6: "CH4", 7: "O2", 13: "OH"}
 molecule_to_label = {"H2O": 'H<sub>2</sub>O',
                      "CO2": 'CO<sub>2</sub>',
+                     'OH': 'OH',
                      "O3": 'O<sub>3</sub>',
                      "N2O": 'N<sub>2</sub>O',
                      "CO": 'CO',
@@ -52,37 +53,73 @@ plotly_dash_value = {"H216O": 'dot', "H218O": "dot", "H217O": "dot",
                      "16OH": 'longdash', "18OH": "longdash", "16OD": "longdash",
                      }
 
+columns_CO = ['wavelength_um', 'isotopologue', 'upper_level', 'lower_level', 'transition', 'einstein_A',
+              'upper_level_energy', 'lower_level_energy', 'g_statistical_weight_upper_level',
+              'g_statistical_weight_lower_level', 'upper_vibrational', 'upper_rotational', 'branch',
+              'lower_vibrational', 'lower_rotational']
+columns_H2O = ['wavelength_um', 'isotopologue', 'upper_level', 'lower_level', 'transition', 'einstein_A',
+               'upper_level_energy', 'lower_level_energy', 'g_statistical_weight_upper_level',
+               'g_statistical_weight_lower_level', 'upper_vibrational1', 'upper_vibrational2',
+               'upper_vibrational3', 'upper_rotational', 'upper_ka', 'upper_kc', 'lower_vibrational1',
+               'lower_vibrational2', 'lower_vibrational3', 'lower_rotational', 'lower_ka', 'lower_kc']
+columns_OH = ['wavelength_um', 'isotopologue', 'upper_level', 'lower_level', 'transition', 'einstein_A',
+              'upper_level_energy', 'lower_level_energy',
+              'g_statistical_weight_upper_level', 'g_statistical_weight_lower_level',
+              'upper_electrical_state', 'upper_f_prime', 'upper_total_angular_momentum', 'upper_vibrational',
+              'lower_branch', 'lower_electrical_state', 'lower_f_double_prime', 'lower_j_double_prime',
+              'lower_sym_double_prime', 'lower_total_angular_momentum', 'lower_vibrational']
+
 
 def make_hl_dict(hitran_line):
-    hl_data = {"wavelength_um": hitran_line.wavelength_um,
-               "isotopologue": hitran_line.isotopologue,
-               "upper_level": str(hitran_line.upper_level),
-               "lower_level": str(hitran_line.lower_level),
-               "transition": hitran_line.transition,
-               "einstein_A": hitran_line.einstein_A,
-               "upper_level_energy": hitran_line.upper_level_energy,
-               "lower_level_energy": hitran_line.lower_level_energy,
-               "g_statistical_weight_upper_level": hitran_line.g_statistical_weight_upper_level,
-               "g_statistical_weight_lower_level": hitran_line.g_statistical_weight_lower_level}
-    if hitran_line.molecule == "CO":
-        hl_data.update({"upper_vibrational": hitran_line.upper_level.vibrational,
-                        "upper_rotational": hitran_line.upper_level.rotational,
-                        "branch": hitran_line.upper_level.branch,
-                        "lower_vibrational": hitran_line.lower_level.vibrational,
-                        "lower_rotational": hitran_line.lower_level.rotational})
-    elif hitran_line.molecule == "H2O":
-        hl_data.update({"upper_vibrational1": hitran_line.upper_level.vibrational[0],
-                        "upper_vibrational2": hitran_line.upper_level.vibrational[1],
-                        "upper_vibrational3": hitran_line.upper_level.vibrational[2],
-                        "upper_rotational": hitran_line.upper_level.rotational,
-                        "upper_ka": hitran_line.upper_level.ka,
-                        "upper_kc": hitran_line.upper_level.kc,
-                        "lower_vibrational1": hitran_line.lower_level.vibrational[0],
-                        "lower_vibrational2": hitran_line.lower_level.vibrational[1],
-                        "lower_vibrational3": hitran_line.lower_level.vibrational[2],
-                        "lower_rotational": hitran_line.lower_level.rotational,
-                        "lower_ka": hitran_line.lower_level.ka,
-                        "lower_kc": hitran_line.lower_level.kc})
+    hl_data = {
+        'wavelength_um': hitran_line.wavelength_um,
+        'isotopologue': hitran_line.isotopologue,
+        'upper_level': str(hitran_line.upper_level),
+        'lower_level': str(hitran_line.lower_level),
+        'transition': hitran_line.transition,
+        'einstein_A': hitran_line.einstein_A,
+        'upper_level_energy': hitran_line.upper_level_energy,
+        'lower_level_energy': hitran_line.lower_level_energy,
+        'g_statistical_weight_upper_level': hitran_line.g_statistical_weight_upper_level,
+        'g_statistical_weight_lower_level': hitran_line.g_statistical_weight_lower_level,
+    }
+    if hitran_line.molecule == 'CO':
+        hl_data.update({
+            'upper_vibrational': hitran_line.upper_level.vibrational,
+            'upper_rotational': hitran_line.upper_level.rotational,
+            'branch': hitran_line.upper_level.branch,
+            'lower_vibrational': hitran_line.lower_level.vibrational,
+            'lower_rotational': hitran_line.lower_level.rotational,
+        })
+    elif hitran_line.molecule == 'H2O':
+        hl_data.update({
+            'upper_vibrational1': hitran_line.upper_level.vibrational[0],
+            'upper_vibrational2': hitran_line.upper_level.vibrational[1],
+            'upper_vibrational3': hitran_line.upper_level.vibrational[2],
+            'upper_rotational': hitran_line.upper_level.rotational,
+            'upper_ka': hitran_line.upper_level.ka,
+            'upper_kc': hitran_line.upper_level.kc,
+            'lower_vibrational1': hitran_line.lower_level.vibrational[0],
+            'lower_vibrational2': hitran_line.lower_level.vibrational[1],
+            'lower_vibrational3': hitran_line.lower_level.vibrational[2],
+            'lower_rotational': hitran_line.lower_level.rotational,
+            'lower_ka': hitran_line.lower_level.ka,
+            'lower_kc': hitran_line.lower_level.kc,
+        })
+    elif hitran_line.molecule == 'OH':
+        hl_data.update({
+            'upper_electrical_state': hitran_line.upper_level.electrical_state,
+            'upper_total_angular_momentum': hitran_line.upper_level.total_angular_momentum,
+            'upper_vibrational': hitran_line.upper_level.vibrational,
+            'upper_f_prime': hitran_line.upper_level.f_prime,
+            'lower_electrical_state': hitran_line.lower_level.electrical_state,
+            'lower_total_angular_momentum': hitran_line.lower_level.total_angular_momentum,
+            'lower_vibrational': hitran_line.lower_level.vibrational,
+            'lower_branch': hitran_line.lower_level.branch,
+            'lower_j_double_prime': hitran_line.lower_level.j_double_prime,
+            'lower_sym_double_prime': hitran_line.lower_level.sym_double_prime,
+            'lower_f_double_prime': hitran_line.lower_level.f_double_prime,
+        })
     return hl_data
 
 
@@ -254,6 +291,14 @@ class QuantaUpperOH(NamedTuple):
     vibrational: int
     f_prime: Optional[str] = None
 
+    def __str__(self):
+        if self.f_prime is None:
+            return f'X omega V ({self.electrical_state} {self.total_angular_momentum} {self.vibrational})'
+        else:
+            return f'X omega V F ({self.electrical_state} {self.total_angular_momentum} {self.vibrational} ' + \
+                f'{self.f_prime})'
+
+
 
 class QuantaLowerOH(NamedTuple):
     electrical_state: str
@@ -263,6 +308,15 @@ class QuantaLowerOH(NamedTuple):
     j_double_prime: float
     sym_double_prime: str
     f_double_prime: Optional[str] = None
+
+    def __str__(self):
+        if self.f_double_prime is None:
+            return f'({self.electrical_state} {self.total_angular_momentum} {self.vibrational}) ' + \
+                         f'{self.branch} {self.j_double_prime} {self.sym_double_prime}'
+        else:
+            return f'({self.electrical_state} {self.total_angular_momentum} ' + \
+                   f'{self.vibrational} {self.f_double_prime}) {self.branch} {self.j_double_prime} ' + \
+                   f'{self.sym_double_prime}'
 
 
 quanta_summary_functions = {}
@@ -337,17 +391,10 @@ def oh(upper_global_quanta, lower_global_quanta, upper_local_quanta, lower_local
                           j_double_prime=quanta['j_double_prime'],
                           sym_double_prime=quanta['sym_double_prime'],
                           f_double_prime=f_double_prime)
-    if f_prime is None and f_double_prime is None:
-        transition = f"X omega V ({qqup.electrical_state} {qqup.total_angular_momentum} {qqup.vibrational})->" +\
-                     f"({qqlow.electrical_state} {qqlow.total_angular_momentum} {qqlow.vibrational}) " +\
-                     f"{qqlow.branch} {qqlow.j_double_prime} {qqlow.sym_double_prime}"
-    elif f_prime is not None and f_double_prime is not None:
-        transition = f"X omega V F ({qqup.electrical_state} {qqup.total_angular_momentum} {qqup.vibrational} " +\
-                     f"{qqup.f_prime})->({qqlow.electrical_state} {qqlow.total_angular_momentum} " +\
-                     f"{qqlow.vibrational} {qqlow.f_double_prime}) {qqlow.branch} {qqlow.j_double_prime} " +\
-                     f"{qqlow.sym_double_prime}"
+    if (f_prime is None and f_double_prime is None) or (f_prime is not None and f_double_prime is not None):
+        transition = f'{qqlow}->{qqup}'
     else:
-        raise ValueError("OH must have both f_prime and f_double_prime to be None or both not None")
+        raise ValueError('OH must have both f_prime and f_double_prime to be None or both not None')
     return qqup, qqlow, transition
 
 

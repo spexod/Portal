@@ -10,31 +10,32 @@ from itertools import zip_longest
 from astropy import units as u
 from astropy.coordinates import SkyCoord, FK5
 
-from ref.ref import object_params_dir, spectra_schema, spexo_schema, stacked_line_schema, \
-    references_per_parameter_path, instrument_metadata, sql_spectrum_types, \
-    bandwidth_fraction_for_null, simbad_reference, web_default_spectrum, output_dir
 from ref.star_names import star_name_format, StringStarName
-from autostar.simbad_query import StarDict, SimbadLib, handle_to_simbad, SimbadMainRef, simbad_coord_to_deg
+from ref.ref import (object_params_dir, spectra_schema, spexo_schema, stacked_line_schema,
+    references_per_parameter_path, instrument_metadata, sql_spectrum_types,
+    bandwidth_fraction_for_null, simbad_reference, web_default_spectrum, output_dir)
+
 from autostar.read_gaia import GaiaLib
 from autostar.tic_query import TicQuery
 from autostar.table_read import num_format
 from autostar.object_params import SingleParam, set_single_param
-
-from science.db.data_status import set_data_status_mysql
-from science.db.file_sync import rsync_output
-from science.load.units import UnitsObjectParams, params_check
 from autostar.name_correction import verify_starname, PopNamesLib
-from science.load.import_spectra import AllSpectra
-from science.load.flux_cal import FluxCal
-from science.load.hitran import HitranRef, isotopologue_to_molecule, isotopologue_to_color, plotly_dash_value, \
-    molecule_to_label, isotopologue_to_label, make_hl_dict
-from science.load.line_flux import LineFluxes
-from science.analyze.spectrum import SpectraSummary, set_single_output_spectra, \
-    spectra_output_dir_default, handle_to_inst_dict, get_spectrum_output_dir
-from science.load.ref_rank import rank_ref, rank_per_column
-from science.analyze.single_star import SingleObject
+from autostar.simbad_query import StarDict, SimbadLib, handle_to_simbad, SimbadMainRef, simbad_coord_to_deg
 from science.db.sql import LoadSQL
+from science.load.flux_cal import FluxCal
+from science.db.file_sync import rsync_output
+from science.load.line_flux import LineFluxes
+from science.load.import_spectra import AllSpectra
+from science.analyze.single_star import SingleObject
 from science.db.alchemy import UploadSQL, is_good_num
+from science.db.data_status import set_data_status_mysql
+from science.load.ref_rank import rank_ref, rank_per_column
+from science.load.units import UnitsObjectParams, params_check
+from science.analyze.spectrum import (SpectraSummary, set_single_output_spectra, spectra_output_dir_default,
+                                      handle_to_inst_dict, get_spectrum_output_dir)
+from science.load.hitran import (HitranRef, isotopologue_to_molecule, isotopologue_to_color, plotly_dash_value,
+                                 molecule_to_label, isotopologue_to_label, make_hl_dict,
+                                 columns_CO, columns_H2O, columns_OH)
 
 
 def set_website_values(ra_epoch_j2000_deg, dec_epoch_j2000_deg):
@@ -1206,18 +1207,9 @@ class ObjectCollection:
             print(" Completed writing SQL tables for spectra")
 
     def write_hitran(self):
-        # Hitran Data
-        columns_CO = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
-                      "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
-                      "g_statistical_weight_lower_level", "upper_vibrational", "upper_rotational", "branch",
-                      "lower_vibrational", "lower_rotational"]
-        columns_H2O = ["wavelength_um", "isotopologue", "upper_level", "lower_level", "transition", "einstein_A",
-                       "upper_level_energy", "lower_level_energy", "g_statistical_weight_upper_level",
-                       "g_statistical_weight_lower_level", "upper_vibrational1", "upper_vibrational2",
-                       "upper_vibrational3", "upper_rotational", "upper_ka", "upper_kc", "lower_vibrational1",
-                       "lower_vibrational2", "lower_vibrational3", "lower_rotational", "lower_ka", "lower_kc"]
         values_CO = []
         values_H2O = []
+        values_OH = []
         values_isos = {}
         one_tenth = int(np.round(len(self.hitran_ref.data) / 10.0))
         percent_divider = len(self.hitran_ref.data) / 100.0
@@ -1238,6 +1230,8 @@ class ObjectCollection:
                     values_CO.append(hl_data)
                 elif hitran_line.molecule == 'H2O':
                     values_H2O.append(hl_data)
+                elif hitran_line.molecule == 'OH':
+                    values_OH.append(hl_data)
             # sort data to isotopologue data tables.
             for isotopologue in self.hitran_ref.ref_dic_isotopologue.keys():
                 isotopologue_hitran = self.hitran_ref.ref_dic_isotopologue[isotopologue]
@@ -1253,8 +1247,10 @@ class ObjectCollection:
                     columns = columns_H2O
                 elif molecule == 'co':
                     columns = columns_CO
+                elif molecule == 'oh':
+                    columns = columns_OH
                 else:
-                    raise KeyError(f"The SpExoDisks database does the molecule {molecule}, " +
+                    raise KeyError(f"The SpExoDisks database does have the molecule {molecule}, " +
                                    f"for MySQL isotopologue tables.")
                 # make and insert isotopologue summary data
                 isotopologue_ordered_data = self.hitran_ref.ref_dic_isotopologue[isotopologue].ordered_data
@@ -1275,7 +1271,7 @@ class ObjectCollection:
                     if self.verbose:
                         print(F"Skipping {isotopologue} as it already exists in the database.")
                     continue
-                # insert the per isotopologue hitran  line data
+                # insert the per isotopologue Hitran line data
                 table_name = f'isotopologue_{isotopologue.lower()}'
                 load_sql.creat_table(table_name=table_name, database=spexo_schema, dynamic_type=molecule)
                 load_sql.buffer_insert_init(table_name=table_name, columns=columns,
@@ -1340,7 +1336,6 @@ class Summary:
     def __init__(self):
         self.desired_spec_params = {"hitran_lines", "line_fluxes", "flux_cals", "stacked_line",
                                     "max_wavelength_um", "min_wavelength_um"}
-
         # Stores of Summary Data
         self.object_count = 0
         self.object_names = {}

@@ -33,7 +33,7 @@ spectrum_handle = F"VARCHAR({max_spectral_handle_len}) NOT NULL, "
 stacked_line_handle = F"VARCHAR({max_spectral_handle_len + 30}) NOT NULL, "
 output_filename = F"VARCHAR({max_output_filename_len}), "
 
-co_table_header = "(`index_CO` int(11) NOT NULL AUTO_INCREMENT, " + \
+co_table_header = "(`index_CO` INT(11) NOT NULL AUTO_INCREMENT, " + \
                    "`wavelength_um` " + float_param + \
                    "`isotopologue` VARCHAR(20), " + \
                    "`upper_level` VARCHAR(30), " + \
@@ -52,7 +52,7 @@ co_table_header = "(`index_CO` int(11) NOT NULL AUTO_INCREMENT, " + \
                     "PRIMARY KEY (`index_CO`)" + \
                    ") ENGINE=InnoDB;"
 
-h20_table_header = "(`index_H2O` int(11) NOT NULL AUTO_INCREMENT, " + \
+h20_table_header = "(`index_H2O` INT(11) NOT NULL AUTO_INCREMENT, " + \
                     "`wavelength_um` " + float_param + \
                     "`isotopologue` VARCHAR(20), " + \
                     "`upper_level` VARCHAR(30), " + \
@@ -77,6 +77,31 @@ h20_table_header = "(`index_H2O` int(11) NOT NULL AUTO_INCREMENT, " + \
                     "`lower_kc` INT(2), " + \
                     "PRIMARY KEY (`index_H2O`)" + \
                     ") ENGINE=InnoDB;"
+
+oh_table_header = '(`index_OH` INT(11) NOT NULL AUTO_INCREMENT, ' + \
+                  '`wavelength_um` ' + float_param + \
+                  '`isotopologue` VARCHAR(20), ' + \
+                  "`upper_level` VARCHAR(50), " + \
+                  "`lower_level` VARCHAR(100), " + \
+                  '`transition` VARCHAR(150), ' + \
+                  '`einstein_A` ' + float_param + \
+                  '`upper_level_energy` ' + float_param + \
+                  '`lower_level_energy` ' + float_param + \
+                  '`g_statistical_weight_upper_level` ' + float_param + \
+                  '`g_statistical_weight_lower_level` ' + float_param + \
+                  '`upper_electrical_state` VARCHAR(2), ' + \
+                  '`upper_f_prime` INT(2), ' + \
+                  '`upper_total_angular_momentum` VARCHAR(5), ' + \
+                  '`upper_vibrational` INT(2), ' + \
+                  '`lower_branch` varchar(2), ' + \
+                  '`lower_electrical_state` VARCHAR(2), ' + \
+                  '`lower_f_double_prime` VARCHAR(5), ' + \
+                  '`lower_j_double_prime` ' + float_param + \
+                  '`lower_sym_double_prime` VARCHAR(2), ' + \
+                  '`lower_total_angular_momentum` VARCHAR(5), ' + \
+                  '`lower_vibrational` INT(2), ' + \
+                  'PRIMARY KEY (`index_OH`)' + \
+                  ') ENGINE=InnoDB;'
 
 
 create_tables = {'object_name_aliases': "CREATE TABLE `object_name_aliases` ("
@@ -232,4 +257,6 @@ dynamically_named_tables = {"spectrum": "(`wavelength_um` " + double_param +
                                                  ") " +
                                                  "ENGINE=InnoDB;",
                             "co": co_table_header,
-                            'h2o': h20_table_header}
+                            'h2o': h20_table_header,
+                            'oh': oh_table_header,
+                            }

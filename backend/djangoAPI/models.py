@@ -1,12 +1,3 @@
-"""
-You'll have to do the following to clean this up:
-  * Rearrange models' order
-  * Make sure each model has one field with primary_key=True
-  * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-  * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-Feel free to rename the models, but don't rename db_table values or field names.
-"""
-
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.dispatch import receiver
@@ -163,6 +154,32 @@ h2o_field_and_data = [('index_h2o', models.BigAutoField(db_column='index_H2O', p
                       ('lower_ka', models.IntegerField(blank=True, null=True)),
                       ('lower_kc', models.IntegerField(blank=True, null=True))]
 
+oh_field_and_data = [
+    ('index_oh', models.BigAutoField(db_column='index_OH', primary_key=True)),
+    ('wavelength_um', models.FloatField()),
+    ('isotopologue', models.CharField(max_length=20, blank=True, null=True)),
+    ('upper_level', models.CharField(max_length=50, blank=True, null=True)),
+    ('lower_level', models.CharField(max_length=100, blank=True, null=True)),
+    ('transition', models.CharField(max_length=150, blank=True, null=True)),
+    ('einstein_a', models.FloatField(db_column='einstein_A')),
+    ('upper_level_energy', models.FloatField()),
+    ('lower_level_energy', models.FloatField()),
+    ('g_statistical_weight_upper_level', models.FloatField()),
+    ('g_statistical_weight_lower_level', models.FloatField()),
+    ('upper_electrical_state', models.CharField(max_length=2, blank=True, null=True)),
+    ('upper_f_prime', models.IntegerField(blank=True, null=True)),
+    ('upper_total_angular_momentum', models.CharField(max_length=5, blank=True, null=True)),
+    ('upper_vibrational', models.IntegerField(blank=True, null=True)),
+    ('lower_branch', models.CharField(max_length=2, blank=True, null=True)),
+    ('lower_electrical_state', models.CharField(max_length=2, blank=True, null=True)),
+    ('lower_f_double_prime', models.CharField(max_length=5, blank=True, null=True)),
+    ('lower_j_double_prime', models.FloatField(blank=True, null=True)),
+    ('lower_sym_double_prime', models.CharField(max_length=2, blank=True, null=True)),
+    ('lower_total_angular_momentum', models.CharField(max_length=5, blank=True, null=True)),
+    ('lower_vibrational', models.IntegerField(blank=True, null=True)),
+    ]
+
+
 # Dynamically create the isotopologue models
 isotopologue_models = {}
 for molecule in sorted(available_isotopologues.keys()):
@@ -171,6 +188,8 @@ for molecule in sorted(available_isotopologues.keys()):
         field_and_data = co_field_and_data
     elif molecule == 'h2o':
         field_and_data = h2o_field_and_data
+    elif molecule == 'oh':
+        field_and_data = oh_field_and_data
     else:
         raise KeyError(f'molecule type: {molecule} not recognized')
     # initialize the molecule dictionary

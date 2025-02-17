@@ -30,6 +30,10 @@ def standard(upload_sql=False, write_plots=False, target_file=None,
                                         "upper_rotational_levels_co": None,
                                         "lower_vibrational_levels_co": None,
                                         "lower_rotational_levels_co": None}
+    # Not fully tested as of 2025-02-17
+    # for oh_key in isotopologue_key['OH'].keys():
+    #     oh_iso = isotopologue_key['OH'][oh_key]
+    #     isotopologues_filter[oh_iso] = {}
     # get the data from this instance of OutputStarData
     output_collection = OutputObjectCollection(verbose=True, simbad_go_fast=False,
                                                spectra_output_dir=spectra_output_dir, update_mode=update_mode)
