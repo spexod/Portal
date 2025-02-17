@@ -1295,7 +1295,7 @@ class ObjectCollection:
             print(" Completed writing SQL tables for Hitran molecular data")
 
     def write_sql(self, upload_all_params: bool = False):
-        set_data_status_mysql(new_data_staged_to_set=False, updated_mysql_to_set=False)
+        set_data_status_mysql(new_data_staged_to_set=False, new_data_commited_to_set=False, updated_mysql_to_set=False)
         with LoadSQL(auto_connect=True, verbose=self.verbose) as load_sql:
             load_sql.create_schema(schema_name=spexo_schema)
             load_sql.clear_database(database=spexo_schema)
@@ -1312,7 +1312,7 @@ class ObjectCollection:
         self.write_metadata(upload_all_params=upload_all_params)
         self.write_spectra()
         self.write_hitran()
-        set_data_status_mysql(new_data_staged_to_set=True, updated_mysql_to_set=False)
+        set_data_status_mysql(new_data_staged_to_set=True, new_data_commited_to_set=False, updated_mysql_to_set=False)
 
     def calculate_summary(self):
         self.summary = Summary()

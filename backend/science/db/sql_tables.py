@@ -240,6 +240,7 @@ create_tables = {'object_name_aliases': "CREATE TABLE `object_name_aliases` ("
                  "status": "CREATE TABLE `status` " +
                            "(`index_status` int(11) NOT NULL AUTO_INCREMENT, " + \
                            "`new_data_staged` TINYINT , " +
+                           "`new_data_commited` TINYINT , " +
                            "`updated_mysql` TINYINT , " +
                            "PRIMARY KEY (`index_status`) ) ENGINE=InnoDB;",
                  }

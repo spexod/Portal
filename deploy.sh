@@ -1,5 +1,10 @@
 #!/bin/bash
 clear
+read -r -p "Portal Data Upload Script, press any key to continue..."
+# upload the output FITs and TXT files
+rsync -avz -e "ssh -i spexo-ssh-key.pem" ./backend/output ubuntu@spexodisks.com:/home/ubuntu/Portal/backend
+# upload input data files
+rsync -avz -e "ssh -i spexo-ssh-key.pem" ./backend/data ubuntu@spexodisks.com:/home/ubuntu/Portal/backend
 echo "Portal Deployment Build Script"
 # take and currently running containers offline and delete any volumes from the last build
 docker compose --profile web --profile api down
@@ -31,4 +36,6 @@ echo -e "\nDevelopment Build completed,"
 echo -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
+# once everything else is competed, we mark the database as ready to be updated
+docker compose run --build --rm backend python science/db/commit_data.py || exit
 echo " completed the push to the container repository, continue the update with ./deploy_update.sh"
