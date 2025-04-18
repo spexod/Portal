@@ -155,14 +155,16 @@ def miri_toml(path: str | os.PathLike) -> dict[str, any]:
     if 'wavelength_um_flux_error' in spec_data.keys():
         wavelength_um, flux, flux_error = zip(*spec_data['wavelength_um_flux_error'])
         del spec_data['wavelength_um_flux_error']
-        spec_data['flux_error'] = np.array(flux_error)
     else:
         wavelength_um, flux = zip(*spec_data['wavelength_um_flux'])
+        flux_error = None
         del spec_data['wavelength_um_flux']
     spec_data['header'] = dict(spec_data)
     spec_data['header']['observation_date'] = str(spec_data['observation_date'])
     spec_data['wavelength_um'] = np.array(wavelength_um)
     spec_data['flux'] = np.array(flux)
+    if flux_error is not None:
+        spec_data['flux_error'] = np.array(flux_error)
     return spec_data
 
 
