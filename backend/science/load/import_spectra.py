@@ -152,8 +152,13 @@ def ishell(path):
 
 def miri_toml(path: str | os.PathLike) -> dict[str, any]:
     spec_data = toml.load(path)
-    wavelength_um, flux = zip(*spec_data['wavelength_um_flux'])
-    del spec_data['wavelength_um_flux']
+    if 'wavelength_um_flux_error' in spec_data.keys():
+        wavelength_um, flux, flux_error = zip(*spec_data['wavelength_um_flux_error'])
+        del spec_data['wavelength_um_flux_error']
+        spec_data['flux_error'] = np.array(flux_error)
+    else:
+        wavelength_um, flux = zip(*spec_data['wavelength_um_flux'])
+        del spec_data['wavelength_um_flux']
     spec_data['header'] = dict(spec_data)
     spec_data['header']['observation_date'] = str(spec_data['observation_date'])
     spec_data['wavelength_um'] = np.array(wavelength_um)
