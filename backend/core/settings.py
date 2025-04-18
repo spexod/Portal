@@ -13,7 +13,7 @@ from pathlib import Path
 from warnings import warn
 from datetime import timedelta
 
-from science.db.migrate import do_migration, new_data_staged
+from science.db.migrate import do_migration, new_data_staged, new_data_commited
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
                             wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED)
@@ -28,7 +28,7 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
-if DATA_MIGRATE_FROM_STAGED and new_data_staged:
+if DATA_MIGRATE_FROM_STAGED and new_data_staged and not new_data_commited:
     do_migration()
 
 # SECURITY WARNING: keep the secret key used in production secret!
