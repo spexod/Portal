@@ -13,7 +13,8 @@ from pathlib import Path
 from warnings import warn
 from datetime import timedelta
 
-from science.db.migrate import do_migration, new_data_staged, new_data_commited
+from science.db.migrate import do_migration
+from science.db.data_status import get_data_status_mysql
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
                             wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED)
@@ -28,6 +29,7 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
+new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
 if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
     do_migration()
 

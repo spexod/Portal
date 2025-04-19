@@ -1,6 +1,6 @@
-from science.db.sql import LoadSQL
-
 from mysql.connector.errors import ProgrammingError
+
+from science.db.sql import LoadSQL
 
 
 database = 'data_status'

@@ -1,9 +1,5 @@
 from science.analyze.prescriptions import update_schemas
-from science.db.data_status import set_data_status_mysql, get_data_status_mysql
-
-
-# read the status variables from the MySQL server
-new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
+from science.db.data_status import set_data_status_mysql
 
 
 def do_migration():
@@ -15,5 +11,8 @@ def do_migration():
 
 if __name__ == '__main__':
     from science.db.sql import DATA_MIGRATE_FROM_STAGED
-    if DATA_MIGRATE_FROM_STAGED and new_data_commited:
+    from science.db.data_status import get_data_status_mysql
+    # read the status variables from the MySQL server
+    new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
+    if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
         do_migration()
