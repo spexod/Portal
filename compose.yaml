@@ -45,6 +45,7 @@ services:
         - "MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}"
         - "DATA_OUTPUT_DIR=${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}"
     image: ghcr.io/spexod/backend:LATEST
+    container_name: backend
     healthcheck:
       test: ["CMD", "python", "healthcheck.py"]
       interval: 6s
@@ -102,6 +103,7 @@ services:
       context: ./SpExo-FrontEnd
       network: host
     image: ghcr.io/spexod/frontend:LATEST
+    container_name: frontend
     profiles: ["web"]
     deploy:
       resources:
@@ -116,6 +118,7 @@ services:
   nginx:
     platform: linux/amd64
     image: nginx:latest
+    container_name: nginx
     ports:
       - "80:8080"
       - "443:8443"
@@ -170,6 +173,7 @@ services:
 
   cert-gen:
     image: alpine
+    container_name: cert-gen
     volumes:
       - ./mysql/certs:/certs:rw
     entrypoint:
