@@ -28,7 +28,7 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
-if DATA_MIGRATE_FROM_STAGED and new_data_staged and not new_data_commited:
+if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
     do_migration()
 
 # SECURITY WARNING: keep the secret key used in production secret!
