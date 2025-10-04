@@ -175,7 +175,12 @@ def miri_fits(path: str | os.PathLike) -> dict[str, any]:
     raw_header = hdul[1].header
     parsed_header = fits_headers_to_dict(raw_header)
     spec_data['header'] = parsed_header
-    spec_data['observation_date'] = datetime.fromisoformat(f"{parsed_header['DATE-END']}+00:00")
+    try:
+        spec_data['observation_date'] = datetime.fromisoformat(f"{parsed_header['DATE-END']}+00:00")
+    except KeyError:
+        raw_header = hdul[0].header
+        parsed_header = fits_headers_to_dict(raw_header)
+        spec_data['observation_date'] = datetime.fromisoformat(f"{parsed_header['DATE-END']}+00:00")
     spec_data['pi'] = f"{parsed_header['PI_NAME']} (JWST GO program #{parsed_header['PROPOSID']})"
     spec_data['object'] = parsed_header['HLSPTARG']
     spec_data['reference'] = parsed_header['PUBL_REF']
