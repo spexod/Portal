@@ -31,7 +31,6 @@ astropy
 Unidecode
 pandas
 sqlalchemy
-pymysql
 # # Caleb Wheeler's utility repositories
 # For Seting out and maintaing databases
 autostar>=0.1.2

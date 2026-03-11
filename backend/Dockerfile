@@ -1,6 +1,6 @@
 # # Things that can be cached
 # Base Configurations
-FROM python:3.13-alpine AS build
+FROM python:3.14-alpine AS build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /home/python_user/backend_app
 ENV PYTHONPATH "${PYTHONPATH}:/home/python_user/backend_app"
@@ -36,7 +36,7 @@ RUN mkdir -p $DATA_OUTPUT_DIR
 RUN chown python_user:python_group $DATA_OUTPUT_DIR
 # pip install the requirements
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 # # Things that will need to update every time the code changes
 # COPY --chown=python_user:python_group . .
 COPY . .
