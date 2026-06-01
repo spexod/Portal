@@ -239,8 +239,8 @@ REST_FRAMEWORK = {
         'core.throttling.SustainedRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'spectra': '5/min',
-        'burst': '25/min',
+        'spectra': '10/min',
+        'burst': '40/min',
         'sustained': '5000/day'
     }
 }
