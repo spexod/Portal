@@ -4,13 +4,9 @@ FROM python:3.14-alpine AS build
 ENV PYTHONNUNBUFFERED 1
 WORKDIR /home/python_user/backend_app
 ENV PYTHONPATH "${PYTHONPATH}:/home/python_user/backend_app"
-ARG MYSQL_HOST
-ENV MYSQL_HOST $MYSQL_HOST
-ARG MYSQL_PASSWORD
-ENV MYSQL_PASSWORD $MYSQL_PASSWORD
-ARG MYSQL_USER
-ENV MYSQL_USER $MYSQL_USER
-ENV IS_DOCKER_BUILD true
+# No database credentials at build time: MYSQL_* are passed only at runtime (compose.yaml
+# "environment:"), so they are never stored in the image. IS_DOCKER_BUILD is set inline on
+# the RUN steps below that import Django, so it does not leak into the runtime image.
 ARG MPLCONFIGDIR
 ENV MPLCONFIGDIR $MPLCONFIGDIR
 ARG DATA_OUTPUT_DIR
@@ -40,18 +36,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 # # Things that will need to update every time the code changes
 # COPY --chown=python_user:python_group . .
 COPY . .
-# initialize the databases, if not already initialized
-RUN python science/db/init.py
-# migrate the Django database and tables
-RUN python manage.py makemigrations djangoAPI
-RUN python manage.py migrate
+# generate the Django migration files (no database needed at build time)
+# Database initialization and "migrate" now run at container start, see docker-entrypoint.sh
+# (--skip-checks: the model system checks ask MySQL for its server version)
+RUN IS_DOCKER_BUILD=true python manage.py makemigrations djangoAPI --skip-checks
 # For static files used by the Django app
 RUN mkdir /home/python_user/backend_app/static_root
 # collect the static files
-RUN python manage.py collectstatic --clear --noinput
+RUN IS_DOCKER_BUILD=true python manage.py collectstatic --clear --noinput
 # allow the user to read the static files
 RUN chown -R python_user:python_group /home/python_user/backend_app/static_root
 # set the user
 USER python_user
+# initialize the database and apply migrations, then run CMD (or the "docker compose run" command)
+ENTRYPOINT ["/bin/sh", "/home/python_user/backend_app/docker-entrypoint.sh"]
 # what runs when the container is started
 CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000"]

@@ -17,10 +17,12 @@ from science.db.migrate import do_migration
 from science.db.data_status import get_data_status_mysql
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
-                            wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED)
+                            wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED, is_docker_build)
 
 
-if not wait_for_mysql_to_start():
+# At image build time (collectstatic, makemigrations) no database is reachable, so skip
+# everything that talks to MySQL. At container start these run as before.
+if not is_docker_build and not wait_for_mysql_to_start():
     raise Exception("Could not connect to MySQL database, please check your environment variables.")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -29,9 +31,12 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
-new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
-if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
-    do_migration()
+if is_docker_build:
+    new_data_staged, new_data_commited, updated_mysql = False, False, False
+else:
+    new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
+    if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
+        do_migration()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",  'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c')

@@ -14,7 +14,7 @@ docker compose --profile web --profile api down
 rm -rf ./backend/output/*
 rm -rf ./backend/uploads/*
 # build the API, NGINX server first
-docker compose build backend || exit
+./shell/build.sh backend || exit
 # bring up the the backend and nginx server
 docker compose --profile api up --detach || exit
 echo "Build a local API (backend) and NGINX-server if completed, press any key to build the frontend..."
@@ -28,7 +28,7 @@ cp .env.deploy .env.production || exit
 cd ../ || exit
 # build in the docker container
 echo -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."
-docker compose build frontend --no-cache || exit
+./shell/build.sh frontend --no-cache || exit
 # take down the old containers
 docker compose down
 # stop here to look for error messages
@@ -37,5 +37,5 @@ echo -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
 # once everything else is competed, we mark the database as ready to be updated
-docker compose run --build --rm backend python science/db/commit_data.py || exit
+docker compose run --rm backend python science/db/commit_data.py || exit
 echo " completed the push to the container repository, continue the update with ./deploy_update.sh"

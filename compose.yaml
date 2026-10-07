@@ -37,11 +37,9 @@ services:
     platform: linux/amd64
     build:
       context: ./backend
-      network: host
+      platforms:
+        - linux/amd64
       args:
-        - MYSQL_HOST=${MYSQL_HOST:-localhost}
-        - "MYSQL_USER=${MYSQL_USER:-root}"
-        - "MYSQL_PASSWORD=${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
         - "MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}"
         - "DATA_OUTPUT_DIR=${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}"
     image: ghcr.io/spexod/backend:LATEST
@@ -80,6 +78,8 @@ services:
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
       IS_DOCKER_BUILD: "false"
+      # set to false to skip database initialization and Django migrations at container start
+      DB_INIT_ON_START: "${DB_INIT_ON_START:-true}"
     profiles: ['api']
     deploy:
       resources:
@@ -102,6 +102,8 @@ services:
     build:
       context: ./SpExo-FrontEnd
       network: host
+      platforms:
+        - linux/amd64
     image: ghcr.io/spexod/frontend:LATEST
     container_name: frontend
     profiles: ["web"]
