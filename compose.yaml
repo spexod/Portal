@@ -3,7 +3,7 @@ services:
     # The MySQL version can be set with MYSQL_VERSION in the .env file.
     # Changing the major version (for example 8.4 -> 9.7) upgrades the files in ./mysql/local in place
     # the first time the new version starts, and this cannot be undone. Back up first, see README.md.
-    image: "mysql:${MYSQL_VERSION:-8.4}"
+    image: "mysql:${MYSQL_VERSION:-9.7}"
     container_name: mysqlDB
     # time for a clean shutdown before Docker force-stops MySQL (Docker's default is 10 seconds)
     stop_grace_period: 5m
