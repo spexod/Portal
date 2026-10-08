@@ -8,6 +8,7 @@ mysql/*.sql
 # backups and fingerprints made by mysql/upgrade.sh
 /mysql/local-*/
 /mysql/fingerprint-*.txt
+/mysql/dump-*.sql.gz
 /backend/mysql.key
 /backend/mysql.crt
 

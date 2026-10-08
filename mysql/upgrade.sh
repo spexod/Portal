@@ -12,6 +12,12 @@
 #   ./mysql/upgrade.sh backup           Stop the other containers, save a fingerprint and a full
 #                                       mysqldump, shut MySQL down cleanly, then copy the data
 #                                       directory to mysql/local-<version>-<time>/.
+#   ./mysql/upgrade.sh dump             Save a fingerprint and a compressed dump of the application
+#                                       schemas (not the mysql system schema with its accounts) to
+#                                       mysql/dump-<version>-<time>.sql.gz. Consistent, and the site
+#                                       keeps running. Use it to copy production to a local database.
+#   ./mysql/upgrade.sh restore <file>   Load a dump (.sql or .sql.gz) into the running server. Tables
+#                                       in the dumped schemas are replaced; asks for confirmation.
 #
 # A major-version upgrade rewrites ./mysql/local in place the first time the new version starts,
 # and it cannot be undone. The data directory copy made by "backup" is the way back: restore it
@@ -130,9 +136,54 @@ backup() {
     echo "  docker compose up mysqlDB --detach && docker compose logs --follow mysqlDB"
 }
 
+dump() {
+    local version stamp file schemas
+    version=$(server_version)
+    stamp=$(date +%Y%m%d-%H%M%S)
+    file="mysql/dump-${version}-${stamp}.sql.gz"
+    schemas=$(query "SELECT schema_name FROM information_schema.schemata
+                     WHERE schema_name NOT IN ('mysql', 'sys', 'information_schema', 'performance_schema')
+                     ORDER BY schema_name")
+
+    echo "Saving a fingerprint to mysql/fingerprint-${version}-${stamp}.txt..."
+    fingerprint > "mysql/fingerprint-${version}-${stamp}.txt"
+
+    echo "Dumping the schemas $(echo $schemas) to ${file} (the site keeps running)..."
+    # shellcheck disable=SC2086
+    in_mysql mysqldump --single-transaction --routines --events --triggers --set-gtid-purged=OFF \
+        --databases $schemas | gzip > "$file" || { rm -f "$file"; echo "Dump failed." >&2; exit 1; }
+    echo "Dump complete: ${file} ($(du -h "$file" | cut -f1))"
+}
+
+restore() {
+    local file="${1:?usage: ./mysql/upgrade.sh restore <dump file, .sql or .sql.gz>}"
+    local version answer old_flush
+    [ -f "$file" ] || { echo "No such file: ${file}" >&2; exit 1; }
+    version=$(server_version)
+    echo "This loads ${file} into MySQL ${version} in the mysqlDB container on $(hostname)."
+    echo "Tables in the schemas inside the dump are dropped and replaced. Other schemas are not touched."
+    read -r -p "Type 'restore' to continue: " answer
+    [ "$answer" = "restore" ] || { echo "Cancelled."; exit 1; }
+
+    # Flush the redo log about once per second instead of at every commit while loading: much
+    # faster for a large dump. The previous value is put back when the script exits.
+    old_flush=$(query "SELECT @@GLOBAL.innodb_flush_log_at_trx_commit")
+    trap 'query "SET GLOBAL innodb_flush_log_at_trx_commit = '"${old_flush}"'"' EXIT
+    query "SET GLOBAL innodb_flush_log_at_trx_commit = 2"
+
+    echo "Loading ${file} (a large dump can take a long time)..."
+    case "$file" in
+        *.gz) gunzip -c "$file" | in_mysql mysql ;;
+        *) in_mysql mysql < "$file" ;;
+    esac
+    echo "Restore complete. Run ./mysql/upgrade.sh check to save a fingerprint to compare."
+}
+
 case "${1:-}" in
     check) check ;;
     checker) checker "${2:-}" ;;
     backup) backup ;;
-    *) echo "usage: ./mysql/upgrade.sh check | checker <version> | backup" >&2; exit 1 ;;
+    dump) dump ;;
+    restore) restore "${2:-}" ;;
+    *) echo "usage: ./mysql/upgrade.sh check | checker <version> | backup | dump | restore <file>" >&2; exit 1 ;;
 esac

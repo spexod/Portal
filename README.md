@@ -217,6 +217,11 @@ On Linux servers, run the script with `sudo`.
 To go back, stop `mysqlDB`, replace the contents of `./mysql/local/` with the copy from step 3,
 and set `MYSQL_VERSION` back to the old version.
 
+To copy production to a local database, run `./mysql/upgrade.sh dump` on the server
+(the site keeps running), copy the `./mysql/dump-*.sql.gz` file to your machine,
+and load it into a fresh local database with `./mysql/upgrade.sh restore <file>`.
+The dump includes the `users` schema, so keep the file private and delete it when done.
+
 ## Recommended Scripts for Local Database Development
 
 Create MySQL tables and FITs files for the SpExoDisks website with:
