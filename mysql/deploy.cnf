@@ -7,8 +7,7 @@ ssl_key=/etc/letsencrypt/mysql-ssl/privkey.pem
 # intermediate and root certificates that MySQL validates its own certificate against; without them,
 # ALTER INSTANCE RELOAD TLS (used after renewals) fails with "Invalid certificates"
 ssl_ca=/etc/letsencrypt/mysql-ssl/ca.pem
-# Reject unencrypted network connections (the local socket is still allowed). Turn this on only
-# after every client runs code that requests TLS, see "MySQL TLS" in shell/ssl.md.
-require_secure_transport=OFF
+# reject unencrypted network connections (the local socket is still allowed)
+require_secure_transport=ON
 loose-container_aware=ON
 innodb_redo_log_capacity=1G
