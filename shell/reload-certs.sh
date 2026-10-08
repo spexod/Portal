@@ -28,4 +28,4 @@ docker compose exec -T nginx nginx -s reload
 # If the new certificate does not validate, the reload fails and MySQL keeps the previous one.
 echo "Reloading the MySQL TLS certificate..."
 mysql_root "ALTER INSTANCE RELOAD TLS"
-echo "MySQL serves a certificate valid until: $(mysql_root "SELECT variable_value FROM performance_schema.tls_channel_status WHERE channel = 'mysql_main' AND property = 'Ssl_server_not_after'")"
+echo "MySQL serves a certificate valid until: $(mysql_root "SELECT value FROM performance_schema.tls_channel_status WHERE channel = 'mysql_main' AND property = 'Ssl_server_not_after'")"
