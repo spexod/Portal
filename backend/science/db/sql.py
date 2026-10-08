@@ -6,7 +6,7 @@ from warnings import warn
 from datetime import datetime
 
 import dotenv
-import mysql.connector
+import MySQLdb
 from numpy import float32, float64
 
 from science.db.sql_tables import (name_specs, param_ref, max_star_name_size, double_param, double_param_error,
@@ -172,10 +172,11 @@ class OutputSQL:
         if self.verbose:
             print("  Opening connection to the SQL Host Server:", self.host)
             print("  under the user:", self.user)
-        self.connection = mysql.connector.connect(host=self.host,
-                                                  user=self.user,
-                                                  port=self.port,
-                                                  password=self.password)
+        self.connection = self.connection = MySQLdb.connect(host=self.host,
+                                          user=self.user,
+                                          port=int(self.port),
+                                          password=self.password,
+                                          charset="utf8mb4")
         self.cursor = self.connection.cursor()
         if self.verbose:
             print("    Connection established")

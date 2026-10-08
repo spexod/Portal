@@ -1,4 +1,4 @@
-from mysql.connector.errors import ProgrammingError
+from MySQLdb import ProgrammingError, OperationalError
 
 from science.db.sql import LoadSQL
 
@@ -26,7 +26,7 @@ def get_data_status_mysql() -> tuple[bool, bool, bool]:
     with LoadSQL() as output_sql:
         try:
             data_status_mysql = output_sql.query(sql_query_str=query_str)
-        except ProgrammingError:
+        except (ProgrammingError, OperationalError):
             # initialize the data status table
             set_data_status_mysql(new_data_staged_to_set=False, new_data_commited_to_set=False,
                                   updated_mysql_to_set=False)

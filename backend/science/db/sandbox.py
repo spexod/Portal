@@ -1,16 +1,13 @@
 import os
-import pathlib
 import shutil
 import zipfile
-import datetime
 from io import BytesIO
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
-import mysql.connector
+from MySQLdb import ProgrammingError, OperationalError
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
 from science.db.sql import django_tables, LoadSQL
-from ref.ref import data_pro_dir, today_str
 from science.analyze.prescriptions import standard, sql_update
 
 
@@ -77,9 +74,9 @@ class Dispatch:
         file_count = 0
         mem_zip = BytesIO()
         with zipfile.ZipFile(mem_zip, mode="w",) as zip_ref:
-            # This python file is packaged with the FITS files so that users have a hope of reading them
+            # This Python file is packaged with the FITS files so that users have a hope of reading them
             zip_ref.write(fitsfile_py_path, arcname=os.path.basename(fitsfile_py_path))
-            # The markdown file is packaged with the FITS files so that users have a hope of reading them
+            # The Markdown file is packaged with the FITS files so that users have a hope of reading them
             zip_ref.write(fitsfile_md_path, arcname=os.path.basename(fitsfile_md_path))
             for spectra_handle in spectra_handles:
                 if spectra_handle in self.output_datum_by_spectrum_handle.keys():
@@ -112,7 +109,7 @@ def move_django_tables():
             try:
                 load_sql.cursor.execute(command_str)
                 load_sql.connection.commit()
-            except mysql.connector.errors.ProgrammingError:
+            except (ProgrammingError, OperationalError) as e:
                 print(f'Could not move table {table_name} to users schema.')
 
 
