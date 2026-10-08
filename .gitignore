@@ -5,6 +5,9 @@
 .git_token.txt
 .backup_email_codes.txt
 mysql/*.sql
+# backups and fingerprints made by mysql/upgrade.sh
+/mysql/local-*/
+/mysql/fingerprint-*.txt
 /backend/mysql.key
 /backend/mysql.crt
 

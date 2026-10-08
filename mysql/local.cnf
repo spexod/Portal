@@ -1,2 +1,3 @@
 [mysqld]
-mysql-native-password=ON
+loose-container_aware=ON
+innodb_redo_log_capacity=1G

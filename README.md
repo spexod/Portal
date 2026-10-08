@@ -195,6 +195,28 @@ MYSQL_USER="root"
 MYSQL_PASSWORD="do-not-use-keyboard-walking-passwords"
 ```
 
+### MySQL Version Upgrades
+
+The MySQL server version is set by `MYSQL_VERSION` in the `.env` file,
+with the default in `compose.yaml`.
+The first time a new major version starts (for example 8.4 to 9.7),
+MySQL upgrades the database files in `./mysql/local/` in place,
+and this **cannot be undone**. `./mysql/upgrade.sh` helps with the steps,
+with the `mysqlDB` container running on the old version:
+
+1. `./mysql/upgrade.sh check` shows the server version and each account's authentication plugin,
+   and saves a fingerprint of the data to compare after the upgrade.
+2. `./mysql/upgrade.sh checker 9.7` runs MySQL Shell's upgrade checker for the target version (read-only).
+3. `./mysql/upgrade.sh backup` makes a full dump, shuts MySQL down cleanly,
+   and copies the data directory to `./mysql/local-<version>-<time>/`.
+4. Set `MYSQL_VERSION` in `.env` to the new version and start the database with
+   `docker compose up mysqlDB --detach`, then watch the upgrade with `docker compose logs --follow mysqlDB`.
+5. `./mysql/upgrade.sh check` again, then `diff` the two `./mysql/fingerprint-*.txt` files.
+
+On Linux servers, run the script with `sudo`.
+To go back, stop `mysqlDB`, replace the contents of `./mysql/local/` with the copy from step 3,
+and set `MYSQL_VERSION` back to the old version.
+
 ## Recommended Scripts for Local Database Development
 
 Create MySQL tables and FITs files for the SpExoDisks website with:

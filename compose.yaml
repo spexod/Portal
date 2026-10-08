@@ -1,12 +1,19 @@
 services:
   mysqlDB:
-    image: mysql:8.4
+    # The MySQL version can be set with MYSQL_VERSION in the .env file.
+    # Changing the major version (for example 8.4 -> 9.7) upgrades the files in ./mysql/local in place
+    # the first time the new version starts, and this cannot be undone. Back up first, see README.md.
+    image: "mysql:${MYSQL_VERSION:-8.4}"
     container_name: mysqlDB
+    # time for a clean shutdown before Docker force-stops MySQL (Docker's default is 10 seconds)
+    stop_grace_period: 5m
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "${MYSQL_HOST:-mysqlDB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
+      # failed checks do not count while MySQL starts, which takes longer during a version upgrade
+      start_period: 5m
     platform: linux/amd64
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
@@ -22,6 +29,8 @@ services:
       - "./mysql/certs:/etc/mysql/certs:ro"
       # Select between MySQL configuration files
       - "./mysql/${MYSQL_CONFIG_FILE:-local.cnf}:/etc/mysql/my.cnf:ro"
+      # store SSL keys for the database in a volume on the host
+      - ssl_keys:/etc/letsencrypt:ro
     profiles: ["db"]
     deploy:
       resources:
@@ -93,9 +102,9 @@ services:
 
     # Optionally uncomment the following lines when using the "db" profile.
     # Wait for the database to be ready before starting the backend.
-#    depends_on:
-#      mysqlDB:
-#        condition: service_healthy
+    depends_on:
+      mysqlDB:
+        condition: service_healthy
 
   frontend:
     platform: linux/amd64
