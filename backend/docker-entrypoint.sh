@@ -10,7 +10,7 @@ set -e
 
 if [ "${DB_INIT_ON_START:-true}" = "true" ]; then
     echo "docker-entrypoint: creating MySQL schemas and tables if they do not exist..."
-    python science/db/init.py
+    python -m science.db.init
     echo "docker-entrypoint: applying Django migrations..."
     python manage.py migrate --noinput
 fi

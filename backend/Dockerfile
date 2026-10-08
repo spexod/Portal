@@ -1,16 +1,15 @@
 # # Things that can be cached
 # Base Configurations
 FROM python:3.14-alpine AS build
-ENV PYTHONNUNBUFFERED 1
+ENV PYTHONNUNBUFFERED=1
 WORKDIR /home/python_user/backend_app
-ENV PYTHONPATH "${PYTHONPATH}:/home/python_user/backend_app"
 # No database credentials at build time: MYSQL_* are passed only at runtime (compose.yaml
 # "environment:"), so they are never stored in the image. IS_DOCKER_BUILD is set inline on
 # the RUN steps below that import Django, so it does not leak into the runtime image.
 ARG MPLCONFIGDIR
-ENV MPLCONFIGDIR $MPLCONFIGDIR
+ENV MPLCONFIGDIR=$MPLCONFIGDIR
 ARG DATA_OUTPUT_DIR
-ENV DATA_OUTPUT_DIR $DATA_OUTPUT_DIR
+ENV DATA_OUTPUT_DIR=$DATA_OUTPUT_DIR
 # update pip
 RUN pip install --upgrade pip
 # install a virtual environment
