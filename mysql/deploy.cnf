@@ -1,7 +1,11 @@
 [mysqld]
-ssl-ca=/etc/mysql/certs/ca.crt
-ssl-cert=/etc/mysql/certs/mysql.crt
-ssl-key=/etc/mysql/certs/mysql.key
+# TLS with the website's Let's Encrypt certificate. MySQL runs as uid 999 and cannot read certbot's
+# root-only private key, so it reads a copy in /etc/letsencrypt/mysql-ssl/ made by
+# shell/certbot-mysql-hook.sh (see shell/ssl.md). shell/renew-certs.sh reloads it after renewals.
+ssl_cert=/etc/letsencrypt/mysql-ssl/fullchain.pem
+ssl_key=/etc/letsencrypt/mysql-ssl/privkey.pem
+# Reject unencrypted network connections (the local socket is still allowed). Turn this on only
+# after every client runs code that requests TLS, see "MySQL TLS" in shell/ssl.md.
 require_secure_transport=OFF
 loose-container_aware=ON
 innodb_redo_log_capacity=1G

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 
-from science.db.sql import MYSQL_HOST, sql_port, sql_database, MYSQL_USER,  MYSQL_PASSWORD
+from science.db.sql import MYSQL_HOST, sql_port, sql_database, MYSQL_USER,  MYSQL_PASSWORD, MYSQL_CONNECT_OPTIONS
 
 
 uri_base = f"mysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{sql_port}/"
@@ -69,7 +69,7 @@ def format_spectrum(wavelength_um: List[float], flux: List[float], flux_error: O
 
 class UploadSQL:
     def __init__(self):
-        self.engine = sa.create_engine(uri_base)
+        self.engine = sa.create_engine(uri_base, connect_args=MYSQL_CONNECT_OPTIONS)
 
     def drop_if_exists(self, table_name):
         self.engine.execute(f"DROP TABLE IF EXISTS {table_name}")

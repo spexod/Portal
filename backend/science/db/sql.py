@@ -1,4 +1,5 @@
 import os
+import ssl
 import time
 import string
 import secrets
@@ -33,18 +34,6 @@ else:
     is_docker = True
 print(f'{os.environ.get("IS_DOCKER_BUILD", 'false')} os.environ.get("IS_DOCKER_BUILD", "false")')
 is_docker_build = str_is_true(os.environ.get("IS_DOCKER_BUILD", 'false'))
-local_key_dir = os.path.join(repo_dir, 'mysql', 'certs')
-
-
-def find_key_file(file_name: str) -> str | None:
-    local_key_path = os.path.join(local_key_dir,  file_name)
-    if os.path.exists(local_key_path):
-        return local_key_path
-    else:
-        docker_key_path = os.path.join(repo_dir, 'mysql.key')
-        if os.path.exists(docker_key_path):
-            return docker_key_path
-    return None
 
 
 sql_port = "3306"
@@ -73,10 +62,25 @@ EMAIL_USER = str_or_none(os.environ.get("DJANGO_EMAIL_USER", "None"))
 EMAIL_APP_PASSWORD = str_or_none(os.environ.get("DJANGO_EMAIL_APP_PASSWORD", "None"))
 
 
-
-MYSQL_KEY_FILE = find_key_file("mysql.key")
-MYSQL_CERT_FILE = find_key_file("mysql.crt")
-MYSQL_CA_FILE = find_key_file("ca.crt")
+# TLS for MySQL connections. Every client uses mysqlclient (MySQLdb): LoadSQL/OutputSQL below,
+# Django (core/settings.py) and SQLAlchemy (science/db/alchemy.py), so they all share these options.
+# MYSQL_SSL_MODE (optional, in .env):
+#   VERIFY_IDENTITY  encrypted, and the server certificate and host name are checked. The default for
+#                    remote hosts like spexodisks.com, which serves its Let's Encrypt certificate.
+#   REQUIRED         encrypted, without checking the certificate. The default for mysqlDB and localhost:
+#                    those names are not on the certificate, and on the server this traffic stays inside
+#                    the machine's Docker network.
+#   PREFERRED        encrypted if the server offers it.   DISABLED  not encrypted.
+# Note: mysqlclient is built against MariaDB's client library, where VERIFY_CA also checks the host name.
+MYSQL_SSL_MODE = (os.environ.get("MYSQL_SSL_MODE") or
+                  ("REQUIRED" if MYSQL_HOST in {"mysqlDB", "localhost", "127.0.0.1"} else "VERIFY_IDENTITY"))
+MYSQL_CONNECT_OPTIONS = {"ssl_mode": MYSQL_SSL_MODE}
+if MYSQL_SSL_MODE in {"VERIFY_CA", "VERIFY_IDENTITY"}:
+    # the system's trusted certificate authorities, which include Let's Encrypt
+    _ca_file = ssl.get_default_verify_paths().cafile
+    if _ca_file and os.path.exists(_ca_file):
+        MYSQL_CONNECT_OPTIONS["ssl"] = {"ca": _ca_file}
+print(f"MYSQL_SSL_MODE: {MYSQL_SSL_MODE}")
 
 # fundamental casting and naming operations
 django_tables = ['auth_group', 'auth_group_permissions', 'auth_permission',
@@ -176,7 +180,8 @@ class OutputSQL:
                                           user=self.user,
                                           port=int(self.port),
                                           password=self.password,
-                                          charset="utf8mb4")
+                                          charset="utf8mb4",
+                                          **MYSQL_CONNECT_OPTIONS)
         self.cursor = self.connection.cursor()
         if self.verbose:
             print("    Connection established")

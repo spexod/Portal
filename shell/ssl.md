@@ -16,7 +16,8 @@ but it is possible to use a domain name if that is already set up.
 - 22 (ssh)
 - 80 (http)
 - 443 (https)
-- 3306 (for MySQL)
+- 3306 (for MySQL), restricted to the IP addresses of the computers that upload data,
+  see [Restrict the MySQL port](#restrict-the-mysql-port)
 
 
 
@@ -51,21 +52,12 @@ by copying them to the `Portal/mysql/init` directory.
 
 More on this in the data export explanation available in the README.md file.
 
-## Initialize SSL certificates
+## TLS certificate for MySQL
 
-Using the docker container, we can initialize the SSL certificates
-
-```
-docker compose up cert-gen
-```
-
-Keep only the three requires files in the `Portal/mysql/cert` directory:
-
-```
-ca.crt
-mysql.crt
-mysql.key
-```
+MySQL uses the website's Let's Encrypt certificate, which does not exist yet on a new server.
+Until it does (see [MySQL TLS](#mysql-tls-with-the-lets-encrypt-certificate) below),
+start the database with `MYSQL_CONFIG_FILE="local.cnf"` in the `.env` file,
+then switch to `deploy.cnf`.
 
 
 ## Bring up the MySQL database service
@@ -170,6 +162,49 @@ It was previously set to `setup.conf` in the `.env` file.
 docker compose up --detach
 ```
 
+## MySQL TLS with the Let's Encrypt certificate
+
+MySQL (`mysql/deploy.cnf`) uses the same Let's Encrypt certificate as the website.
+MySQL runs as uid 999 and cannot read certbot's root-only private key, so it reads a copy in
+`/etc/letsencrypt/mysql-ssl/` (inside the `ssl_keys` volume).
+Certbot makes a new copy after every renewal with the deploy hook `shell/certbot-mysql-hook.sh`.
+
+Make the first copy:
+
+```
+docker compose run --rm --entrypoint /bin/sh certbot /etc/letsencrypt/renewal-hooks/deploy/mysql-ssl.sh
+```
+
+Then (re)start the database with `MYSQL_CONFIG_FILE="deploy.cnf"` in the `.env` file
+and check the certificate that MySQL serves, which should show the Let's Encrypt expiration date:
+
+```
+docker compose up mysqlDB --detach
+docker compose exec mysqlDB sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW GLOBAL STATUS LIKE \"Ssl_server_not_after\""'
+```
+
+Database clients request TLS (see `MYSQL_SSL_MODE` in `backend/science/db/sql.py`):
+remote clients connect to `spexodisks.com` and check the certificate and host name,
+and the backend on the server connects to `mysqlDB` encrypted without the host name check
+(`mysqlDB` is not on the certificate, and the traffic stays inside the server).
+
+When every client uses TLS, set `require_secure_transport=ON` in `mysql/deploy.cnf`
+so that MySQL rejects unencrypted connections. To list the current connections and their TLS version
+(an empty version means unencrypted):
+
+```
+docker compose exec mysqlDB sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT t.processlist_user, t.processlist_host, s.variable_value AS tls FROM performance_schema.threads t LEFT JOIN performance_schema.status_by_thread s ON s.thread_id = t.thread_id AND s.variable_name = \"Ssl_version\" WHERE t.processlist_user IS NOT NULL"'
+```
+
+## Restrict the MySQL port
+
+Docker publishes port 3306 directly, bypassing host firewalls such as `ufw`,
+so restrict it in the cloud provider's firewall (for AWS Lightsail: the instance's
+**Networking** tab, in both the IPv4 and IPv6 firewalls).
+Limit the MySQL/3306 rule to the IP addresses of the computers that upload data,
+and update the rule when those addresses change.
+The website itself is not affected: the backend reaches MySQL inside the Docker network.
+
 ## Renewal With CronTab
 
 ### install cron, probably already installed on Ubuntu
@@ -192,7 +227,9 @@ sudo crontab -e
 
 ### We add a line cron tab file to check if the certificate needs to be renewed, it checks once a day at 3:00PM.
 
+`shell/renew-certs.sh` renews the certificate when it is due (the deploy hook copies it for MySQL),
+then reloads it in nginx and MySQL without dropping connections.
+
 ```
-0 15 * * * docker compose --file /home/ubuntu/Portal/compose.yaml run --rm certbot renew --quiet
-0 16 * * SUN,Tue,Thu docker compose --file /home/ubuntu/Portal/compose.yaml restart nginx
+0 15 * * * /home/ubuntu/Portal/shell/renew-certs.sh >> /var/log/spexodisks-certs.log 2>&1
 ```

@@ -25,11 +25,9 @@ services:
       - "./mysql/local:/var/lib/mysql:rw"
       # initialize the database from existing files in this directory
       - "./mysql/init:/docker-entrypoint-initdb.d:ro"
-      # store SSL certificates in a volume on the host
-      - "./mysql/certs:/etc/mysql/certs:ro"
       # Select between MySQL configuration files
       - "./mysql/${MYSQL_CONFIG_FILE:-local.cnf}:/etc/mysql/my.cnf:ro"
-      # store SSL keys for the database in a volume on the host
+      # Let's Encrypt certificate for TLS, a copy MySQL can read in mysql-ssl/ (see mysql/deploy.cnf)
       - ssl_keys:/etc/letsencrypt:ro
     profiles: ["db"]
     deploy:
@@ -84,6 +82,8 @@ services:
       MYSQL_HOST: "${MYSQL_HOST:-localhost}"
       MYSQL_USER: "${MYSQL_USER:-root}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      # optional TLS mode for database connections, the default depends on MYSQL_HOST (see science/db/sql.py)
+      MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
       IS_DOCKER_BUILD: "false"
@@ -167,6 +167,7 @@ services:
           MYSQL_HOST: "${MYSQL_HOST:-localhost}"
           MYSQL_USER: "${MYSQL_USER:-root}"
           MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+          MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
           API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
       volumes:
           - ./backend:/backend
@@ -177,29 +178,12 @@ services:
     volumes:
       - ssl_keys:/etc/letsencrypt:rw
       - ssl_challenge:/var/www/certbot/.well-known:rw
+      # after each renewal, certbot runs this hook to copy the certificate for MySQL
+      - "./shell/certbot-mysql-hook.sh:/etc/letsencrypt/renewal-hooks/deploy/mysql-ssl.sh:ro"
     command: [ "certonly", "--webroot", "--webroot-path=/var/www/certbot", "--email", "chw3k5@gmail.com", "--agree-tos", "--no-eff-email", "-d", "spexodisks.com", "-d", "www.spexodisks.com"]
     depends_on:
       - nginx
     profiles: [ "ssl" ]
-
-  cert-gen:
-    image: alpine
-    container_name: cert-gen
-    volumes:
-      - ./mysql/certs:/certs:rw
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        apk add --no-cache openssl &&
-        openssl genpkey -algorithm RSA -out /certs/mysql.key -pkeyopt rsa_keygen_bits:2048 &&
-        openssl req -new -key /certs/mysql.key -out /certs/mysql.csr -subj "/CN=mysql/O=myorg/C=US" &&
-        openssl x509 -req -in /certs/mysql.csr -signkey /certs/mysql.key -out /certs/mysql.crt -days 365 &&
-        openssl genpkey -algorithm RSA -out /certs/ca.key -pkeyopt rsa_keygen_bits:2048 &&
-        openssl req -new -x509 -key /certs/ca.key -out /certs/ca.crt -days 1095 -subj "/CN=Certificate Authority/O=myorg/C=US" &&
-        chmod 600 /certs/* && chown 999:999 /certs/*
-    profiles: [ "db-ssl" ]
-
 
 volumes:
   django_static:

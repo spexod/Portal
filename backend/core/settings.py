@@ -15,7 +15,7 @@ from datetime import timedelta
 
 from science.db.migrate import do_migration
 from science.db.data_status import get_data_status_mysql
-from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD,
+from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_CONNECT_OPTIONS,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
                             wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED, is_docker_build)
 
@@ -114,6 +114,8 @@ data_auth = {
     'PASSWORD': MYSQL_PASSWORD,
     'PORT': sql_port,
     'HOST': MYSQL_HOST,
+    # TLS settings shared with the other database clients, see science/db/sql.py
+    'OPTIONS': MYSQL_CONNECT_OPTIONS,
 }
 DATABASES = {
     'default': {
