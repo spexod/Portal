@@ -4,6 +4,9 @@
 # shell/certbot-mysql-hook.sh (see shell/ssl.md). shell/renew-certs.sh reloads it after renewals.
 ssl_cert=/etc/letsencrypt/mysql-ssl/fullchain.pem
 ssl_key=/etc/letsencrypt/mysql-ssl/privkey.pem
+# intermediate and root certificates that MySQL validates its own certificate against; without them,
+# ALTER INSTANCE RELOAD TLS (used after renewals) fails with "Invalid certificates"
+ssl_ca=/etc/letsencrypt/mysql-ssl/ca.pem
 # Reject unencrypted network connections (the local socket is still allowed). Turn this on only
 # after every client runs code that requests TLS, see "MySQL TLS" in shell/ssl.md.
 require_secure_transport=OFF

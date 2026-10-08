@@ -4,6 +4,9 @@
 # certbot runs this inside its container after every successful renewal: compose.yaml mounts it at
 # /etc/letsencrypt/renewal-hooks/deploy/mysql-ssl.sh. MySQL runs as uid 999 and cannot read
 # certbot's root-only private key, so MySQL gets its own copy in /etc/letsencrypt/mysql-ssl/.
+# It also writes ca.pem (Let's Encrypt's intermediate certificates plus the trusted root certificates),
+# which MySQL needs to validate its own certificate: ALTER INSTANCE RELOAD TLS, used after
+# renewals, refuses a certificate that does not validate.
 # To make the first copy by hand (see shell/ssl.md):
 #   docker compose run --rm --entrypoint /bin/sh certbot /etc/letsencrypt/renewal-hooks/deploy/mysql-ssl.sh
 set -eu
@@ -16,9 +19,22 @@ chmod 755 "$dest"
 # copy the files the symlinks in live/ point to, then swap them into place
 cp -L "$lineage/fullchain.pem" "$dest/fullchain.pem.new"
 cp -L "$lineage/privkey.pem" "$dest/privkey.pem.new"
-chown 999:999 "$dest/fullchain.pem.new" "$dest/privkey.pem.new"
-chmod 644 "$dest/fullchain.pem.new"
+# the trusted root certificates of this (Alpine-based) container
+bundle=""
+for candidate in /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert.pem; do
+    if [ -f "$candidate" ]; then
+        bundle="$candidate"
+        break
+    fi
+done
+if [ -z "$bundle" ]; then
+    echo "mysql-ssl: WARNING no root certificate bundle found, ca.pem has only the intermediates" >&2
+fi
+cat "$lineage/chain.pem" ${bundle:+"$bundle"} > "$dest/ca.pem.new"
+chown 999:999 "$dest/fullchain.pem.new" "$dest/privkey.pem.new" "$dest/ca.pem.new"
+chmod 644 "$dest/fullchain.pem.new" "$dest/ca.pem.new"
 chmod 600 "$dest/privkey.pem.new"
 mv "$dest/fullchain.pem.new" "$dest/fullchain.pem"
 mv "$dest/privkey.pem.new" "$dest/privkey.pem"
+mv "$dest/ca.pem.new" "$dest/ca.pem"
 echo "mysql-ssl: copied the certificate from ${lineage} for MySQL"
