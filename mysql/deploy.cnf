@@ -1,7 +1,8 @@
 [mysqld]
 # TLS with the website's Let's Encrypt certificate. MySQL runs as uid 999 and cannot read certbot's
 # root-only private key, so it reads a copy in /etc/letsencrypt/mysql-ssl/ made by
-# shell/certbot-mysql-hook.sh (see shell/ssl.md). shell/renew-certs.sh reloads it after renewals.
+# shell/certbot-mysql-hook.sh. After renewals, shell/reload-certs.sh (run by systemd) reloads it.
+# See shell/ssl.md.
 ssl_cert=/etc/letsencrypt/mysql-ssl/fullchain.pem
 ssl_key=/etc/letsencrypt/mysql-ssl/privkey.pem
 # intermediate and root certificates that MySQL validates its own certificate against; without them,

@@ -1,0 +1,12 @@
+[Unit]
+Description=SpExoDisks: watch for a new Let's Encrypt certificate
+
+[Path]
+# certbot replaces the symbolic links in this directory (in the ssl_keys Docker volume) when the
+# certificate is renewed or reissued. Check the volume's location with:
+#   docker volume inspect portal_ssl_keys --format '{{ .Mountpoint }}'
+PathChanged=/var/lib/docker/volumes/portal_ssl_keys/_data/live/spexodisks.com
+Unit=spexodisks-certs-changed.service
+
+[Install]
+WantedBy=multi-user.target

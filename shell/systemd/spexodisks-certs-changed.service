@@ -1,0 +1,13 @@
+[Unit]
+Description=SpExoDisks: load the current Let's Encrypt certificate into nginx and MySQL
+Documentation=file:///home/ubuntu/Portal/shell/ssl.md
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Portal
+# certbot changes several links and then runs its deploy hook; let it finish first
+ExecStartPre=/bin/sleep 30
+ExecStart=/home/ubuntu/Portal/shell/reload-certs.sh

@@ -241,31 +241,57 @@ If the SSH rule (port 22) is also restricted to an IP address, the same steps ap
 Keep **Allow Lightsail browser SSH** selected on that rule, so the browser-based SSH client in the
 Lightsail console still works when the address is out of date.
 
-## Renewal With CronTab
+## Certificate renewal with systemd
 
-### install cron, probably already installed on Ubuntu
-```
-sudo apt-get install cron
-```
+Four systemd units in `shell/systemd/` keep the certificate current:
 
-### Enable the cron app to run in the background
+- `spexodisks-certbot.timer` starts `spexodisks-certbot.service` twice a day.
+  It runs `certbot renew`, which renews the certificate only when it is close to expiring.
+  After a renewal, certbot's deploy hook (`shell/certbot-mysql-hook.sh`) copies it for MySQL.
+- `spexodisks-certs-changed.path` watches the symbolic links in `live/spexodisks.com/`
+  inside the `ssl_keys` volume. When certbot replaces them, it starts
+  `spexodisks-certs-changed.service`, which runs `shell/reload-certs.sh`:
+  it copies the certificate for MySQL again and reloads it in nginx and MySQL
+  without restarting either.
 
-```
-sudo systemctl enable cron
-```
+### Install the units
 
-### Open the crontab to setup a new cron job
-
-```
-sudo crontab -e
-```
-
-
-### We add a line cron tab file to check if the certificate needs to be renewed, it checks once a day at 3:00PM.
-
-`shell/renew-certs.sh` renews the certificate when it is due (the deploy hook copies it for MySQL),
-then reloads it in nginx and MySQL without dropping connections.
+The path unit watches the `ssl_keys` volume's directory on the server.
+Check that `spexodisks-certs-changed.path` starts with the volume's mount point:
 
 ```
-0 15 * * * /home/ubuntu/Portal/shell/renew-certs.sh >> /var/log/spexodisks-certs.log 2>&1
+docker volume inspect portal_ssl_keys --format '{{ .Mountpoint }}'
+```
+
+Copy the units to systemd and start them.
+Repeat these commands after changing a file in `shell/systemd/`.
+
+```
+sudo install -m 644 shell/systemd/spexodisks-* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now spexodisks-certbot.timer spexodisks-certs-changed.path
+```
+
+On a server that used the older cron setup, remove the certificate lines
+(`certbot renew`, `renew-certs.sh`, or `restart nginx`) with `sudo crontab -e`.
+
+### Check the renewal
+
+```
+systemctl list-timers spexodisks-certbot.timer
+systemctl status spexodisks-certs-changed.path
+journalctl -u spexodisks-certbot -u spexodisks-certs-changed --since "-7 days"
+```
+
+To test the whole renewal path against Let's Encrypt's staging servers,
+without changing the certificate:
+
+```
+docker compose run --rm certbot renew --dry-run
+```
+
+To load the current certificate into nginx and MySQL by hand (it waits 30 seconds first):
+
+```
+sudo systemctl start spexodisks-certs-changed.service
 ```

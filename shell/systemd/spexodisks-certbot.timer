@@ -1,0 +1,12 @@
+[Unit]
+Description=SpExoDisks: check twice a day whether the Let's Encrypt certificate needs renewal
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+# spread the checks out, as Let's Encrypt recommends
+RandomizedDelaySec=1h
+# run a missed check after the server was down
+Persistent=true
+
+[Install]
+WantedBy=timers.target

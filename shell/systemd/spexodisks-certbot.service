@@ -1,0 +1,14 @@
+[Unit]
+Description=SpExoDisks: renew the Let's Encrypt certificate if it is due
+Documentation=file:///home/ubuntu/Portal/shell/ssl.md
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Portal
+# Renews only when the certificate is close to expiring. A renewal replaces the symbolic links that
+# spexodisks-certs-changed.path watches, which then loads the new certificate into nginx and MySQL.
+ExecStart=/usr/bin/docker compose run --rm -T certbot renew --quiet
