@@ -114,7 +114,7 @@ backup() {
     fingerprint > "mysql/fingerprint-${version}-${stamp}.txt"
 
     echo "Writing a full logical backup to ${dump} (this can take a while)..."
-    in_mysql mysqldump --all-databases --single-transaction --routines --events --triggers > "$dump"
+    in_mysql mysqldump --all-databases --single-transaction --set-gtid-purged=OFF --routines --events --triggers > "$dump"
 
     echo "Shutting down MySQL ${version} cleanly (slow shutdown, can take a few minutes)..."
     query "SET GLOBAL innodb_fast_shutdown = 0"
