@@ -9,6 +9,10 @@ It now includes the files needed to run the
 You will need to install the frontend and input data repositories
 to have a fully functional development environment.
 
+> [!TIP]
+> Debugging an error? See [Troubleshooting](#troubleshooting) for error messages,
+> their usual causes, and where the fixes are documented.
+
 ## Initial Setup
 
 ### Install Docker
@@ -165,6 +169,12 @@ For configuration,
 local docker containers connect to the MySQL server at spexodisks.com.
 This MySQL Server is used public website and for this pipeline.
 
+> [!NOTE]
+> Connections to spexodisks.com are encrypted and check the server's certificate,
+> so use `MYSQL_HOST="spexodisks.com"`, not the server's IP address.
+> The server's firewall only accepts database connections from approved IP addresses, see
+> [When the upload computer's IP address changes](shell/ssl.md#when-the-upload-computers-ip-address-changes).
+
 **Example `.env` file for pipline processing:**
 ```
 # Configuration
@@ -313,6 +323,8 @@ the MySQL tables and FITS/TXT files for the SpExoDisks website.
 ```bash
 ./data.sh
 ```
+
+If `data.sh` cannot reach the database, see [Troubleshooting](#troubleshooting).
 
 ### Testing `display.sh`
 
@@ -481,6 +493,10 @@ docker compose ps
 
 ## Exporting to an SQL Dump File for data initialization. 
 
+> [!TIP]
+> `./mysql/upgrade.sh dump` and `./mysql/upgrade.sh restore` copy the production database
+> from the command line, see [MySQL Version Upgrades](#mysql-version-upgrades).
+
 Once we exported data from a production server to a new production server. This was done in two steps:
 
 1. Export the data from the production server to an SQL dump file.
@@ -529,3 +545,25 @@ This will start the MySQL docker image and load the data from the SQL dump file.
 This process takes a few minutes extra to load the data.
 Once it completes, the new database will be running as a server on your local machine. 
 This is a good time to test logging into the database with [MySQL Workbench](https://dev.mysql.com/downloads/workbench/).
+
+
+# Troubleshooting
+
+Search this table for the error message you see.
+The server's TLS and firewall setup is documented in [shell/ssl.md](shell/ssl.md).
+
+| Error message or symptom | Usual cause | Where to look |
+|---|---|---|
+| `Can't connect to MySQL server on 'spexodisks.com:3306'` (after a timeout) from `data.sh` or `deploy.sh`, while the website works | The upload computer's IP address changed and the server's firewall blocks it | [When the upload computer's IP address changes](shell/ssl.md#when-the-upload-computers-ip-address-changes) |
+| `Connections using insecure transport are prohibited while --require_secure_transport=ON` | A client connected without TLS (an old image, or `MYSQL_SSL_MODE` set to `DISABLED` or `PREFERRED`) | [MySQL TLS](shell/ssl.md#mysql-tls-with-the-lets-encrypt-certificate), `MYSQL_SSL_MODE` in `backend/science/db/sql.py` |
+| `TLS/SSL error: Validation of SSL server certificate failed` | `MYSQL_HOST` is the server's IP address or another name that is not on the certificate | Use `MYSQL_HOST="spexodisks.com"` (see `.env.example`) |
+| `SSL is required but the server doesn't support it`, or `Unable to get certificate` in the MySQL log | MySQL started without its copy of the certificate in `/etc/letsencrypt/mysql-ssl/` | [MySQL TLS](shell/ssl.md#mysql-tls-with-the-lets-encrypt-certificate): make the copy, then `ALTER INSTANCE RELOAD TLS` |
+| `Invalid certificates` from `ALTER INSTANCE RELOAD TLS` | MySQL cannot validate its certificate (missing `ca.pem`, `ssl_ca` in `mysql/deploy.cnf`) | `shell/certbot-mysql-hook.sh`, `mysql/deploy.cnf` |
+| The certificate expired or was not renewed | The daily renewal job failed | The log `/var/log/spexodisks-certs.log` on the server, [Renewal With CronTab](shell/ssl.md#renewal-with-crontab) |
+| A local MySQL server has no TLS, or local connections fail with TLS errors | The local `.env` uses `MYSQL_CONFIG_FILE="deploy.cnf"`, which needs the server's certificate | Remove `MYSQL_CONFIG_FILE` from the local `.env` to use `local.cnf` |
+| `unknown variable` when MySQL starts | An option in the `.cnf` file is not known to this MySQL version | Prefix version-specific options with `loose-` (see `mysql/deploy.cnf`) |
+| A MySQL version upgrade, or MySQL fails to start after the version changed | Major versions upgrade the data files in place | [MySQL Version Upgrades](#mysql-version-upgrades) |
+| `additional privileges requested: pass "--allow=network.host"` | Docker Compose v5+ builds with Docker Bake, which needs permission for `network: host` builds | Build with `./shell/build.sh <service>`, then run Compose commands without `--build` |
+| `image ... was found but its platform (linux/arm64) does not match the specified platform (linux/amd64)` | The image was built for the wrong platform | `platforms:` under `build:` in `compose.yaml`; build with `./shell/build.sh` |
+| `denied: denied` when pushing images to `ghcr.io` | The GitHub token expired | [Build Deployable containers](#build-deployable-containers-deploysh) (new token link) |
+| `ModuleNotFoundError: No module named 'science'` | A backend script was run as a file path | Run it as a module: `python -m science.db.<name>` |

@@ -205,6 +205,42 @@ Limit the MySQL/3306 rule to the IP addresses of the computers that upload data,
 and update the rule when those addresses change.
 The website itself is not affected: the backend reaches MySQL inside the Docker network.
 
+### When the upload computer's IP address changes
+
+Home internet providers change addresses from time to time.
+The sign is that `./data.sh` or `./deploy.sh` cannot reach the database
+(`Can't connect to MySQL server on 'spexodisks.com:3306'`, usually after a timeout)
+while the website keeps working.
+
+1. Find the computer's current public IPv4 address. Run this on the upload computer, not the server:
+
+   ```
+   curl -4 https://checkip.amazonaws.com
+   ```
+
+   With a VPN connected, this is the VPN's address, and the uploads use it too.
+   Either allow that address or disconnect the VPN.
+
+2. Update the firewall rule in the [Lightsail console](https://lightsail.aws.amazon.com):
+   choose the instance, open the **Networking** tab, and in the **IPv4 Firewall** section
+   choose **Edit** (the pencil icon) on the MySQL/Aurora rule (TCP 3306).
+   Keep **Restrict to IP address** selected, replace the old address with the new one,
+   and save. The change takes effect within a few moments.
+   The **IPv6 Firewall** section should not have an open 3306 rule.
+
+3. Check that the port is reachable from the upload computer, then rerun the upload:
+
+   ```
+   nc -vz spexodisks.com 3306
+   ```
+
+   `succeeded` (or `open`) means the rule works; a timeout means the address in the rule does not
+   match the one from step 1.
+
+If the SSH rule (port 22) is also restricted to an IP address, the same steps apply to it.
+Keep **Allow Lightsail browser SSH** selected on that rule, so the browser-based SSH client in the
+Lightsail console still works when the address is out of date.
+
 ## Renewal With CronTab
 
 ### install cron, probably already installed on Ubuntu
