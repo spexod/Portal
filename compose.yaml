@@ -102,9 +102,9 @@ services:
 
     # Optionally uncomment the following lines when using the "db" profile.
     # Wait for the database to be ready before starting the backend.
-    depends_on:
-      mysqlDB:
-        condition: service_healthy
+#    depends_on:
+#      mysqlDB:
+#        condition: service_healthy
 
   frontend:
     platform: linux/amd64

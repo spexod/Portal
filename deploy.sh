@@ -37,5 +37,5 @@ echo -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
 # once everything else is competed, we mark the database as ready to be updated
-docker compose run --rm backend python science/db/commit_data.py || exit
+docker compose run --rm backend python -m science.db.commit_data || exit
 echo " completed the push to the container repository, continue the update with ./deploy_update.sh"
