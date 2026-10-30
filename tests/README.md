@@ -42,6 +42,21 @@ Exit status 2 means the site could not be reached at all.
 Add a page to `PAGES`, an endpoint to `API_TABLES`, or a `results.check(group, name, passed, detail)`
 call to one of the `check_*` functions. A new frontend page is not tested until it is added here.
 
+## Account API test: `auth_flow.py`
+
+Walks through the user-account endpoints on a local stack with a throwaway user: register, login,
+`/users/me`, token refresh (the old refresh token is revoked), an authenticated spectrum download,
+password change (every token is revoked), login with the new password, logout. It creates a user,
+so it refuses hosts other than localhost unless `--remote` is given. `shell/local-test.sh` runs it
+after the smoke test.
+
+```
+python3 tests/auth_flow.py --base-url http://localhost
+```
+
+The login, refresh, register and logout endpoints are throttled to 10 requests per minute per
+address; the test uses eight, so wait a minute between runs.
+
 ## Unit tests: `backend/tests/`
 
 Tests for the pure parts of the backend, which need no database and no Django:

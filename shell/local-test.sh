@@ -8,6 +8,7 @@
 #   4. commit_data.py marks the staged upload ready
 #   5. backend + nginx start; the entrypoint moves the staged tables live (DATA_MIGRATE_FROM_STAGED=true)
 #   6. tests/smoke.py checks the API (the frontend pages are not part of this: see display.sh)
+#   7. tests/auth_flow.py registers a throwaway user and tests login, refresh, download, logout
 #
 # Needs: backend/data (the data repository, see shell/init.sh) and a .env for the local stack, see
 # .env.example: MYSQL_HOST="mysqlDB", MYSQL_USER="root", any MYSQL_PASSWORD, DEBUG=true and, on an
@@ -75,6 +76,11 @@ if [ "$status" = 2 ]; then
     # nginx may need a moment to resolve the recreated backend container
     sleep 10
     python3 tests/smoke.py --base-url http://localhost --only api,auth && status=0 || status=$?
+fi
+
+if [ "$status" = 0 ]; then
+    step "7. account API test (creates a throwaway user in the local database)"
+    python3 tests/auth_flow.py --base-url http://localhost || status=$?
 fi
 
 if [ "$down_after" = true ]; then

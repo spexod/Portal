@@ -428,6 +428,9 @@ python3 tests/smoke.py
 python3 tests/smoke.py --base-url http://localhost
 ```
 Backend unit tests (no database needed): `cd backend && python3 -m unittest discover tests`.
+The user-account endpoints (register, login, token refresh, download, password change, logout) are
+tested by `python3 tests/auth_flow.py --base-url http://localhost` on a local stack only, since it
+creates a user.
 
 ## Local database test `shell/local-test.sh`
 Rebuilds the production database from `backend/data` on the local MySQL container and runs the API

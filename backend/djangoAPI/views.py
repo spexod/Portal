@@ -56,14 +56,16 @@ for molecule in sorted(isotopologue_models.keys()):
 spectrum_fields = ('wavelength_um', 'flux', 'flux_error')
 
 
+def list_spectrum(self, request):
+    """ The "list" action of every per-spectrum view set: one array per column instead of one row per point.
+    (Defined at module level under its own name: a module-level "def list" shadowed the built-in list().) """
+    return Response(data={key: data_array for key, data_array in
+                          zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
+                    status=status.HTTP_200_OK)
+
+
 spectra_views = {}
 for spectrum_handle in sorted(spectra_models.keys()):
-    def list(self, request):
-        return Response(data={key: data_array for key, data_array in
-                              zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
-                        status=status.HTTP_200_OK)
-
-
     view_name = f'{spectrum_handle.lower()}ViewSet'
     database_this_handle = available_spectra_to_database[spectrum_handle]
     queryset = spectra_models[spectrum_handle].objects.using(database_this_handle).order_by('pk')
@@ -73,7 +75,7 @@ for spectrum_handle in sorted(spectra_models.keys()):
                                                queryset=queryset,
                                                serializer_class=spectra_serializers[spectrum_handle],
                                                throttle_scope='spectra',
-                                               list=list))
+                                               list=list_spectrum))
 
 """
 Static Views
