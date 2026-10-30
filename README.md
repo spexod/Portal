@@ -427,6 +427,7 @@ Run it against the production site after a deployment, or against a local stack 
 python3 tests/smoke.py
 python3 tests/smoke.py --base-url http://localhost
 ```
+Backend unit tests (no database needed): `cd backend && python3 -m unittest discover tests`.
 
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller

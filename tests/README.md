@@ -39,6 +39,22 @@ Exit status 2 means the site could not be reached at all.
 Add a page to `PAGES`, an endpoint to `API_TABLES`, or a `results.check(group, name, passed, detail)`
 call to one of the `check_*` functions. A new frontend page is not tested until it is added here.
 
+## Unit tests: `backend/tests/`
+
+Tests for the pure parts of the backend, which need no database and no Django:
+
+```
+cd backend && python3 -m unittest discover tests      # numpy is needed for test_spectrum_format
+```
+
+| File | Covers |
+|---|---|
+| `test_sql_values.py` | `science/db/sql_values.py`: identifier validation (SQL injection attempts are rejected) and the conversion of Python/numpy values to query parameters |
+| `test_spectrum_format.py` | `science/analyze/spectrum_format.py`: null points in wavelength gaps, isolated points, bad flux values |
+
+Code that talks to MySQL (`science/db/sql.py`, the Django views) has no unit tests yet; it needs a
+test database. The smoke test covers the views end to end against a running stack.
+
 ## Baseline
 
 First run against production on 2026-10-30, before the security fixes: 40 checks, 32 passed,
