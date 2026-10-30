@@ -120,6 +120,11 @@ services:
         - linux/amd64
     image: ghcr.io/spexod/frontend:LATEST
     container_name: frontend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     profiles: ["web"]
     security_opt:
       - no-new-privileges:true

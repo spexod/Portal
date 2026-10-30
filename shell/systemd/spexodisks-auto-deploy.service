@@ -1,4 +1,5 @@
 [Unit]
+OnFailure=spexodisks-failed@%n.service
 Description=SpExoDisks: pull updated container images and restart what changed
 Documentation=file:///home/ubuntu/Portal/shell/auto_update.md
 Wants=network-online.target

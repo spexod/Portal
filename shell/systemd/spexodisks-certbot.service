@@ -1,4 +1,5 @@
 [Unit]
+OnFailure=spexodisks-failed@%n.service
 Description=SpExoDisks: renew the Let's Encrypt certificate if it is due
 Documentation=file:///home/ubuntu/Portal/shell/ssl.md
 Wants=network-online.target
