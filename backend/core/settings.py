@@ -11,6 +11,7 @@ For the full list of settings and their values, see
 import os
 from pathlib import Path
 from warnings import warn
+from django.core.exceptions import ImproperlyConfigured
 from datetime import timedelta
 
 from science.db.migrate import do_migration
@@ -39,7 +40,9 @@ else:
         do_migration()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",  'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c')
+# The published default is for development (DEBUG=true) only, production refuses to start with it (see below).
+DEVELOPMENT_SECRET_KEY = 'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or DEVELOPMENT_SECRET_KEY
 
 ALLOWED_HOSTS = [
      'localhost',
@@ -220,14 +223,17 @@ CSRF_TRUSTED_ORIGINS = [
 # HTTPS hardening for production. nginx terminates TLS and sets X-Forwarded-Proto (nginx/deploy.conf).
 # SECURE_SSL_REDIRECT is left off on purpose: nginx already redirects http to https, and the container
 # healthcheck calls gunicorn directly over http.
-if not DEBUG:
+# (is_docker_build: collectstatic and makemigrations run without .env at image build time)
+if not DEBUG and not is_docker_build:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = 'same-origin'
-    if SECRET_KEY.startswith(('a-50-or-more', 'a$c#ph)5yg')):
-        warn("DJANGO_SECRET_KEY is a published default value; set a private key in .env, sessions can be forged otherwise.")
+    if SECRET_KEY == DEVELOPMENT_SECRET_KEY:
+        # the same key signs the login tokens (simplejwt), so a known key lets anyone log in as any user
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY is not set. Set a private key of 50 or more characters in .env "
+                                   "(or DEBUG=true for development).")
 
 # Email server Configuration
 # DJANGO_EMAIL_APP_PASSWORD, NOTE THIS IS A DIFFERENT PASSWORD COMPARED TO LOGGING IN W/ EMAIL

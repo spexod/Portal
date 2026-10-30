@@ -1,4 +1,6 @@
 #!/bin/bash
+# stop at the first failure: a failed pull must not take the running site down
+set -euo pipefail
 clear
 echo "SpExServer Update Script"
 cd /home/ubuntu/Portal/ || exit
@@ -17,7 +19,8 @@ docker compose down
 docker compose up --detach
 # clear the old images and cache to keep the disk usage down on the server computer
 echo -e "\nCompleted: Portal Update Script, check the website at spexodisks.com. After confirming the site, press any-key prune"
-read -r -p  "ocker cache (deleting any old docker image components)..."
-docker system prune --force --all --volumes
+read -r -p  "docker cache (deleting replaced docker images)..."
+# images only: never volumes (the Let's Encrypt certificates live in one)
+docker image prune --force
 echo "completed: Portal Update Script"
 read -r -p "press any-key to exit."

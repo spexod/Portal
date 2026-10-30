@@ -16,10 +16,12 @@ services:
       start_period: 5m
     platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
       MYSQL_DATABASE: "spexodisks"
     ports:
-      - "3306:3306"
+      # MYSQL_BIND_ADDRESS=127.0.0.1 keeps the database off the network, the production server needs
+      # remote (TLS) connections from the upload computers, protected by the cloud firewall (shell/ssl.md)
+      - "${MYSQL_BIND_ADDRESS:-0.0.0.0}:3306:3306"
     volumes:
       # store data in a volume on the host for the MySQL database
       - "./mysql/local:/var/lib/mysql:rw"
@@ -77,11 +79,12 @@ services:
       DJANGO_EMAIL_PORT: "${DJANGO_EMAIL_PORT:-587}"
       DJANGO_EMAIL_USER: "${DJANGO_EMAIL_USER:-None}"
       DJANGO_EMAIL_APP_PASSWORD: "${DJANGO_EMAIL_APP_PASSWORD:-None}"
-      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-a-50-or-more-character-sequence-of-characters-that-seems-to-go-on-for-very-long-time}"
-      DEBUG: "${DEBUG:-true}"
+      # required unless DEBUG=true, see core/settings.py
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-}"
+      DEBUG: "${DEBUG:-false}"
       MYSQL_HOST: "${MYSQL_HOST:-localhost}"
       MYSQL_USER: "${MYSQL_USER:-root}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
       # optional TLS mode for database connections, the default depends on MYSQL_HOST (see science/db/sql.py)
       MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
@@ -165,15 +168,16 @@ services:
       container_name: ipython
       user: root
       ports:
-          - "8888:8888"
+          # Jupyter runs as root with sudo and the database password: local connections only
+          - "127.0.0.1:8888:8888"
       environment:
-          JUPYTER_TOKEN: "${JUPYTER_TOKEN:-docker}"
+          JUPYTER_TOKEN: "${JUPYTER_TOKEN:?set JUPYTER_TOKEN in .env}"
           GRANT_SUDO: "yes"
           DOCKER_STACKS_JUPYTER_CMD: "lab"
-          DEBUG: "${DEBUG:-true}"
+          DEBUG: "${DEBUG:-false}"
           MYSQL_HOST: "${MYSQL_HOST:-localhost}"
           MYSQL_USER: "${MYSQL_USER:-root}"
-          MYSQL_PASSWORD: "${MYSQL_PASSWORD:-a-very-long-and-secure-password}"
+          MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
           MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
           API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
       volumes:

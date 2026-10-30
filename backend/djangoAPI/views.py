@@ -1,7 +1,8 @@
+import os
 from django.http import HttpResponse
 from rest_framework import viewsets, permissions
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 # for Data Download
 from rest_framework.views import APIView
@@ -74,6 +75,10 @@ Static Views
 """
 
 
+# the download zip is built in memory, see download_spectra
+DOWNLOAD_MAX_SPECTRA = int(os.environ.get('DOWNLOAD_MAX_SPECTRA', '200'))
+
+
 class StatsTotalViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StatsTotal.objects.using(f'{schema_prefix}spexodisks').all()
     serializer_class = StatsTotalSerializer
@@ -131,24 +136,24 @@ Data Downloads
 """
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def download_spectra(request):
     """
     Get a list of strings from a user with the spectra they would like to download.
     Each spectra being seperated with a % character.
+
+    The zip file is built in memory, so the number of spectra per request is limited.
     """
-    try:
-        spectra_list = request.query_params.get('spectra').split('%')
-    except:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    current_user = request.user
-    if current_user:
-        response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list),
-                                content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
-        return response
-    else:
-        print(f'User {current_user}, is not authenticated')
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    # drop empty entries and duplicates, keeping the order
+    spectra_list = list(dict.fromkeys(handle for handle in request.query_params.get('spectra', '').split('%') if handle))
+    if not spectra_list:
+        return Response({'detail': 'No spectra requested.'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(spectra_list) > DOWNLOAD_MAX_SPECTRA:
+        return Response({'detail': f'At most {DOWNLOAD_MAX_SPECTRA} spectra per download.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
+    return response
 
 
 class RegisterView(APIView):
