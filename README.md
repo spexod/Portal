@@ -420,6 +420,14 @@ Congratulations, you just deployed the SpExoDisks website!
 > 2) click on their "Connect using SSH"
 
 
+# Smoke Tests
+`tests/smoke.py` requests every page and API endpoint and checks the security settings, see [tests/README.md](tests/README.md).
+Run it against the production site after a deployment, or against a local stack while developing:
+```
+python3 tests/smoke.py
+python3 tests/smoke.py --base-url http://localhost
+```
+
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller
 component repositories. On a local machine, we can individually control 

@@ -32,8 +32,14 @@ for _ in $(seq 60); do
     if [ "$state" = healthy ]; then healthy=true; else sleep 5; fi
 done
 
+# the smoke test covers every page and API endpoint (tests/smoke.py), the container healthcheck only one
+if [ "$healthy" = true ]; then
+    sleep 10   # nginx re-resolves the container addresses every 30s (resolver valid=30s in nginx/deploy.conf)
+    python3 tests/smoke.py --base-url "${SMOKE_BASE_URL:-https://spexodisks.com}" || healthy=false
+fi
+
 if [ "$healthy" != true ]; then
-    echo "backend is not healthy after the update, rolling back" >&2
+    echo "the site is not healthy after the update, rolling back" >&2
     if [ -n "${before[backend]:-}" ]; then
         docker tag "${before[backend]}" ghcr.io/spexod/backend:LATEST
         docker compose up --detach --no-build --force-recreate backend
