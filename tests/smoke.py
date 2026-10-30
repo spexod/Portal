@@ -89,6 +89,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+# the check groups, in the order they run (--only picks a subset)
+GROUPS = ("pages", "api", "auth", "security")
+
+
 def _lower_keys(headers):
     return {key.lower(): value for key, value in headers.items()}
 
@@ -146,7 +150,7 @@ def check_api_table(site, results, endpoint, expected_type):
     return data if ok else None
 
 
-def check_api(site, results):
+def check_api(site, results, with_pages=True):
     tables = {endpoint: check_api_table(site, results, endpoint, kind) for endpoint, kind in API_TABLES}
 
     # the per-spectrum and per-isotopologue tables, which djangoAPI/dynamic_data.py builds at startup
@@ -168,8 +172,9 @@ def check_api(site, results):
         orphans = {row.get("spexodisks_handle") for row in spectra} - curated_handles
         results.check("api", "every spectrum belongs to a curated object", not orphans,
                       f"{len(orphans)} spectra with no curated object" if orphans else f"{len(curated_handles)} objects")
-        # a page for one real object
-        check_page(site, results, f"/ExploreData/{urllib.parse.quote(curated[0]['spexodisks_handle'])}")
+        # a page for one real object (a frontend page, so only when the pages group runs)
+        if with_pages:
+            check_page(site, results, f"/ExploreData/{urllib.parse.quote(curated[0]['spexodisks_handle'])}")
 
     stats = tables.get("stats_total") or [{}]
     results.check("api", "stats_total has counts", all(k in stats[0] for k in ("total_spectra", "total_stars")) if stats else False,
@@ -228,18 +233,29 @@ def main():
     parser.add_argument("--timeout", type=float, default=30, help="seconds per request (default: %(default)s)")
     parser.add_argument("--strict", action="store_true", help="security findings fail the run instead of warning")
     parser.add_argument("--insecure", action="store_true", help="skip TLS certificate verification (local stacks)")
+    parser.add_argument("--only", default=",".join(GROUPS), metavar="GROUPS",
+                        help=f"comma-separated groups to run, from {', '.join(GROUPS)} (default: all); "
+                             "a backend-only local stack has no pages: --only api,auth,security")
     args = parser.parse_args()
+    groups = {group.strip() for group in args.only.split(",") if group.strip()}
+    unknown = groups - set(GROUPS)
+    if unknown:
+        parser.error(f"unknown group(s) {', '.join(sorted(unknown))}; choose from {', '.join(GROUPS)}")
 
     site = Site(args.base_url, args.timeout, insecure=args.insecure)
     no_redirect = Site(args.base_url, args.timeout, follow_redirects=False, insecure=args.insecure)
     results = Results()
-    print(f"Smoke test of {site.base_url}\n")
+    print(f"Smoke test of {site.base_url} ({', '.join(g for g in GROUPS if g in groups)})\n")
     try:
-        for path in PAGES:
-            check_page(site, results, path)
-        check_api(site, results)
-        check_auth(site, results)
-        check_security(site, results, no_redirect)
+        if "pages" in groups:
+            for path in PAGES:
+                check_page(site, results, path)
+        if "api" in groups:
+            check_api(site, results, with_pages="pages" in groups)
+        if "auth" in groups:
+            check_auth(site, results)
+        if "security" in groups:
+            check_security(site, results, no_redirect)
     except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
         print(f"FAIL could not reach {site.base_url}: {err}")
         return 2

@@ -10,6 +10,7 @@ wrong credentials; nothing on the site is changed.
 ```
 python3 tests/smoke.py                                 # production, https://spexodisks.com
 python3 tests/smoke.py --base-url http://localhost     # a local docker compose stack
+python3 tests/smoke.py --base-url http://localhost --only api,auth,security   # backend only, no frontend
 python3 tests/smoke.py --strict                        # security warnings fail the run
 python3 tests/smoke.py --help
 ```
@@ -31,8 +32,10 @@ Exit status 2 means the site could not be reached at all.
   recreated and rolls the backend back when it fails. The URL is `SMOKE_BASE_URL`, default
   `https://spexodisks.com`. Set it in the systemd unit if the server cannot reach its own public address.
 - **After `./deploy.sh` and `./deploy_update.sh`**: run it by hand against production.
-- **While developing**: run it against the local stack. A local stack without the production data
-  fails the `api` group, which is expected.
+- **While developing**: `./shell/local-test.sh` rebuilds the production database from `backend/data`
+  on the local MySQL container (the `data.sh` pipeline without prompts) and then runs the `api` and
+  `auth` groups against `http://localhost`. `--no-update` skips the pipeline and tests the data already
+  in the local database. The `pages` group needs the frontend, see `display.sh`.
 
 ### Adding a check
 

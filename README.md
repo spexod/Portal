@@ -429,6 +429,20 @@ python3 tests/smoke.py --base-url http://localhost
 ```
 Backend unit tests (no database needed): `cd backend && python3 -m unittest discover tests`.
 
+## Local database test `shell/local-test.sh`
+Rebuilds the production database from `backend/data` on the local MySQL container and runs the API
+smoke tests against it: the `data.sh` pipeline (build, `update.py`, `commit_data.py`), then the backend
+and nginx start with `DATA_MIGRATE_FROM_STAGED=true` and move the staged tables live, exactly as on
+the server. It needs a `.env` for the local stack (`MYSQL_HOST="mysqlDB"`, see `.env.example`) and
+takes about ten minutes, most of it in `update.py`.
+```
+./shell/local-test.sh               # full run
+./shell/local-test.sh --no-update   # only start the backend and test the data already in MySQL
+./shell/local-test.sh --down        # stop the containers afterwards
+```
+The result should match production: `curl http://localhost/api/stats_total/` and
+`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra.
+
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller
 component repositories. On a local machine, we can individually control 

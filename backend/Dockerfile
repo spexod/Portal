@@ -1,7 +1,8 @@
 # # Things that can be cached
 # Base Configurations
 FROM python:3.14-alpine AS build
-ENV PYTHONNUNBUFFERED=1
+# print output straight away, also without a terminal (docker compose run ... > log, systemd)
+ENV PYTHONUNBUFFERED=1
 WORKDIR /home/python_user/backend_app
 # No database credentials at build time: MYSQL_* are passed only at runtime (compose.yaml
 # "environment:"), so they are never stored in the image. IS_DOCKER_BUILD is set inline on
@@ -53,4 +54,5 @@ USER python_user
 # initialize the database and apply migrations, then run CMD (or the "docker compose run" command)
 ENTRYPOINT ["/bin/sh", "/home/python_user/backend_app/docker-entrypoint.sh"]
 # what runs when the container is started
-CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000"]
+# (no control socket: gunicorn 26 would create it in the home directory, which is read-only in the container)
+CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000", "--no-control-socket"]
