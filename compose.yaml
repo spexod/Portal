@@ -14,7 +14,7 @@ services:
       retries: 5
       # failed checks do not count while MySQL starts, which takes longer during a version upgrade
       start_period: 5m
-    platform: linux/amd64
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
       MYSQL_DATABASE: "spexodisks"
@@ -43,11 +43,11 @@ services:
         condition: any
 
   backend:
-    platform: linux/amd64
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: ./backend
       platforms:
-        - linux/amd64
+        - ${DOCKER_PLATFORM:-linux/amd64}
       args:
         - "MPLCONFIGDIR=${MPLCONFIGDIR:-/home/python_user/backend_app/.cache/matplotlib}"
         - "DATA_OUTPUT_DIR=${DATA_OUTPUT_DIR:-/home/python_user/backend_app/output}"
@@ -112,12 +112,12 @@ services:
 #        condition: service_healthy
 
   frontend:
-    platform: linux/amd64
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: ./SpExo-FrontEnd
       network: host
       platforms:
-        - linux/amd64
+        - ${DOCKER_PLATFORM:-linux/amd64}
     image: ghcr.io/spexod/frontend:LATEST
     container_name: frontend
     healthcheck:
@@ -139,7 +139,7 @@ services:
         condition: any
 
   nginx:
-    platform: linux/amd64
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     # the stable branch gets bug and security fixes only, no new features
     image: nginx:stable
     container_name: nginx
@@ -176,7 +176,7 @@ services:
           # Jupyter runs as root with sudo and the database password: local connections only
           - "127.0.0.1:8888:8888"
       environment:
-          JUPYTER_TOKEN: "${JUPYTER_TOKEN:?set JUPYTER_TOKEN in .env}"
+          JUPYTER_TOKEN: "${JUPYTER_TOKEN:-docker}"
           GRANT_SUDO: "yes"
           DOCKER_STACKS_JUPYTER_CMD: "lab"
           DEBUG: "${DEBUG:-false}"
