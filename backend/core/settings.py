@@ -14,11 +14,9 @@ from warnings import warn
 from django.core.exceptions import ImproperlyConfigured
 from datetime import timedelta
 
-from science.db.migrate import do_migration
-from science.db.data_status import get_data_status_mysql
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_CONNECT_OPTIONS,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
-                            wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED, is_docker_build)
+                            wait_for_mysql_to_start, is_docker_build)
 
 
 # At image build time (collectstatic, makemigrations) no database is reachable, so skip
@@ -32,12 +30,8 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
-if is_docker_build:
-    new_data_staged, new_data_commited, updated_mysql = False, False, False
-else:
-    new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
-    if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
-        do_migration()
+# The migration of staged data used to run here, in every process that imported the settings (each gunicorn
+# worker, every manage.py command). It now runs once at container start, see docker-entrypoint.sh.
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # The published default is for development (DEBUG=true) only, production refuses to start with it (see below).

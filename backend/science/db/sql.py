@@ -8,8 +8,8 @@ from datetime import datetime
 
 import dotenv
 import MySQLdb
-from numpy import float32, float64
 
+from science.db.sql_values import quote_identifier, qualified_name, placeholders, sql_value
 from science.db.sql_tables import (name_specs, param_ref, max_star_name_size, double_param, double_param_error,
                                    str_param, str_param_error, update_schema_map, create_tables,
                                    dynamically_named_tables)
@@ -52,7 +52,8 @@ MYSQL_USER = os.environ.get("MYSQL_USER", "username")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "password")
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/home/ubuntu/SpExServer/backend/output")
 update_mode = str_is_true(os.environ.get("DATA_NEW_UPLOADS_ONLY", "true"))
-API_USE_NEW_TABLES = str_is_true(os.environ.get("API_USE_NEW_TABLES", 'true'))
+# the API reads the live tables unless told otherwise: the new_* tables are dropped while an update runs
+API_USE_NEW_TABLES = str_is_true(os.environ.get("API_USE_NEW_TABLES", 'false'))
 # production is the default, development sets DEBUG=true in .env
 DEBUG = str_is_true(os.environ.get("DEBUG", "false"))
 DATA_MIGRATE_FROM_STAGED = str_is_true(os.environ.get("DATA_MIGRATE_FROM_STAGED", 'false'))
@@ -92,54 +93,15 @@ django_tables_set = set(django_tables)
 
 
 def make_insert_columns_str(table_name, columns, database):
-    insert_str = F"INSERT INTO {database}.{table_name}("
-    columns_str = ""
-    for column_name in columns:
-        columns_str += F"`{column_name}`, "
-    insert_str += columns_str[:-2] + ") VALUES"
-    return insert_str
+    columns_str = ", ".join(quote_identifier(column_name) for column_name in columns)
+    return F"INSERT INTO {qualified_name(table_name, database)}({columns_str}) VALUES"
 
 
 def make_insert_many_columns_str(table_name, columns, database=None):
-    insert_str = make_insert_columns_str(table_name=table_name, columns=columns, database=database) + "("
-
-    for i in range(len(columns)):
-        if i == 0:
-            insert_str += "%s"
-        else:
-            insert_str += ", %s"
-    return insert_str + ")"
-
-
-def make_insert_values_str(values):
-    values_str = ""
-    for value in values:
-        if isinstance(value, str):
-            values_str += F"'{value}', "
-        elif isinstance(value, (float, int, float32, float64)):
-            values_str += F"{value}, "
-        elif isinstance(value, bool):
-            values_str += F"{int(value)}, "
-        elif isinstance(value, datetime):
-            values_str += F"'{str(value)}', "
-        elif value is None:
-            values_str += "NULL, "
-        else:
-            raise TypeError
-    return "(" + values_str[:-2] + ")"
-
-
-def insert_into_table_str(table_name, data, database=None):
+    # one row of query parameters, for cursor.execute(sql, row) and cursor.executemany(sql, rows)
     if database is None:
         database = sql_database
-    columns = []
-    values = []
-    for column_name in sorted(data.keys()):
-        columns.append(column_name)
-        values.append(data[column_name])
-    insert_str = make_insert_columns_str(table_name, columns, database)
-    insert_str += make_insert_values_str(values) + ";"
-    return insert_str
+    return make_insert_columns_str(table_name=table_name, columns=columns, database=database) + placeholders(len(columns))
 
 
 def generate_sql_config_file(user_name, password):
@@ -250,7 +212,7 @@ class OutputSQL:
             print("    Dropping (deleting if the table exists) the Table:", table_name)
         if database is None:
             database = sql_database
-        self.cursor.execute(F"DROP TABLE IF EXISTS {database}.{table_name};")
+        self.cursor.execute(F"DROP TABLE IF EXISTS {qualified_name(table_name, database)};")
 
     def creat_table(self, table_name, database=None, dynamic_type=None, run_silent=False, drop_if_exists=True):
         if database is None:
@@ -260,42 +222,43 @@ class OutputSQL:
             self.drop_if_exists(table_name=table_name, database=database, run_silent=run_silent)
         if self.verbose and not run_silent:
             print("  Creating the SQL Table: '" + table_name + "' in the database: " + database)
-        self.cursor.execute("USE " + database + ";")
+        self.cursor.execute("USE " + quote_identifier(database) + ";")
         if dynamic_type is None:
             table_str = create_tables[table_name]
         else:
-            table_str = "CREATE TABLE `" + table_name + "` " + dynamically_named_tables[dynamic_type]
+            table_str = "CREATE TABLE " + quote_identifier(table_name) + " " + dynamically_named_tables[dynamic_type]
         self.cursor.execute(table_str)
 
     def check_if_table_exists(self, table_name, database=None):
         if database is None:
             database = sql_database
         self.open_if_closed()
-        return bool(self.query(f"""SELECT EXISTS(SELECT * FROM information_schema.tables WHERE
-                          table_schema = '{database}' AND table_name = '{table_name}');""")[0][0])
+        self.cursor.execute("""SELECT EXISTS(SELECT * FROM information_schema.tables WHERE
+                               table_schema = %s AND table_name = %s);""", (database, table_name))
+        return bool(self.cursor.fetchone()[0])
 
     def get_all_tables(self, database=None):
         if database is None:
             database = sql_database
         self.open_if_closed()
-        str_cmd = f"""SELECT table_name FROM information_schema.tables WHERE table_schema='{database}';"""
-        return [row[0] for row in self.query(str_cmd)]
+        self.cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = %s;", (database,))
+        return [row[0] for row in self.cursor]
 
     def check_key_exists(self, table_name, key_name, database=None):
         if database is None:
             database = sql_database
         self.open_if_closed()
-        self.cursor.execute(F"SHOW KEYS FROM {database}.{table_name} WHERE Key_name = '{key_name}';")
+        self.cursor.execute(F"SHOW KEYS FROM {qualified_name(table_name, database)} WHERE Key_name = %s;", (key_name,))
         return bool(self.cursor.fetchone())
 
     def get_matching_data(self, column_name: str, match_value: str, table_name: str, database: str = None):
         if database is None:
             database = sql_database
         self.open_if_closed()
-        select_str = f"""SELECT * FROM {database}.{table_name} WHERE 
-             {column_name} = '{match_value}';;"""
-
-        return self.query(select_str)
+        # match_value is a query parameter: it comes from file names and FITS headers
+        self.cursor.execute(F"SELECT * FROM {qualified_name(table_name, database)} WHERE {quote_identifier(column_name)} = %s;",
+                            (match_value,))
+        return [item for item in self.cursor]
 
     def create_schema(self, schema_name, run_silent=False):
         if self.verbose and not run_silent:
@@ -308,22 +271,29 @@ class OutputSQL:
         if database is None:
             database = sql_database
         self.open_if_closed()
-        insert_str = insert_into_table_str(table_name, data, database=database)
-        self.cursor.execute(insert_str)
+        columns = sorted(data.keys())
+        self.cursor.execute(make_insert_many_columns_str(table_name, columns, database=database),
+                            [sql_value(data[column_name]) for column_name in columns])
         self.connection.commit()
 
+    # A buffer collects rows for one table and inserts them in a single executemany call.
     def buffer_insert_init(self, table_name, columns, database, run_silent=False, buffer_num=0):
         if self.verbose and not run_silent:
             print("  Buffer inserting " + database + "." + table_name)
-        self.buffers[buffer_num] = make_insert_columns_str(table_name, columns, database)
+        self.buffers[buffer_num] = {'sql': make_insert_many_columns_str(table_name, columns, database=database),
+                                    'rows': []}
 
     def buffer_insert_value(self, values, buffer_num=0):
-        self.buffers[buffer_num] += make_insert_values_str(values) + ", "
+        self.buffers[buffer_num]['rows'].append([sql_value(value) for value in values])
 
     def buffer_insert_execute(self, run_silent=False, buffer_num=0):
+        buffer = self.buffers[buffer_num]
+        if not buffer['rows']:
+            return
         self.open_if_closed()
-        self.cursor.execute(self.buffers[buffer_num][:-2] + ";")
+        self.cursor.executemany(buffer['sql'], buffer['rows'])
         self.connection.commit()
+        buffer['rows'] = []
         if self.verbose and not run_silent:
             print("    Table inserted")
 
@@ -331,8 +301,18 @@ class OutputSQL:
         self.creat_table(table_name=table_name,  database=database, dynamic_type='spectrum',
                          run_silent=True)
         insert_str = make_insert_many_columns_str(table_name=table_name, columns=columns, database=database)
-        self.cursor.executemany(insert_str, data)
+        self.cursor.executemany(insert_str, [[sql_value(value) for value in row] for row in data])
         self.connection.commit()
+
+    # MySQL named locks, released when the connection closes: GET_LOCK returns 1 (got it), 0 (busy) or NULL
+    def get_lock(self, lock_name: str, timeout_seconds: int = 0) -> bool:
+        self.open_if_closed()
+        self.cursor.execute("SELECT GET_LOCK(%s, %s);", (lock_name, timeout_seconds))
+        return self.cursor.fetchone()[0] == 1
+
+    def release_lock(self, lock_name: str):
+        self.cursor.execute("SELECT RELEASE_LOCK(%s);", (lock_name,))
+        self.cursor.fetchone()
 
     def creat_database(self, database):
         if self.verbose:
@@ -581,11 +561,19 @@ class LoadSQL(OutputSQL):
                     # drop the temporary user data tables from new_spectra and do not move them
                     self.drop_if_exists(table_name=table_name, database=source)
                 else:
-                    # drop the old database table
-                    self.drop_if_exists(table_name=table_name, database=target)
-                    # move the new database tables to the old locations
-                    self.cursor.execute(F"""ALTER TABLE {source}.{table_name}
-                                            RENAME {target}.{table_name};""")
+                    # Swap the new table in with one RENAME statement, which is atomic: the running API never
+                    # sees a moment without the table (dropping first and renaming after left such a gap).
+                    source_table = qualified_name(table_name, source)
+                    target_table = qualified_name(table_name, target)
+                    old_name = f"{table_name}__old"
+                    if self.check_if_table_exists(table_name=table_name, database=target) and len(old_name) <= 64:
+                        self.drop_if_exists(table_name=old_name, database=target, run_silent=True)
+                        self.cursor.execute(F"RENAME TABLE {target_table} TO {qualified_name(old_name, target)}, "
+                                            F"{source_table} TO {target_table};")
+                        self.drop_if_exists(table_name=old_name, database=target, run_silent=True)
+                    else:
+                        self.drop_if_exists(table_name=table_name, database=target, run_silent=True)
+                        self.cursor.execute(F"RENAME TABLE {source_table} TO {target_table};")
                     if self.verbose:
                         print(F"     Moved {source}.{table_name} to {target}.{table_name}")
                     self.connection.commit()

@@ -87,7 +87,7 @@ services:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
       # optional TLS mode for database connections, the default depends on MYSQL_HOST (see science/db/sql.py)
       MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
-      API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+      API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-false}"
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
       IS_DOCKER_BUILD: "false"
       # set to false to skip database initialization and Django migrations at container start
@@ -179,7 +179,7 @@ services:
           MYSQL_USER: "${MYSQL_USER:-root}"
           MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
           MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
-          API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-true}"
+          API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-false}"
       volumes:
           - ./backend:/backend
       profiles: ["ipython"]

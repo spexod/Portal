@@ -1303,12 +1303,18 @@ class ObjectCollection:
             load_sql.clear_database(database=spectra_schema)
             load_sql.create_schema(schema_name=spectra_schema)
             load_sql.clear_database(database=stacked_line_schema)
-        # delete all the files and folders in the output directory
-        for root, dirs, files in os.walk(output_dir):
-            for f in files:
-                os.unlink(os.path.join(root, f))
-            for d in dirs:
-                shutil.rmtree(os.path.join(root, d))
+        if self.update_mode:
+            # write_spectra skips the spectra already in the database and writes no files for them,
+            # so their download files (.txt, .fits) must stay; new spectra overwrite their own files
+            if self.verbose:
+                print("Update mode: keeping the existing files in the output directory")
+        else:
+            # delete all the files and folders in the output directory
+            for root, dirs, files in os.walk(output_dir):
+                for f in files:
+                    os.unlink(os.path.join(root, f))
+                for d in dirs:
+                    shutil.rmtree(os.path.join(root, d))
         self.write_metadata(upload_all_params=upload_all_params)
         self.write_spectra()
         self.write_hitran()

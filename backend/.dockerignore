@@ -6,3 +6,16 @@
 *Dockerfile*
 venv*
 output
+# never in the image: secrets, generated database configs (plain text passwords), caches
+.env*
+*.pem
+*.key
+**/new_configs
+*sql_config.py
+ref/user.toml
+**/__pycache__
+*.pkl
+# mounted at run time (compose.yaml), not needed in the image
+data
+uploads
+tests

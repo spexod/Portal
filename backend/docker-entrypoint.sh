@@ -13,6 +13,9 @@ if [ "${DB_INIT_ON_START:-true}" = "true" ]; then
     python -m science.db.init
     echo "docker-entrypoint: applying Django migrations..."
     python manage.py migrate --noinput
+    # staged data from update.py + commit_data.py goes live here (only when DATA_MIGRATE_FROM_STAGED=true)
+    echo "docker-entrypoint: migrating staged data, if any..."
+    python -m science.db.migrate
 fi
 
 exec "$@"
