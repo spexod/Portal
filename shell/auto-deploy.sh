@@ -19,7 +19,7 @@ for s in $services; do
     before[$s]=$(docker inspect --format '{{.Image}}' "$(docker compose ps -q "$s" 2>/dev/null | head -n1)" 2>/dev/null || true)
 done
 
-docker compose pull --quiet --ignore-buildable
+docker compose pull --quiet --ignore-pull-failures
 # only containers with a new image (or changed compose.yaml) are recreated
 docker compose up --detach --no-build --remove-orphans
 

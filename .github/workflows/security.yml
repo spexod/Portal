@@ -40,6 +40,10 @@ jobs:
           context: ./backend
           platforms: linux/amd64
           pull: true
+          # the same values compose.yaml passes, the Dockerfile ARGs have no defaults
+          build-args: |
+            MPLCONFIGDIR=/home/python_user/backend_app/.cache/matplotlib
+            DATA_OUTPUT_DIR=/home/python_user/backend_app/output
           no-cache: true
           load: true
           tags: ghcr.io/spexod/backend:LATEST
