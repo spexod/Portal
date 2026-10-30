@@ -35,7 +35,8 @@ Exit status 2 means the site could not be reached at all.
 - **While developing**: `./shell/local-test.sh` rebuilds the production database from `backend/data`
   on the local MySQL container (the `data.sh` pipeline without prompts) and then runs the `api` and
   `auth` groups against `http://localhost`. `--no-update` skips the pipeline and tests the data already
-  in the local database. The `pages` group needs the frontend, see `display.sh`.
+  in the local database; `--frontend` also builds and starts the frontend image (as `display.sh` does)
+  and runs every group.
 
 ### Adding a check
 

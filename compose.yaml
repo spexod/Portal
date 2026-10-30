@@ -120,8 +120,12 @@ services:
         - ${DOCKER_PLATFORM:-linux/amd64}
     image: ghcr.io/spexod/frontend:LATEST
     container_name: frontend
+    environment:
+      # the standalone Next.js server binds to HOSTNAME, which Docker sets to the container ID (so it
+      # listened on the container address only and the healthcheck on localhost was refused)
+      HOSTNAME: "0.0.0.0"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
       interval: 10s
       timeout: 5s
       retries: 6

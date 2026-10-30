@@ -14,7 +14,7 @@ cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
 rm -rf .next || exit
 # copy production environment variables
-rm .env.production || exit
+rm -f .env.production || exit
 cp .env.display .env.production || exit
 # update the packages in package-lock.json (this requires node https://nodejs.org/en/download/package-manager)
 npm update || exit

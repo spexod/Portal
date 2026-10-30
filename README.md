@@ -441,6 +441,7 @@ takes about ten minutes, most of it in `update.py`.
 ```
 ./shell/local-test.sh               # full run
 ./shell/local-test.sh --no-update   # only start the backend and test the data already in MySQL
+./shell/local-test.sh --frontend    # also build and start the frontend (display.sh) and test the pages
 ./shell/local-test.sh --down        # stop the containers afterwards
 ```
 The result should match production: `curl http://localhost/api/stats_total/` and
