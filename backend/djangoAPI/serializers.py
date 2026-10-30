@@ -53,7 +53,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             email=validated_data['email'],
-            institution=validated_data['institution'],
+            institution=validated_data.get('institution', ''),
             password=validated_data['password'],
         )
 
@@ -81,6 +81,11 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        # the same rules as registration (AUTH_PASSWORD_VALIDATORS)
+        validate_password(value, self.context['request'].user)
+        return value
 
 
 """

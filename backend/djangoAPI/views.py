@@ -11,6 +11,11 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from django_rest_passwordreset.views import ResetPasswordRequestToken, ResetPasswordConfirm
 
 from .dynamic_data import (dispatch, schema_prefix,
                            available_spectra_to_database, available_isotopologues_to_database)
@@ -156,9 +161,48 @@ def download_spectra(request):
     return response
 
 
+def revoke_all_tokens(user):
+    """ Blacklist every refresh token issued to a user (after a password change or reset). """
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
+
+
+# the 'auth' throttle scope (core/settings.py) limits password guessing and reset-email floods
+class LoginView(TokenObtainPairView):
+    throttle_scope = 'auth'
+
+
+class RefreshView(TokenRefreshView):
+    throttle_scope = 'auth'
+
+
+class PasswordResetRequestView(ResetPasswordRequestToken):
+    throttle_scope = 'auth'
+
+
+class PasswordResetConfirmView(ResetPasswordConfirm):
+    throttle_scope = 'auth'
+
+
+class LogoutView(APIView):
+    """ Revoke the refresh token, so a logout also ends the session on the server. """
+    # the refresh token in the body is the credential: an expired access token must not prevent the logout
+    permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request):
+        try:
+            RefreshToken(request.data.get('refresh', '')).blacklist()
+        except TokenError:
+            # already revoked, expired or missing: the client is logged out either way
+            pass
+        return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
 class RegisterView(APIView):
     """ Register a new user. """
-    # User = get_user_model()
+    throttle_scope = 'auth'
+
     def post(self, request):
         """
         overwrite the post method to create a new user.
@@ -211,6 +255,8 @@ class ChangePasswordView(generics.UpdateAPIView):
             # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
+            # other devices and browsers have to log in again with the new password
+            revoke_all_tokens(self.object)
             response = {
                 'status': 'success',
                 'code': status.HTTP_200_OK,

@@ -1,7 +1,8 @@
+import logging
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.dispatch import receiver
-from django_rest_passwordreset.signals import reset_password_token_created
+from django_rest_passwordreset.signals import reset_password_token_created, post_password_reset
 from django.core.mail import send_mail
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -86,16 +87,27 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     email_plaintext_message = f"https://spexodisks.com/ResetPassword?token={reset_password_token.key}"
-    send_mail(
-        # title:
-        "Password Reset for SpExoDisks".format(title="SpExoDisks"),
-        # message:
-        "Click the following link to reset your password " + email_plaintext_message,
-        # from:
-        "donotreplyspexodisks@gmail.com",
-        # to:
-        [reset_password_token.user.email]
-    )
+    try:
+        send_mail(
+            # title:
+            "Password Reset for SpExoDisks".format(title="SpExoDisks"),
+            # message:
+            "Click the following link to reset your password " + email_plaintext_message,
+            # from:
+            "donotreplyspexodisks@gmail.com",
+            # to:
+            [reset_password_token.user.email]
+        )
+    except Exception:
+        # an email failure must not turn into an error response: that would reveal which addresses have accounts
+        logging.getLogger(__name__).exception("Could not send the password reset email")
+
+
+@receiver(post_password_reset)
+def password_reset_done(sender, user, *args, **kwargs):
+    # every device logged in with the old password has to log in again
+    from .views import revoke_all_tokens
+    revoke_all_tokens(user)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

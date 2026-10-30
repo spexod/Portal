@@ -75,6 +75,8 @@ INSTALLED_APPS = [
     'channels_redis',
     'dpd_static_support',
     'django_rest_passwordreset',
+    # records issued refresh tokens, so logout and password changes can revoke them
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -265,14 +267,21 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'spectra': '10/min',
+        # login, registration, password reset and token refresh (djangoAPI/views.py)
+        'auth': '10/min',
         'burst': '40/min',
         'sustained': '5000/day'
-    }
+    },
+    # one proxy (nginx) in front of the API: the client address is the last X-Forwarded-For entry
+    'NUM_PROXIES': 1,
 }
+
+# password reset answers the same way for unknown email addresses (no user enumeration)
+DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAK = True
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,

@@ -202,6 +202,10 @@ def check_security(site, results, no_redirect):
     res = site.get("/api/datadownload/?spectra=smoke-test-handle")
     results.check("security", "GET /api/datadownload/ without a token is refused", res.status in (401, 403), f"HTTP {res.status}")
 
+    # logout revokes the refresh token on the server (djangoAPI/views.py LogoutView); no token given here
+    res = site.get("/api/users/logout/", method="POST", data=b"{}", headers={"Content-Type": "application/json"})
+    results.check("security", "POST /api/users/logout/ exists (server-side logout)", res.status == 205, f"HTTP {res.status}")
+
     # unknown API paths are 404, not the catch-all index page (core/urls.py)
     res = site.get("/api/no-such-endpoint-smoke-test/")
     results.check("security", "unknown /api/ path is 404", res.status == 404, f"HTTP {res.status}")
