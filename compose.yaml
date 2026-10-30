@@ -147,7 +147,7 @@ services:
       - "80:8080"
       - "443:8443"
     volumes:
-      - "./nginx/${NGINX_CONFIG_FILE:-setup.conf}:/etc/nginx/conf.d/default.conf:rw"
+      - "./nginx/${NGINX_CONFIG_FILE:-setup.conf}:/etc/nginx/conf.d/default.conf:ro"
       # the Keys for https encryption
       - ssl_keys:/etc/letsencrypt:ro
       # One the Server is needed to verify the challenge to website ownership

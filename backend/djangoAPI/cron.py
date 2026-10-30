@@ -4,6 +4,7 @@ This file will be used to store the cron jobs for the website.
 For example, the function "schedule_deletion" will delete any zip files that are older than 5 minutes.
 """
 import os
+import time
 
 
 def schedule_deletion():
@@ -22,7 +23,7 @@ def schedule_deletion():
             # Print file path
             file_path = os.path.join('uploads', file)
             # If the file is a zip file, delete it
-            if file.endswith('.zip') and os.path.getmtime(file_path) > 300.0:
+            if file.endswith('.zip') and time.time() - os.path.getmtime(file_path) > 300.0:
                 print('Deleting file: ' + file)
                 os.remove(os.path.join('uploads', file))
 

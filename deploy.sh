@@ -21,19 +21,19 @@ echo "Build a local API (backend) and NGINX-server if completed, press any key t
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
-rm -rf .next || return
+rm -rf .next || exit
 # copy production environment variables
-rm .env.production || return
+rm .env.production || exit
 cp .env.deploy .env.production || exit
 cd ../ || exit
 # build in the docker container
-echo -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."
+read -r -p "Local Build for frontend completed (needed for fetch-cache), press any key to launch the test-website and continue..."
 ./shell/build.sh frontend --no-cache || exit
 # take down the old containers
 docker compose down
 # stop here to look for error messages
 echo -e "\nDevelopment Build completed,"
-echo -r -p "Pushing the new images to the container repository"
+read -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
 # once everything else is competed, we mark the database as ready to be updated
