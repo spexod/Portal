@@ -49,3 +49,29 @@ Which should return something like:
 
 Now the server will automatically update
 and reboot as needed.
+
+# Automatic updates for the website itself
+
+The operating system is covered by `unattended-upgrades` above. The containers are updated in layers:
+
+| Layer | What updates it | How often |
+|---|---|---|
+| Ubuntu packages | `unattended-upgrades` (this file) | daily |
+| Python dependencies and the backend base image | `.github/dependabot.yml` opens PRs; `.github/workflows/security.yml` audits them (pip-audit, Trivy) and rebuilds and publishes `ghcr.io/spexod/backend:LATEST` | PRs weekly, rebuild Mondays |
+| nginx and MySQL images | `docker compose pull` (nginx follows `stable`, MySQL stays on its pinned major version) | nightly |
+| Running containers | `shell/auto-deploy.sh` through the `spexodisks-auto-deploy` timer: pulls, recreates changed containers, rolls the backend back if it is not healthy | nightly at 04:00 |
+
+The frontend image is not rebuilt in GitHub Actions, because its build needs the live API (see `deploy.sh`).
+It still needs `./deploy.sh` after dependency updates. Copy `.github/dependabot.yml` to the SpExo-FrontEnd
+repository (ecosystems `npm` and `docker`) so it gets update PRs too.
+
+## One-time setup on the server
+
+```
+sudo install -m 644 shell/systemd/spexodisks-auto-deploy.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now spexodisks-auto-deploy.timer
+```
+
+Test it once by hand: `sudo systemctl start spexodisks-auto-deploy.service`, then `journalctl -u spexodisks-auto-deploy`.
+The server needs to be logged in to ghcr.io (`shell/ghcr-login.sh`) for private images.

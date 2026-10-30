@@ -1,0 +1,16 @@
+# Dependabot opens pull requests for outdated dependencies, and security-fix PRs as soon as an advisory is published.
+# The frontend (SpExo-FrontEnd) is a separate repository and needs its own copy of this file with "npm" and "docker".
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

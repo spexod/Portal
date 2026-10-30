@@ -217,6 +217,18 @@ CORS_ORIGIN_WHITELIST = (
 CSRF_TRUSTED_ORIGINS = [
 ]
 
+# HTTPS hardening for production. nginx terminates TLS and sets X-Forwarded-Proto (nginx/deploy.conf).
+# SECURE_SSL_REDIRECT is left off on purpose: nginx already redirects http to https, and the container
+# healthcheck calls gunicorn directly over http.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    if SECRET_KEY.startswith(('a-50-or-more', 'a$c#ph)5yg')):
+        warn("DJANGO_SECRET_KEY is a published default value; set a private key in .env, sessions can be forged otherwise.")
+
 # Email server Configuration
 # DJANGO_EMAIL_APP_PASSWORD, NOTE THIS IS A DIFFERENT PASSWORD COMPARED TO LOGGING IN W/ EMAIL
 if EMAIL_USER:

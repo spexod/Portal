@@ -90,6 +90,8 @@ services:
       # set to false to skip database initialization and Django migrations at container start
       DB_INIT_ON_START: "${DB_INIT_ON_START:-true}"
     profiles: ['api']
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -116,6 +118,8 @@ services:
     image: ghcr.io/spexod/frontend:LATEST
     container_name: frontend
     profiles: ["web"]
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -128,7 +132,8 @@ services:
 
   nginx:
     platform: linux/amd64
-    image: nginx:latest
+    # the stable branch gets bug and security fixes only, no new features
+    image: nginx:stable
     container_name: nginx
     ports:
       - "80:8080"
@@ -141,6 +146,8 @@ services:
       - ssl_challenge:/var/www/certbot/.well-known:ro
       - "django_static:/django/static_root:ro"
     profiles: ["api", "web"]
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
