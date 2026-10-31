@@ -15,8 +15,13 @@ docker compose pull
 docker compose down
 # delete the (to remake) the Django static files and other temp files
 ./shell/rm_volumes.sh
-# start the new containers from the pull images
-docker compose up --detach
+# start the new containers from the pulled images; --wait returns when the healthchecks pass
+# (the backend first creates missing schemas, applies Django migrations and moves staged data live, see
+# backend/docker-entrypoint.sh)
+docker compose up --detach --wait
+# every page and API endpoint, then the security settings (a failure stops the script before the prune)
+sleep 10   # nginx re-resolves the container addresses (resolver valid=30s in nginx/deploy.conf)
+python3 tests/smoke.py --base-url "${SMOKE_BASE_URL:-https://spexodisks.com}"
 # clear the old images and cache to keep the disk usage down on the server computer
 echo -e "\nCompleted: Portal Update Script, check the website at spexodisks.com. After confirming the site, press any-key prune"
 read -r -p  "docker cache (deleting replaced docker images)..."

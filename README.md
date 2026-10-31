@@ -419,6 +419,10 @@ https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-exi
 
 Fundamentally this is about running the script `/home/ubuntu/Portal/shell/update.sh` on the server,
 however, we have a script that login to the sever for you and run this command do this for you, `deploy_update.sh`.
+The script now waits for the healthchecks and runs `tests/smoke.py` before offering to prune the old
+images. For a deployment that changes the server's `.env` or the database, follow
+[shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security update, the checklist
+applies to later ones too).
 
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 

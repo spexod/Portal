@@ -101,3 +101,11 @@ Test it once by hand: `sudo systemctl start spexodisks-auto-deploy.service`, the
 `journalctl -u spexodisks-auto-deploy`. The server needs to be logged in to ghcr.io (`shell/ghcr-login.sh`)
 for private images. To get alerts, add `ALERT_WEBHOOK_URL=...` to `.env` and test with
 `./shell/notify-failure.sh spexodisks-auto-deploy.service`.
+
+## One-time setup on GitHub
+
+The image build in `security.yml` needs `backend/data/reference_data` from the private `spexod/data`
+repository. In the Portal repository settings add the Actions secret `DATA_REPO_TOKEN`: a fine-grained
+personal access token with *Contents: read* on `spexod/data` and nothing else. Then run the workflow
+once from the Actions tab (*Run workflow*): it publishes `ghcr.io/spexod/backend:LATEST` only from
+`main` and only on the schedule or that manual run, never from a plain push.

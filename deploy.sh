@@ -23,7 +23,7 @@ cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
 rm -rf .next || exit
 # copy production environment variables
-rm .env.production || exit
+rm -f .env.production || exit
 cp .env.deploy .env.production || exit
 cd ../ || exit
 # build in the docker container
@@ -37,5 +37,6 @@ read -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
 # once everything else is competed, we mark the database as ready to be updated
-docker compose run --rm backend python -m science.db.commit_data || exit
+# (DB_INIT_ON_START=false: only the status flag changes here, the schema steps of the entrypoint are not needed)
+docker compose run --rm -e DB_INIT_ON_START=false backend python -m science.db.commit_data || exit
 echo " completed the push to the container repository, continue the update with ./deploy_update.sh"
