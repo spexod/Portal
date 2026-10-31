@@ -164,9 +164,10 @@ The data upload looks up star names on SIMBAD when a name is not in
 ```
 SIMBAD_SERVER=simbad.harvard.edu
 ```
-`python -m ref.simbad_compat "HD 189733"` in the backend container tests a live lookup without
-writing any files. The same module translates the results of current astroquery versions back to
-the format the `autostar` package expects; see its docstring.
+`python -m autostar.simbad_query "HD 189733"` in the backend container tests a live lookup without
+writing any files. The lookups live in `backend/autostar` (formerly the separate `autostar`
+package, see its README), which also translates the results of current astroquery versions back
+to the format of the reference files.
 
 
 ## .evn File Configurations

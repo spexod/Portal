@@ -12,7 +12,6 @@ output
 *.key
 **/new_configs
 *sql_config.py
-ref/user.toml
 **/__pycache__
 *.pkl
 # The whole "data" directory is bind-mounted at run time (compose.yaml). The image only needs the small

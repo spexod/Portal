@@ -11,9 +11,7 @@ science/db/new_configs/*
 djangoAPI/migrations
 science/plots/output/*
 *.ipynb_checkpoints*
-autostar
 spexodisks.egg-info/
-ref/user.toml
 ref/data_status.toml
 uploads
 output

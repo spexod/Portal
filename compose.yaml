@@ -88,7 +88,7 @@ services:
       # optional TLS mode for database connections, the default depends on MYSQL_HOST (see science/db/sql.py)
       MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-false}"
-      # SIMBAD server for the star-name lookups (ref/simbad_compat.py): empty = the CDS main site
+      # SIMBAD server for the star-name lookups (autostar/simbad_query.py): empty = the CDS main site
       SIMBAD_SERVER: "${SIMBAD_SERVER:-}"
       UPLOAD_DIR: "/home/ubuntu/SpExServer/backend/output/"
       IS_DOCKER_BUILD: "false"
