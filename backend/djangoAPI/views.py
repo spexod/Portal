@@ -175,7 +175,9 @@ class LoginView(TokenObtainPairView):
 
 
 class RefreshView(TokenRefreshView):
-    throttle_scope = 'auth'
+    # every logged-in browser refreshes about every five minutes, so this scope is separate from the
+    # password-guessing limit, which users behind one shared address would otherwise exhaust together
+    throttle_scope = 'refresh'
 
 
 class PasswordResetRequestView(ResetPasswordRequestToken):
@@ -189,6 +191,9 @@ class PasswordResetConfirmView(ResetPasswordConfirm):
 class LogoutView(APIView):
     """ Revoke the refresh token, so a logout also ends the session on the server. """
     # the refresh token in the body is the credential: an expired access token must not prevent the logout
+    # (the frontend sends its Authorization header anyway, and logs out exactly when that token was refused,
+    # so the default JWT authentication would answer 401 before this view runs)
+    authentication_classes = []
     permission_classes = [permissions.AllowAny]
     throttle_scope = 'auth'
 

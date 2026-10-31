@@ -37,7 +37,8 @@ def do_migration() -> bool:
 
 
 if __name__ == '__main__':
-    if migration_is_due():
-        do_migration()
+    # do_migration checks whether a migration is due (under the lock) and returns False when it did nothing
+    if do_migration():
+        print("Staged data migrated to the live schemas.")
     else:
         print("No staged and committed data to migrate.")

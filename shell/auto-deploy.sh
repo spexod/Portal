@@ -131,6 +131,8 @@ if has backend "${changed[@]}"; then
     reset_static_volume
 fi
 docker compose up --detach --no-build --force-recreate "${changed[@]}" || true
+# reset_static_volume stopped backend and nginx; start whatever is not running again (nginx is rarely in "changed")
+docker compose up --detach --no-build "${services[@]}" || true
 if site_is_healthy; then
     echo "rollback completed, the previous images are running again" >&2
 else

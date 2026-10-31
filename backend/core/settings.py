@@ -260,8 +260,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'spectra': '10/min',
-        # login, registration, password reset and token refresh (djangoAPI/views.py)
+        # login, registration, logout and password reset (djangoAPI/views.py): slows down password guessing
         'auth': '10/min',
+        # token refresh, separately: many users behind one address refresh every few minutes
+        'refresh': '60/min',
+        # the scopes of django_rest_passwordreset's own views (its validate_token route is included as is);
+        # ScopedRateThrottle answers 500 for a view whose scope has no rate
+        'django-rest-passwordreset-request-token': '10/min',
+        'django-rest-passwordreset-confirm': '10/min',
+        'django-rest-passwordreset-validate-token': '10/min',
         'burst': '40/min',
         'sustained': '5000/day'
     },
@@ -271,6 +278,9 @@ REST_FRAMEWORK = {
 
 # password reset answers the same way for unknown email addresses (no user enumeration)
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAK = True
+# django_rest_passwordreset >= 1.6 otherwise throttles reset requests with its own 3/day-per-address class and
+# ignores the view's throttle_scope; an empty tuple means "use DEFAULT_THROTTLE_CLASSES", i.e. the 'auth' scope
+DJANGO_REST_PASSWORDRESET_THROTTLE_CLASSES = ()
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),

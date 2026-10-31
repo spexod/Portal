@@ -7,13 +7,14 @@
 venv*
 output
 # never in the image: secrets, generated database configs (plain text passwords), caches
-.env*
-*.pem
-*.key
+# (a pattern without **/ only matches at the root of the build context)
+**/.env*
+**/*.pem
+**/*.key
 **/new_configs
-*sql_config.py
+**/*sql_config.py
 **/__pycache__
-*.pkl
+**/*.pkl
 # The whole "data" directory is bind-mounted at run time (compose.yaml). The image only needs the small
 # reference tables (data/reference_data), which the Django models read when they are imported at build
 # time; the spectra and the generated data products are large and never read during the build.

@@ -176,9 +176,12 @@ def check_api(site, results, with_pages=True):
         if with_pages:
             check_page(site, results, f"/ExploreData/{urllib.parse.quote(curated[0]['spexodisks_handle'])}")
 
-    stats = tables.get("stats_total") or [{}]
-    results.check("api", "stats_total has counts", all(k in stats[0] for k in ("total_spectra", "total_stars")) if stats else False,
-                  ", ".join(f"{k}={v}" for k, v in stats[0].items()) if stats else "")
+    stats = tables.get("stats_total") or []
+    if stats:
+        results.check("api", "stats_total has counts", all(k in stats[0] for k in ("total_spectra", "total_stars")),
+                      ", ".join(f"{k}={v}" for k, v in stats[0].items()))
+    else:
+        results.check("api", "stats_total has counts", False, "empty response")
 
     # static files for the Django site
     res = site.get("/api/static/admin/css/base.css")

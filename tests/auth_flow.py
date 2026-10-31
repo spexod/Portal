@@ -100,8 +100,9 @@ def main():
 
     # 3. the access token identifies the user
     status, me = api.json("GET", "/api/users/me", token=access)
-    checks.check("/users/me with the access token", status == 200 and me.get("email") == email, f"HTTP {status} {me}")
-    checks.check("/users/me never returns the password", isinstance(me, dict) and "password" not in me)
+    me_ok = status == 200 and isinstance(me, dict)
+    checks.check("/users/me with the access token", me_ok and me.get("email") == email, f"HTTP {status} {me}")
+    checks.check("/users/me never returns the password", me_ok and "password" not in me)
 
     # 4. refresh rotates the token pair, the old refresh token is revoked
     status, rotated = api.json("POST", "/api/users/token/refresh/", {"refresh": refresh})
@@ -141,8 +142,9 @@ def main():
     status, tokens = api.json("POST", "/api/users/token/", {"email": email, "password": new_password})
     ok = checks.check("login with the new password", status == 200 and isinstance(tokens, dict) and "refresh" in tokens, f"HTTP {status}")
     if ok:
-        status, _ = api.json("POST", "/api/users/logout/", {"refresh": tokens["refresh"]})
-        checks.check("logout", status == 205, f"HTTP {status}")
+        # the frontend logs out when its access token was refused, so the header may carry an unusable token
+        status, _ = api.json("POST", "/api/users/logout/", {"refresh": tokens["refresh"]}, token="expired.access.token")
+        checks.check("logout works with an invalid access token in the header", status == 205, f"HTTP {status}")
         status, _ = api.json("POST", "/api/users/token/refresh/", {"refresh": tokens["refresh"]})
         checks.check("the refresh token is revoked by the logout", status == 401, f"HTTP {status}")
 

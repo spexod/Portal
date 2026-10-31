@@ -10,7 +10,7 @@ Portal, 15 commits (`git log main..claude`):
 | Area | Change | Visible effect |
 |---|---|---|
 | nginx | TLS 1.2/1.3 only, security headers (HSTS 1 year, nosniff, frame, referrer, permissions), server version hidden, requests for other host names dropped (444), real client address forwarded | headers on every response; the IP address no longer serves the site |
-| Django | `DJANGO_SECRET_KEY` required when `DEBUG=false`; refresh tokens rotate and can be revoked (logout, password change, password reset); 10 requests/minute per address on login, refresh, register, reset; password rules on password change; reset request never reveals whether an email exists; `/api/datadownload/` needs a login; unknown `/api/...` paths are 404 | sessions keep working; a logout now ends the session on the server; brute force is slowed down |
+| Django | `DJANGO_SECRET_KEY` required when `DEBUG=false`; refresh tokens rotate and can be revoked (logout, password change, password reset); 10 requests/minute per address on login, register, logout, reset (60/minute on refresh); password rules on password change; reset request never reveals whether an email exists; `/api/datadownload/` needs a login; unknown `/api/...` paths are 404 | sessions keep working; a logout now ends the session on the server; brute force is slowed down |
 | compose | `MYSQL_PASSWORD` required; `no-new-privileges`; nginx config read-only; `DEBUG` and `API_USE_NEW_TABLES` default to false; MySQL port bindable to one address; frontend healthcheck fixed (`HOSTNAME=0.0.0.0`) | compose refuses to start without the password |
 | data pipeline | parameterised SQL, atomic table swap, schema init / Django migrations / staged-data migration at container start (not at image build), `update_mode` keeps the output directory | the first backend start applies two new Django migrations (token blacklist tables) |
 | autostar | moved into `backend/autostar`; SIMBAD lookups work with current astroquery; `SIMBAD_SERVER` selects the CDS site or the Harvard mirror | only the development computer runs it |
@@ -140,7 +140,8 @@ new images up at 04:00 and rolls back when the smoke test fails. Details: `shell
 ## Known behaviour changes to expect
 
 - Every user is logged out once (new secret key); logins work normally afterwards.
-- Login, refresh, register and password-reset requests are limited to 10 per minute per address.
+- Login, register, logout and password-reset requests are limited to 10 per minute per address;
+  token refresh has its own limit of 60 per minute per address.
 - Spectrum downloads require a login (the frontend already asked for one).
 - `https://<server IP>/` and unknown host names get no response instead of the site.
 - Browsers remember HSTS for a year: the site is https-only from the first visit on.
