@@ -121,3 +121,6 @@ try:
         toml.dump(autostar_toml, f)
 except OSError:
     print(f"Could not write the user.toml file to {ref_module_dir}, read-only file system?")
+
+# SIMBAD server selection and the astroquery >= 0.4.8 compatibility layer for autostar's live lookups
+from ref import simbad_compat  # noqa: E402,F401  (import for its side effects)

@@ -156,6 +156,18 @@ When set to `false`, the data upload process will re-upload all spectra and file
 This could be a useful to update all spectra after formatting changes,
 such as to the changes to FITS files.
 
+### `.env` variable: SIMBAD_SERVER
+
+The data upload looks up star names on SIMBAD when a name is not in
+`backend/data/reference_data` yet. Empty (the default) uses the CDS main site in Strasbourg,
+`simbad.harvard.edu` uses the CfA mirror, for example while CDS is down:
+```
+SIMBAD_SERVER=simbad.harvard.edu
+```
+`python -m ref.simbad_compat "HD 189733"` in the backend container tests a live lookup without
+writing any files. The same module translates the results of current astroquery versions back to
+the format the `autostar` package expects; see its docstring.
+
 
 ## .evn File Configurations
 
