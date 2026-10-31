@@ -47,6 +47,11 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     """
     User authentication
     """
+    # The production table was created with a 32-bit id (Django's AutoField), before DEFAULT_AUTO_FIELD was
+    # BigAutoField. A foreign key to this model is created with the type declared here, so it has to stay
+    # AutoField: with the default, the token-blacklist tables failed to apply on production (MySQL error 3780,
+    # "Referencing column 'user_id' and referenced column 'id' ... are incompatible").
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)

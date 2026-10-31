@@ -73,6 +73,22 @@ and take a database dump that the rollback can use:
 sudo ./mysql/upgrade.sh dump        # writes mysql/dump-<time>.sql.gz
 ```
 
+### Clean up after the failed `data.sh` run of 2026-10-31
+
+The first `data.sh` with the new image stopped in the Django migrations with MySQL error 3780: the
+token-blacklist table's `user_id` was created as `bigint` while the production user table has a
+32-bit `id`. The model now declares that id type explicitly, but the failed migration left its two
+tables behind on the production server, and the next migration run would stop at "table already
+exists". In the MySQL client (on the server: `docker compose exec mysqlDB mysql -uroot -p`):
+```sql
+SHOW CREATE TABLE users.djangoAPI_useraccount\G          -- expect:  `id` int NOT NULL AUTO_INCREMENT
+SHOW TABLES FROM users LIKE 'token_blacklist%';          -- the two orphan tables
+DROP TABLE IF EXISTS users.token_blacklist_blacklistedtoken, users.token_blacklist_outstandingtoken;
+SELECT app, name FROM users.django_migrations WHERE app = 'token_blacklist';   -- expect no rows
+```
+If the first statement shows `bigint` instead of `int`, stop and say so before deploying: the model
+change would then be wrong.
+
 ## 3. Build and publish the images (development computer)
 
 `./deploy.sh` as before. It rsyncs `backend/output` and `backend/data` to the server, builds the backend
