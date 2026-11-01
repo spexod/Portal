@@ -1,11 +1,20 @@
-# Dependabot opens pull requests for outdated dependencies, and security-fix PRs as soon as an advisory is published.
-# The frontend (SpExo-FrontEnd) is a separate repository and needs its own copy of this file with "npm" and "docker".
+# Dependabot opens pull requests for outdated dependencies, and security-fix PRs as soon as an advisory is
+# published. The frontend (SpExo-FrontEnd) is a separate repository with its own copy of this file.
+#
+# Version policy (shell/next_round_plan.md, section 3): the packages follow the newest release, majors
+# included, resolved at build time (shell/refresh_versions.py) and tested by the image build, the smoke test
+# and the nightly rollback, so Dependabot opens no version PRs for pip packages (open-pull-requests-limit 0
+# keeps the security PRs). The runtimes are pinned to a line (python:3.15-alpine, mysql:9.7): a new line is
+# an administrator's decision, and the Docker PRs are the prompt. GitHub Actions are pinned by commit and
+# updated in full, in one grouped PR.
 version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
     schedule:
       interval: weekly
+    # security advisories only
+    open-pull-requests-limit: 0
   - package-ecosystem: docker
     directory: /backend
     schedule:
@@ -18,3 +27,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
