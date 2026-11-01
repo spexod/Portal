@@ -1,0 +1,3 @@
+# the Playwright install for screenshots.mjs
+node_modules/
+package-lock.json
