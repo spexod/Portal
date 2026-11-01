@@ -5,11 +5,9 @@ read -r -p "Portal TEST Build Script, press any key to continue..."
 docker compose --profile web --profile api down
 # delete the (to remake) the Django static files
 ./shell/rm_volumes.sh
-# bring up the the backend and nginx server
+# build the backend image
 ./shell/build.sh backend || exit
-docker compose --profile api up --detach || exit
-echo "Build a local API (backend) and NGINX-server completed, building the frontend..."
-# build the frontend on the local machine (we need the cache from this for the docker-build later)
+# the frontend image: the pages are rendered on request, so the build needs no API
 cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
 rm -rf .next || exit
@@ -20,7 +18,6 @@ cp .env.display .env.production || exit
 npm update || exit
 cd ../ || exit
 # build in the docker container
-read -r -p "Local Build for frontend completed (needed for fetch-cache), launching the test-website..."
 ./shell/build.sh frontend || exit
 # test the build on a local machine
 # stop here to look for error messages

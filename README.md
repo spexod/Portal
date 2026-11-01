@@ -607,7 +607,6 @@ The server's TLS and firewall setup is documented in [shell/ssl.md](shell/ssl.md
 | A local MySQL server has no TLS, or local connections fail with TLS errors | The local `.env` uses `MYSQL_CONFIG_FILE="deploy.cnf"`, which needs the server's certificate | Remove `MYSQL_CONFIG_FILE` from the local `.env` to use `local.cnf` |
 | `unknown variable` when MySQL starts | An option in the `.cnf` file is not known to this MySQL version | Prefix version-specific options with `loose-` (see `mysql/deploy.cnf`) |
 | A MySQL version upgrade, or MySQL fails to start after the version changed | Major versions upgrade the data files in place | [MySQL Version Upgrades](#mysql-version-upgrades) |
-| `additional privileges requested: pass "--allow=network.host"` | Docker Compose v5+ builds with Docker Bake, which needs permission for `network: host` builds | Build with `./shell/build.sh <service>`, then run Compose commands without `--build` |
 | `image ... was found but its platform (linux/arm64) does not match the specified platform (linux/amd64)` | The image was built for the wrong platform | `platforms:` under `build:` in `compose.yaml`; build with `./shell/build.sh` |
 | `denied: denied` when pushing images to `ghcr.io` | The GitHub token expired | [Build Deployable containers](#build-deployable-containers-deploysh) (new token link) |
 | `ModuleNotFoundError: No module named 'science'` | A backend script was run as a file path | Run it as a module: `python -m science.db.<name>` |

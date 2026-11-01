@@ -66,9 +66,10 @@ The operating system is covered by `unattended-upgrades` above. The containers a
 - **MySQL** stays on `MYSQL_VERSION`; `auto-deploy.sh` never pulls or recreates `mysqlDB`. Even a patch
   release upgrades the data files in place at 04:00 with nobody watching. Update it by hand, see
   "MySQL Version Upgrades" in README.md.
-- **The frontend image** is not rebuilt in GitHub Actions, because its build needs the live API
-  (see `deploy.sh`). Dependabot PRs in the SpExo-FrontEnd repository still need `./deploy.sh` to reach
-  the site; once published, the nightly update picks the new image up.
+- **The frontend image** is not rebuilt in GitHub Actions yet. Its build no longer needs an API (the
+  pages are rendered on request), so a workflow in the SpExo-FrontEnd repository can publish it; until
+  then Dependabot PRs there still need `./deploy.sh` to reach the site. Once published, the nightly update
+  picks the new image up.
 
 ## What `shell/auto-deploy.sh` does
 

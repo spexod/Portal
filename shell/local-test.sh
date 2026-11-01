@@ -75,7 +75,7 @@ DATA_MIGRATE_FROM_STAGED=true docker compose up --detach --wait --force-recreate
 
 groups=api,auth
 if [ "$with_frontend" = true ]; then
-    step "5b. frontend image, built against the local API through nginx (http://localhost/)"
+    step "5b. frontend image (the build needs no API), started against the local API through nginx"
     [ -d SpExo-FrontEnd/app ] || { echo "SpExo-FrontEnd is missing, see shell/init.sh" >&2; exit 1; }
     rm -rf SpExo-FrontEnd/.next
     cp SpExo-FrontEnd/.env.display SpExo-FrontEnd/.env.production
