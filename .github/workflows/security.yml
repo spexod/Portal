@@ -33,6 +33,16 @@ jobs:
       # The Django models read data/reference_data when they are imported during the build (see
       # backend/.dockerignore), and that directory is the private spexod/data repository. DATA_REPO_TOKEN is
       # a fine-grained token with read access to the contents of spexod/data only.
+      - name: Check that the DATA_REPO_TOKEN secret is set
+        env:
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+        run: |
+          if [ -z "$DATA_REPO_TOKEN" ]; then
+            echo "::error::The repository secret DATA_REPO_TOKEN is not set. Create a fine-grained token with" \
+                 "read access to the contents of spexod/data and add it under Settings > Secrets and variables" \
+                 "> Actions, then re-run this job (shell/auto_update.md, 'One-time setup on GitHub')."
+            exit 1
+          fi
       - name: Check out the reference data (private repository)
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
