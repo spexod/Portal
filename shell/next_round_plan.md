@@ -8,7 +8,8 @@ of the security deployment and the short list this plan grew from.
 
 ## 1. Rules for unattended work
 
-- **Branches.** One branch per work package, named `claude/<package>` (for example `claude/wp1-tooling`),
+- **Branches.** One branch per work package, named `claude-<package>` (for example `claude-wp1-tooling`; git
+  allows no `claude/...` branches beside the old `claude` branch),
   branched from `main`. Commits are small and described; nothing is pushed, merged or deployed by the
   assistant. The user merges after review, as before. A package that touches both repositories gets the same
   branch name in both.
