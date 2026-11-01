@@ -96,10 +96,10 @@ image, starts the local API for the frontend build, builds the frontend with `.e
 both images to ghcr.io and marks staged data committed (prints "No staged data to commit" when
 `data.sh` was not run, which is fine for this deployment).
 
-**Downloads on the local test website are empty.** The test website that `deploy.sh` starts serves the
-zip downloads from `backend/output` on this computer, which the previous `deploy.sh` emptied
-(`rm -rf ./backend/output/*`) and which `data.sh` in update mode (`DATA_NEW_UPLOADS_ONLY=true`) only
-refills for spectra that are new to the database. So a zip from the local test website holds only
+**Downloads on the local test website are empty.** The test website that `display.sh` or `deploy.sh`
+starts serves the zip downloads from `backend/output` on this computer. `data.sh` empties that directory
+first (`rm -rf ./backend/output/*`) and, in update mode (`DATA_NEW_UPLOADS_ONLY=true`), `update.py`
+only writes files for spectra that are new to the database. So a zip from the local test website holds only
 `fits_read.py` and `FITSREAD.md`. This is not a fault of the build: the server keeps the complete set
 (1197 spectra, `.fits` and `.txt`) in `/home/ubuntu/Portal/backend/output`, the rsync in `deploy.sh`
 only adds to it, and the production download is checked in section 5. To have the files locally again:
