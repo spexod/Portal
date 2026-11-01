@@ -76,10 +76,11 @@ of the security deployment and the short list this plan grew from.
   `--auto-deploy` test found exactly that). Done in WP1: the running image is tagged `previous` before the
   update and the rollback uses the tag. WP2 can add the `sha-<commit>` tags on top, so the server can also
   be pinned to a known build by hand.
-- **`API_BASE_SERVER` is baked into the frontend image** from `.env.production` at build time. With dynamic
-  rendering it is read at run time, so it belongs in compose's `environment:` (it already has the right
-  value, `http://backend:8000/`), and the image is then the same for the local test site and production;
-  only `NEXT_PUBLIC_*` values are compiled in, and those are public. Needed for the CI build. (WP2)
+- **`API_BASE_SERVER` was baked into the frontend image** from `.env.production` at build time. Done in WP2:
+  it is a run-time setting (the Dockerfile's default `http://backend:8000/`, overridable in compose), only
+  the public `NEXT_PUBLIC_*` values are compiled in, as build args with the production defaults, and the
+  env files `.env.deploy`/`.env.display` are gone; the EmailJS key becomes a GitHub repository variable
+  that the CI build reads, so setting it needs no commit.
 - **No off-site copy of anything.** The database dumps and the 1.3 GB of download files live on the server
   only; the data repository has the inputs but not the outputs. (WP10, D5)
 - **No uptime check from outside.** The nightly script notices a broken site only when it runs. A free
@@ -263,7 +264,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 | Package | Branch | Status | Verified by | Open |
 |---|---|---|---|---|
 | WP1 | `claude-wp1-tooling` | all six steps done 2026-11-01: `local-test.sh --auto-deploy` (update and rollback of `auto-deploy.sh` against the local stack), `update.sh --check`, `data-status.sh` in `data.sh`/`deploy.sh`, venv/pip gone, Python 3.15 line, `refresh_versions.py`, CI resolves and labels, Dependabot policy | backend built on 3.15 from the lock; local-test --frontend 40/40 + account flow; Trivy 0 findings without the ignore file; auto-deploy update and rollback scenarios (see commit) | |
-| WP2 | | not started | | D9 |
+| WP2 | `claude-wp2-ci-builds` (stacked on `claude-wp1-tooling`, both repositories) | done 2026-11-01: frontend settings as build args and run-time env, `audit.yml` builds, scans and publishes the frontend image, `security.yml` publishes on push to `main`; the server side (`sha-` tags for rollback by hand, `deploy.sh` as fallback) documented | frontend built from build args alone, local-test --frontend 40/40, API base checked in the compiled pages, browser console clean | the first real publish of each image is watched by the user; the frontend package needs the repository's write access (auto_update.md) |
 | WP3 | `pipeline-split` | plan written 2026-10-31, needs rebase on `main` | | |
 | WP4 | | `github-status.sh` on `main`; routine not started | | D1 |
 | WP5 | | screenshots taken 2026-11-01, findings in deploy_plan.md | | D7 |

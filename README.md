@@ -387,9 +387,15 @@ stop the containers.
 
 ### Build Deployable containers `deploy.sh`
 
-The server requires a configuration that is not compatible with local testing.
-Building docker images to be used and pulled by the server uses a special 
-script, `deploy.sh`.
+Since November 2026 the images the server runs are built on GitHub: a merge to `main` in Portal
+(`.github/workflows/security.yml`) or in SpExo-FrontEnd (`.github/workflows/audit.yml`) builds the
+image with the newest packages, scans it, publishes it to ghcr.io as `LATEST` and `sha-<commit>`, and the
+server's nightly update (see [shell/auto_update.md](shell/auto_update.md)) pulls it, checks the site and
+rolls back if the check fails. So for a code change the deployment is: merge, wait for the green run,
+and the site updates the next night (or run `sudo systemctl start spexodisks-auto-deploy.service` on
+the server). `deploy.sh` remains for the data steps (the rsync of the download files and the data
+repository, and committing the staged data) and as the fallback that builds and pushes the images from
+this computer, for example when a build needs a local workaround.
 
 ```bash
 ./deploy.sh
