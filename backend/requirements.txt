@@ -33,4 +33,4 @@ sqlalchemy
 # SIMBAD, Gaia and TESS Input Catalog queries (backend/autostar, formerly the separate autostar package)
 astroquery
 # The SpExoDisks Community FITs file tools
-spexod>=0.1.1
+spexod>=0.3.0
