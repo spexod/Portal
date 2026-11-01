@@ -56,6 +56,11 @@ emptied again (see section 3).
    there restarts the containers, and from the recreate step on `set -e` is off so the rollback path is always
    reached. The sandbox tests never exercised a backend update through this script: `local-test.sh` should
    get a mode that runs `auto-deploy.sh` against the local stack with a changed image.
+000. **`auto-deploy.sh` rolled back to an image that no longer existed** (found by `local-test.sh --auto-deploy`
+   on 2026-11-01, fixed on `claude-wp1-tooling`): it remembered the running image by id, but an image that has
+   lost its tag (the new image took it) and its container (removed for the volume reset) is garbage-collected
+   by Docker's containerd image store, so the rollback found nothing. The running image now gets a `previous`
+   tag before the update and the rollback uses that tag; `docker image prune` leaves tagged images alone.
 0. **`update.sh` died on `clear`** (found on the first real run, fixed on `claude`): with `set -euo pipefail`
    and no terminal over ssh, `clear` fails on the missing `TERM` variable and ends the script before the
    pull; `deploy_update.sh` then went on to its prune prompt as if the update had run. The server was untouched.
