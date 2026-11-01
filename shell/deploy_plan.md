@@ -75,6 +75,22 @@ emptied again (see section 3).
   urllib3/msgpack/setuptools copies that `.trivyignore` accepts. Then delete the `.trivyignore` entries.
 - **Pipeline split** (branch `pipeline-split`, `shell/pipeline_split_plan.md`): separate API and pipeline
   images, drop the dead dependencies.
+- **Build the production images on GitHub, not on a developer computer.** Two steps:
+  1. *Backend.* `security.yml` already builds, scans and publishes `ghcr.io/spexod/backend` from `main` on the
+     weekly schedule and by hand. Publish on every push to `main` as well (keep the two-job separation: the
+     third-party actions never run with a token that can write to the registry). The server's nightly timer,
+     or `systemctl start spexodisks-auto-deploy.service` for an immediate update, becomes the deployment path;
+     `deploy.sh` then only builds the backend for the frontend build (until step 2) and does the data steps.
+  2. *Frontend.* The Next.js build pre-renders the pages and fetches the API at build time through
+     `API_BASE_SERVER`, which is why `deploy.sh` needs a local backend and why the production API must stay out
+     of the build. Make the build independent of the API: render the data pages on first request instead of at
+     build time (the pages already revalidate every 100 s and keep the last good data when a fetch fails). Then
+     an `image` job in SpExo-FrontEnd's workflow builds the image from `main` with no API, no database and no
+     secrets, scans it and publishes `ghcr.io/spexod/frontend`. Cost: a slower first request after a container
+     start. Gain: both images reproducible from a commit, built for amd64 on a runner (the `DOCKER_PLATFORM`
+     trap in section 1 disappears), tagged with the commit SHA, independent of a laptop's state.
+  After both steps, what remains on the development computer is data work: `data.sh`, the rsync of the
+  download files and the staged-data commit, which the pipeline split separates from the API anyway.
 
 ## What is being deployed
 
