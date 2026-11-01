@@ -137,9 +137,16 @@ services:
       args:
         # the Node line to follow (the current LTS); versions.env pins the exact image
         - "BASE_IMAGE=${FRONTEND_BASE_IMAGE:-node:26-alpine}"
+        # public values compiled into the pages: the API the browser calls (a test stack: http://localhost/)
+        # and the EmailJS key of the contact form (empty: the form says it is not configured)
+        - "NEXT_PUBLIC_API_BASE_CLIENT=${NEXT_PUBLIC_API_BASE_CLIENT:-https://spexodisks.com/}"
+        - "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=${NEXT_PUBLIC_EMAILJS_PUBLIC_KEY:-}"
     image: ${FRONTEND_IMAGE:-ghcr.io/spexod/frontend:LATEST}
     container_name: frontend
     environment:
+      # the API the server-side fetches call (app/layout.js renders every page on request)
+      API_BASE_SERVER: "${API_BASE_SERVER:-http://backend:8000/}"
+      DEBUG: "${FRONTEND_DEBUG:-false}"
       # the standalone Next.js server binds to HOSTNAME, which Docker sets to the container ID (so it
       # listened on the container address only and the healthcheck on localhost was refused)
       HOSTNAME: "0.0.0.0"

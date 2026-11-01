@@ -98,21 +98,21 @@ jobs:
           # accepted findings with their reasons and review dates
           trivyignores: .trivyignore
       - name: Save the scanned image for the publish job
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: docker save ghcr.io/spexod/backend:LATEST | gzip > backend-image.tar.gz
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         with:
           name: backend-image
           path: backend-image.tar.gz
           retention-days: 1
 
-  # Publishing happens only on the weekly schedule or by hand, from main, and in a job of its own: the
-  # third-party actions above never run with a token that can write to the registry. The server
-  # pulls LATEST the next night (shell/auto-deploy.sh).
+  # Publishing happens from main only (a push, the weekly schedule, a manual run), in a job of its own:
+  # the third-party actions above never run with a token that can write to the registry. The server
+  # pulls LATEST the next night (shell/auto-deploy.sh), so a merge to main is a deployment.
   publish:
     needs: image
-    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read

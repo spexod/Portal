@@ -14,14 +14,9 @@ docker compose --profile web --profile api down
 rm -rf ./backend/output/*
 # build the backend image
 ./shell/build.sh backend || exit
-# the frontend image: the pages are rendered on request, so the build needs no API
-cd SpExo-FrontEnd || exit
-# remove the .next folder to ensure a clean build
-rm -rf .next || exit
-# copy production environment variables
-rm -f .env.production || exit
-cp .env.deploy .env.production || exit
-cd ../ || exit
+# the frontend image: the pages are rendered on request, so the build needs no API; its settings are the
+# build args in compose.yaml (NEXT_PUBLIC_*) and the run-time environment, not env files
+rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production || exit
 # build in the docker container
 ./shell/build.sh frontend --no-cache || exit
 # stop here to look for error messages

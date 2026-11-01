@@ -7,14 +7,9 @@ docker compose --profile web --profile api down
 ./shell/rm_volumes.sh
 # build the backend image
 ./shell/build.sh backend || exit
-# the frontend image: the pages are rendered on request, so the build needs no API
-cd SpExo-FrontEnd || exit
-# remove the .next folder to ensure a clean build
-rm -rf .next || exit
-# copy production environment variables
-rm -f .env.production || exit
-cp .env.display .env.production || exit
-cd ../ || exit
+# the frontend image for the test website: the browser calls the local API through nginx
+export NEXT_PUBLIC_API_BASE_CLIENT=http://localhost/
+rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production || exit
 # the newest package versions within the ranges, and the exact base images, for this build
 python3 shell/refresh_versions.py || exit
 # build in the docker container

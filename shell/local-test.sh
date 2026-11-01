@@ -18,7 +18,7 @@
 #   ./shell/local-test.sh              full run; update.py takes about ten minutes
 #   ./shell/local-test.sh --no-update  skip steps 2-4, test the data already in the local database
 #   ./shell/local-test.sh --frontend   also build the frontend image against the local API (as display.sh
-#                                      does, with SpExo-FrontEnd/.env.display), start it and test the pages
+#                                      does, the browser calling http://localhost/), start it and test the pages
 #   ./shell/local-test.sh --auto-deploy  with --frontend: also run shell/auto-deploy.sh against the local stack
 #                                      twice, with a changed backend image (an update) and with a broken one
 #                                      (a rollback). The stack then runs its images from a registry container
@@ -114,9 +114,8 @@ groups=api,auth
 if [ "$with_frontend" = true ]; then
     step "5b. frontend image (the build needs no API), started against the local API through nginx"
     [ -d SpExo-FrontEnd/app ] || { echo "SpExo-FrontEnd is missing, see shell/init.sh" >&2; exit 1; }
-    rm -rf SpExo-FrontEnd/.next
-    cp SpExo-FrontEnd/.env.display SpExo-FrontEnd/.env.production
-    ./shell/build.sh frontend
+    rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production
+    NEXT_PUBLIC_API_BASE_CLIENT=http://localhost/ ./shell/build.sh frontend
     have_image "$FRONTEND_IMAGE" frontend || exit 1
     [ "$with_auto_deploy" = true ] && docker push -q "$FRONTEND_IMAGE" >/dev/null
     COMPOSE_PROFILES=db,api,web docker compose up --detach --wait --force-recreate frontend
