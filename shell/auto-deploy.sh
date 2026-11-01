@@ -46,7 +46,10 @@ reset_static_volume() {
     volume=$(docker volume ls -q --filter "label=com.docker.compose.project=$project" \
                                  --filter "label=com.docker.compose.volume=django_static")
     [ -z "$volume" ] && return 0
-    docker compose stop backend nginx
+    # Docker refuses to remove a volume while a container references it, stopped or not, so the two
+    # containers that mount it go first ("docker compose up" below recreates them). The first real
+    # backend update (2026-11-01) stopped here with "volume is in use" and left the site down.
+    docker compose rm --force --stop backend nginx
     docker volume rm --force "$volume" >/dev/null
     echo "reset the static-files volume $volume"
 }
@@ -105,10 +108,13 @@ if has backend "${changed[@]}"; then
     else
         echo "no local mysqlDB container, no database dump taken" >&2
     fi
-    reset_static_volume
+    reset_static_volume || { echo "could not reset the static-files volume, starting the containers again" >&2
+                             docker compose up --detach --no-build "${services[@]}"; exit 1; }
 fi
 
-# ---- recreate the containers with new images
+# ---- recreate the containers with new images. From here on nothing may end the script early: the
+# containers are down or half replaced, and the rollback below is the only way back
+set +e
 healthy=true
 docker compose up --detach --no-build --remove-orphans "${services[@]}" || healthy=false
 if [ "$healthy" = true ]; then

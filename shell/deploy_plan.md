@@ -35,6 +35,14 @@ emptied again (see section 3).
 
 ## Deployment workflow problems found during this deployment (fix before the next one)
 
+00. **`auto-deploy.sh` took the site down on its first real update** (2026-11-01 18:10 UTC, fixed on `main`
+   right after): it stops backend and nginx and then removes the Django static-files volume, but Docker refuses
+   to remove a volume that a stopped container still references, and with `set -e` the script ended between
+   the stop and the start. The containers stayed stopped until `docker compose up --detach backend nginx` by
+   hand. Fix: the two containers are removed before the volume (`docker compose rm --force --stop`), a failure
+   there restarts the containers, and from the recreate step on `set -e` is off so the rollback path is always
+   reached. The sandbox tests never exercised a backend update through this script: `local-test.sh` should
+   get a mode that runs `auto-deploy.sh` against the local stack with a changed image.
 0. **`update.sh` died on `clear`** (found on the first real run, fixed on `claude`): with `set -euo pipefail`
    and no terminal over ssh, `clear` fails on the missing `TERM` variable and ends the script before the
    pull; `deploy_update.sh` then went on to its prune prompt as if the update had run. The server was untouched.
