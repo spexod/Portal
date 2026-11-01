@@ -96,6 +96,17 @@ image, starts the local API for the frontend build, builds the frontend with `.e
 both images to ghcr.io and marks staged data committed (prints "No staged data to commit" when
 `data.sh` was not run, which is fine for this deployment).
 
+**Downloads on the local test website are empty.** The test website that `deploy.sh` starts serves the
+zip downloads from `backend/output` on this computer, which the previous `deploy.sh` emptied
+(`rm -rf ./backend/output/*`) and which `data.sh` in update mode (`DATA_NEW_UPLOADS_ONLY=true`) only
+refills for spectra that are new to the database. So a zip from the local test website holds only
+`fits_read.py` and `FITSREAD.md`. This is not a fault of the build: the server keeps the complete set
+(1197 spectra, `.fits` and `.txt`) in `/home/ubuntu/Portal/backend/output`, the rsync in `deploy.sh`
+only adds to it, and the production download is checked in section 5. To have the files locally again:
+`rsync -avz -e "ssh -i spexo-ssh-key.pem" ubuntu@spexodisks.com:/home/ubuntu/Portal/backend/output/ ./backend/output/`
+(about 1.3 GB). That server directory is the only complete copy of the download files (the repository
+ignores `output`), so include it in the server backups.
+
 ## 4. Update the server
 
 `./deploy_update.sh` runs `shell/update.sh` on the server over ssh. Note: the script pulls `main`
