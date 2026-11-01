@@ -287,7 +287,11 @@ table updated and a message naming what was verified and what needs the user.
 
 ## 6. Findings and questions parked during the work
 
-(empty)
+- 2026-11-01: the SIMBAD web pages at the CDS (both hosts) are still unreachable after the incident of
+  2026-10-29; the site now links to the Harvard mirror by default (`NEXT_PUBLIC_SIMBAD_HOST` in
+  SpExo-FrontEnd, `simbadURL()`). ESASky answered 503 for every page the same evening; the stored links
+  are correct and redirect to ESASky's current address, nothing to change. Tutorial video #4 shows an empty
+  frame in the test browser while #1 to #3 load: check the video's visibility on YouTube.
 
 ## 7. Switching the server and the upload computer to the least-privilege database accounts
 
