@@ -292,6 +292,11 @@ table updated and a message naming what was verified and what needs the user.
   SpExo-FrontEnd, `simbadURL()`). ESASky answered 503 for every page the same evening; the stored links
   are correct and redirect to ESASky's current address, nothing to change. Tutorial video #4 shows an empty
   frame in the test browser while #1 to #3 load: check the video's visibility on YouTube.
+- 2026-11-01: the browser's API base is relative by default (`/`, SpExo-FrontEnd `claude-wp5-visual`):
+  the pages work from whatever host and port they are served on, which an absolute `http://localhost/`
+  did not (a test site published on port 8888 could not load spectra). To do when WP2 is next touched: the
+  defaults of `NEXT_PUBLIC_API_BASE_CLIENT` in the frontend Dockerfile, `compose.yaml` and `audit.yml`
+  (both `claude-wp2-ci-builds` branches) become `/` as well; `.env.display` and `.env.deploy` lose the value.
 
 ## 7. Switching the server and the upload computer to the least-privilege database accounts
 
