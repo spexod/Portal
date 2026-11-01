@@ -329,6 +329,24 @@ __Windows (PowerShell)__
 `.\data.sh`
 
 
+### Versions `shell/refresh_versions.py`
+
+Git holds only what to follow. The runtimes are pinned to a line: `python:3.15-alpine` and `node:26-alpine`
+(the current LTS) as `BACKEND_BASE_IMAGE` and `FRONTEND_BASE_IMAGE` in `compose.yaml`, `mysql:9.7` as
+`MYSQL_VERSION`, `nginx:stable`. Moving to a new line is an administrator's decision; Dependabot opens a
+pull request when one exists. The packages follow the newest release: `backend/requirements.txt` is unpinned
+and `SpExo-FrontEnd/package.json` has open ranges, because every image is built, scanned and smoke-tested
+before it is published, and the nightly update on the server rolls back when the smoke test fails.
+
+Before a build, `python3 shell/refresh_versions.py` resolves all of that to exact versions: `versions.env`
+(every image line with the digest its tag points to today) and `backend/requirements.lock` (every Python
+package at an exact version, compiled with uv inside the backend's base image), both gitignored, and
+`SpExo-FrontEnd/package-lock.json` updated within the ranges. `shell/build.sh` reads `versions.env`;
+`display.sh` runs the refresh; the image workflow (`.github/workflows/security.yml`) runs it before the
+build, audits the lock, keeps it with the run and writes the base image and the commit into the image
+labels. The lock files are copied into the images, so `docker run --rm --entrypoint cat
+ghcr.io/spexod/backend:LATEST requirements.lock` says what an image runs.
+
 ### Data upload `data.sh`
 `data.sh` is a script that will start from input data files and create 
 the MySQL tables and FITS/TXT files for the SpExoDisks website.

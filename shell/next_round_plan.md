@@ -48,19 +48,19 @@ of the security deployment and the short list this plan grew from.
 
 ## 3. Suggestions beyond the list (new findings from the survey)
 
-- **Version policy (decided 2026-11-01, the HySite pattern).** Git holds only *what to follow*: the
-  package lists with a major-version ceiling per package (`Django>=6,<7`, `numpy>=2,<3`, `next` with a caret
-  range) and the image lines (`python:3.14-alpine`, `node:26-alpine`, `mysql:9.7`, `nginx:stable`). Exact
-  versions are resolved at build time by a script like HySite's `scripts/refresh_versions.py` (a lock file
-  compiled with `uv pip compile` inside the base image, the image tags with their digests in a
-  `versions.env`), recorded in the image labels and in a deployments log, never edited by hand and not
-  committed. The weekly CI build is the automated minor and patch update; the nightly `auto-deploy.sh` with
-  its smoke test and rollback is the rollback test; a build or a deploy that fails keeps the previously
-  tested versions. A new major line (Python 3.15, MySQL 10, Django 7, Next 17) is an administrator's
-  decision: Dependabot keeps opening PRs for majors and for security advisories only (`ignore:
-  version-update:semver-minor` and `semver-patch` for pip, npm and docker; GitHub Actions stay fully
-  automatic). Today `requirements.txt` has no ceilings and `package.json` uses `>=` everywhere, so a build
-  follows majors too. (WP1)
+- **Version policy (decided 2026-11-01, after HySite; corrected the same day).** Git holds only *what to
+  follow*. The *runtimes* are pinned to a line: `python:3.15-alpine` and `node:26-alpine` (the current
+  LTS), `mysql:9.7`, `nginx:stable`; moving to a new line is an administrator's decision, and Dependabot's
+  Docker PRs are the prompt. The *packages* follow the newest release, majors included: `requirements.txt`
+  stays unpinned and `package.json` keeps its open ranges, because the image build, the smoke test and the
+  nightly rollback are the safety net and a bad package release never takes the site down (the previous
+  image keeps running). Exact versions are resolved at build time by `shell/refresh_versions.py` (after
+  HySite's `scripts/refresh_versions.py`): the image lines with their digests in `versions.env`,
+  `backend/requirements.lock` compiled with uv inside the base image, `package-lock.json` updated within
+  the ranges; the lock files are copied into the images and the base image and commit go into the image
+  labels, so every published image says what it runs. Dependabot opens no version PRs for packages any
+  more (`open-pull-requests-limit: 0` for pip and npm keeps the security PRs), only for the Docker lines
+  and the GitHub Actions. (WP1, done on `claude-wp1-tooling`)
 - **Django migrations are gitignored and regenerated at every image build.** A model change on two machines
   can generate two different migration files for the same change, and the token-blacklist incident
   (bigint vs int) was only caught on production. Commit the migrations, drop the `makemigrations` step from
@@ -117,13 +117,11 @@ the Dockerfile and pins need a `deploy.sh` or a CI publish.
    to run when `.env` points at the wrong database for the step.
 4. Dockerfile: drop the unused venv/virtualenv steps, `pip uninstall pip` at the end of the runtime stage,
    remove the entries from `.trivyignore`; `python:3.14-alpine` pinned to a digest that Dependabot updates.
-5. The version policy (section 3): major ceilings in `requirements.txt` and caret ranges in `package.json`;
-   `shell/refresh_versions.py` after HySite's (lock compiled in the base image, image digests in
-   `versions.env`, both gitignored); the Dockerfiles take `REQUIREMENTS` and `BASE_IMAGE` build args;
-   `security.yml` and the frontend workflow run the refresh before the build and write the resolved
-   versions into the image labels; a `deployments.log` on the server written by `auto-deploy.sh` (image
-   digest, date, result); Dependabot limited to majors and security advisories; `npm update` out of
-   `display.sh`.
+5. The version policy (section 3): `shell/refresh_versions.py`; `BASE_IMAGE` and `REQUIREMENTS` build args
+   in the Dockerfiles and compose (`BACKEND_BASE_IMAGE`, `FRONTEND_BASE_IMAGE`, `NGINX_IMAGE`,
+   `CERTBOT_IMAGE`); `build.sh` reads `versions.env`; `security.yml` resolves before the build, audits the
+   lock, keeps it as a run artifact and labels the image; `display.sh` runs the refresh instead of
+   `npm update`; Dependabot limited to the Docker lines, the Actions and security advisories.
 6. Verification: local-test in all three modes; Trivy clean without the ignore entries; image size noted.
 
 ### WP2. Build and publish both images on GitHub
@@ -250,7 +248,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 
 | Package | Branch | Status | Verified by | Open |
 |---|---|---|---|---|
-| WP1 | | not started | | |
+| WP1 | `claude-wp1-tooling` | 4 and 5 done 2026-11-01 (venv/pip gone, Python 3.15 line, `refresh_versions.py`, CI resolves and labels, Dependabot policy); 1 to 3 open | backend built on 3.15 from the lock; local-test --frontend 40/40 + account flow; Trivy 0 findings without the ignore file | |
 | WP2 | | not started | | D9 |
 | WP3 | `pipeline-split` | plan written 2026-10-31, needs rebase on `main` | | |
 | WP4 | | `github-status.sh` on `main`; routine not started | | D1 |
