@@ -71,6 +71,8 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
+          # accepted findings with their reasons and review dates
+          trivyignores: .trivyignore
       - name: Save the scanned image for the publish job
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: docker save ghcr.io/spexod/backend:LATEST | gzip > backend-image.tar.gz
