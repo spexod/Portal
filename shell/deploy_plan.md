@@ -3,31 +3,62 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
-## Checklist (status 2026-11-01, afternoon)
+## Checklist (status 2026-11-01, evening)
 
 Done:
 - [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
 - [x] database dump on the server (`mysql/dump-<time>.sql.gz`)
-- [x] pull request `claude` → `main` opened; GitHub secret `DATA_REPO_TOKEN` set; `security.yml` passes
-      (the five Trivy findings in pip's bundled libraries are accepted in `.trivyignore` until 2027-02-01)
-- [x] code review of both repositories; review commits: Trivy ignore file, dead-code removal (Portal),
+- [x] GitHub secret `DATA_REPO_TOKEN` set; `security.yml` and `audit.yml` pass (the five Trivy findings in pip's
+      bundled libraries are accepted in `.trivyignore` until 2027-02-01)
+- [x] code review of both repositories; review commits: Trivy ignore file, dead-code removal, deploy plan (Portal),
       Next.js 16.4.3 and fast-uri 3.1.9 in the lock file (SpExo-FrontEnd, fixes the critical `npm audit` findings)
+- [x] both repositories merged into `main` and pushed; CI green on `main`
+- [x] first `./deploy_update.sh` started, interrupted with Ctrl-C during the server step; the server then had
+      `main` pulled by hand, so the next `update.sh` run is the new version (healthcheck wait + smoke test)
 
 Remaining, in order:
-1. [ ] SpExo-FrontEnd: push the lock-file commit; `audit.yml` on the pull request goes green
-2. [ ] `./deploy.sh` once more, **after** the last commit in either repository: the dead-code commit changed the
-       backend image and the lock-file commit changed the frontend image, and the server pulls `LATEST`
-       (`data.sh` is not needed again). A `deploy.sh` run started before the lock-file commit built the old frontend
-3. [ ] Merge both repositories into `main` and push (section 1; also SpExo-FrontEnd `claude` → `main`)
-4. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2)
-5. [ ] `./deploy_update.sh`; do not confirm the prune prompt yet (section 4)
-6. [ ] `python3 tests/smoke.py --strict`, login, spectrum download, logout (section 5); then confirm the prune
-7. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+1. [ ] Confirm that the last `./deploy.sh` ran **after** the final commits (Portal dead-code removal, SpExo-FrontEnd
+       lock file 6186b26). If not, run it again: `ghcr.io/spexod/frontend:LATEST` would still be Next.js 16.4.0,
+       which has the remote-code-execution advisory the lock-file commit fixes. `data.sh` is being run again as
+       well; see the note below.
+2. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2). The interrupted run may
+       not have reached `docker compose up`; check before the next run, the new compose file refuses to start
+       without `MYSQL_PASSWORD` and the backend without `DJANGO_SECRET_KEY`
+3. [ ] `./deploy_update.sh` again; do not confirm the prune prompt yet (section 4). This time `update.sh` waits
+       for the healthchecks and runs the smoke test itself
+4. [ ] From the laptop `python3 tests/smoke.py --strict`, login, spectrum download, logout (section 5); then
+       confirm the prune
+5. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
 
-Until step 5 nothing on the server changes: the server only pulls new images when `update.sh` runs, and the
-nightly timer is not installed yet. One side effect of the first "deploy.sh" is already in place: the staged data is
-committed, so if the current (old) backend container restarts before the update, its entrypoint moves that
-data live. That is harmless, the data is meant to go live.
+Note on the repeated `data.sh`: it stages the processed data in the `new_*` schemas but does not mark it
+committed; `deploy.sh` does that (`science.db.commit_data`). The backend's entrypoint only moves staged data
+live when it is committed, so a `data.sh` run that is not followed by `deploy.sh` leaves the new staging in
+place, unused, until the next `deploy.sh`. Harmless, but the output directory on the development computer is
+emptied again (see section 3).
+
+## Deployment workflow problems found during this deployment (fix before the next one)
+
+1. **`update.sh` updates itself mid-run.** It pulls `main` and bash keeps executing the copy it already opened,
+   so a change to `update.sh` only takes effect on the run after the one that pulls it. `deploy_update.sh`
+   should pull in a separate ssh step first (`ssh ... "cd Portal && git pull origin main"`), then run the script;
+   or `update.sh` should `exec` itself after the pull.
+2. **`deploy_update.sh` ignores failures.** After the ssh step it goes straight to its own prune prompt, whether
+   the server update succeeded, failed or was interrupted with Ctrl-C. It needs `set -e` or `|| exit` on the
+   ssh command, so a failed server update stops the script and nothing on the laptop is pruned.
+3. **The prompts in `update.sh` do not work over ssh.** `deploy_update.sh` calls ssh without `-t`, so the
+   `read` prompts in `update.sh` get no terminal: `read` returns an error at end of input and `set -e` ends
+   the script before the prune, and "press any-key to exit" never waits. Either call `ssh -t`, or better make
+   `update.sh` non-interactive with a `--prune` flag that `deploy_update.sh` passes once the site is checked.
+4. **`update.sh` logs in to ghcr.io from `.git_token.txt`.** `shell/ghcr-login.sh` is the documented way;
+   `update.sh` should use it (or skip the login when the registry session is still valid) so there is one place
+   that holds the token.
+5. **`data.sh` and `deploy.sh` are coupled by the staged-data commit** (note above) and nothing records which
+   `data.sh` run the committed staging came from. `data.sh` could print the staging schemas it wrote and
+   `deploy.sh` could show what it is about to commit.
+6. **The first run of a changed workflow is always the risky one.** `shell/local-test.sh` exercises the data and
+   display steps against a local database, but there is no equivalent for `update.sh`; a dry-run mode
+   (`update.sh --check`: pull, `docker compose config`, image pull, no `down`) would catch a missing `.env`
+   value before the site goes down.
 
 ## Next round of work (not part of this deployment)
 
