@@ -1,5 +1,4 @@
 import os
-import toml
 from warnings import warn
 from datetime import datetime
 
@@ -36,7 +35,6 @@ except ValueError:
 base_dir = os.path.dirname(backend_dir)
 working_dir = os.path.join(backend_dir, "science")
 input_data_dir = os.path.join(backend_dir, "data")
-uploads_dir = os.path.join(backend_dir, "uploads")
 output_dir = os.path.join(backend_dir, "output")
 ref_dir = os.path.join(input_data_dir, "reference_data")
 spectra_dir = os.path.join(input_data_dir, "spectral_data")
@@ -103,21 +101,5 @@ sql_spectrum_types = ['set_type', "observation_date", 'pi', 'reference', 'downlo
                       'flux_is_calibrated', "ref_frame", "min_wavelength_um", "max_wavelength_um", "resolution_um",
                       "output_filename"]
 
-# write the user toml for the autostar package
-autostar_toml = {'reference_data_dir': ref_dir,
-                 'sb_bad_star_name_ignore_filename': sb_bad_star_name_ignore,
-                 'sb_main_ref_filename': sb_main_ref_file_name,
-                 'sb_save_filename': sb_save_file_name,
-                 'sb_save_coord_filename': sb_save_coord_file_name,
-                 'sb_ref_filename': sb_ref_file_name,
-                 'tic_ref_filename': tic_ref_filename,
-                 'annoying_names_filename': annoying_names_filename,
-                 'popular_names_filename': popular_names_filename,
-                 'sb_desired_names': sb_desired_names}
-
-ref_module_dir = os.path.dirname(os.path.realpath(__file__))
-try:
-    with open(os.path.join(ref_module_dir, "user.toml"), 'w') as f:
-        toml.dump(autostar_toml, f)
-except OSError:
-    print(f"Could not write the user.toml file to {ref_module_dir}, read-only file system?")
+# The autostar package (backend/autostar, formerly a separate repository) reads the reference-file names
+# and sb_desired_names above directly from this module, see autostar/config/datapaths.py.

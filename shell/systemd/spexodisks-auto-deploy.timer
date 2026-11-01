@@ -1,0 +1,10 @@
+[Unit]
+Description=SpExoDisks: check for updated container images every night
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

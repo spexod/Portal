@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.http import JsonResponse
 from django.views.generic import TemplateView
 
 urlpatterns = [
@@ -22,4 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 ]
 
+# unknown API paths are a 404, everything else gets the index page
+urlpatterns += [re_path(r'^api/', lambda request: JsonResponse({'detail': 'Not found.'}, status=404))]
 urlpatterns += [re_path(r'^.*', TemplateView.as_view(template_name='index.html'))]

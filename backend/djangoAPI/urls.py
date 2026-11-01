@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework import routers
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenVerifyView
 
 
 from . import views
@@ -36,26 +36,19 @@ for spectrum_handle in sorted(views.spectra_views.keys()):
 
 
 """
-Tables with duplicated information in other tables, these are raw versions of the available data
-"""
-
-# router.register(r'objectparamsfloat', views.ObjectParamsFloatViewSet)
-# router.register(r'objectparamsstr', views.ObjectParamsStrViewSet)
-# router.register(r'availablefloatparams', views.AvailableFloatParamsViewSet)
-# router.register(r'availablespectrumparams', views.AvailableSpectrumParamsViewSet)
-# router.register(r'availablestrparams', views.AvailableStrParamsViewSet)
-
-
-"""
 URL Patterns
 """
 urlpatterns = [path('', include(router.urls)),
                path('datadownload/', views.download_spectra),
-               path('users/token/', TokenObtainPairView.as_view()),
-               path('users/token/refresh/', TokenRefreshView.as_view()),
+               path('users/token/', views.LoginView.as_view()),
+               path('users/token/refresh/', views.RefreshView.as_view()),
                path('users/token/verify/', TokenVerifyView.as_view()),
+               path('users/logout/', views.LogoutView.as_view()),
                path('users/register', views.RegisterView.as_view()),
                path('users/me', views.RetrieveUserView.as_view()),
                path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+               # the throttled views come first, the include keeps the remaining routes (validate_token)
+               path('password_reset/', views.PasswordResetRequestView.as_view()),
+               path('password_reset/confirm/', views.PasswordResetConfirmView.as_view()),
                path('password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
                ]

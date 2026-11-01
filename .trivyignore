@@ -1,0 +1,12 @@
+# Vulnerabilities Trivy reports in the backend image that are accepted, with the reason and a review date.
+# Format: one id per line, "exp:YYYY-MM-DD" makes Trivy report it again after that date.
+
+# pip's bundled copies of urllib3 2.7.0, msgpack 1.1.2 and setuptools 70.3.0 (pip/_vendor/vendor.txt in
+# pip 26.2.2). pip is only used while the image is built; the application's own urllib3, msgpack and
+# setuptools are at fixed versions. Remove these lines when a pip release with newer bundled copies is
+# in the python:3.14-alpine base image, or when pip is uninstalled from the runtime image.
+CVE-2026-97687 exp:2027-02-01
+CVE-2026-97689 exp:2027-02-01
+CVE-2026-114613 exp:2027-02-01
+GHSA-6v7p-g79w-8964 exp:2027-02-01
+CVE-2025-47273 exp:2027-02-01

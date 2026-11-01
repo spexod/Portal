@@ -11,13 +11,12 @@ For the full list of settings and their values, see
 import os
 from pathlib import Path
 from warnings import warn
+from django.core.exceptions import ImproperlyConfigured
 from datetime import timedelta
 
-from science.db.migrate import do_migration
-from science.db.data_status import get_data_status_mysql
 from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_CONNECT_OPTIONS,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
-                            wait_for_mysql_to_start, DATA_MIGRATE_FROM_STAGED, is_docker_build)
+                            wait_for_mysql_to_start, is_docker_build)
 
 
 # At image build time (collectstatic, makemigrations) no database is reachable, so skip
@@ -31,15 +30,13 @@ server_dir = BASE_DIR.parent
 if DEBUG:
     warn(f"Running in DEBUG mode, this is not recommended for production.")
 
-if is_docker_build:
-    new_data_staged, new_data_commited, updated_mysql = False, False, False
-else:
-    new_data_staged, new_data_commited, updated_mysql = get_data_status_mysql()
-    if DATA_MIGRATE_FROM_STAGED and new_data_staged and new_data_commited:
-        do_migration()
+# The migration of staged data used to run here, in every process that imported the settings (each gunicorn
+# worker, every manage.py command). It now runs once at container start, see docker-entrypoint.sh.
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",  'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c')
+# The published default is for development (DEBUG=true) only, production refuses to start with it (see below).
+DEVELOPMENT_SECRET_KEY = 'a$c#ph)5yg%r)d-qp*^-vkxgfw!r$$e%%md)!r6m$$j26x(r1c'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or DEVELOPMENT_SECRET_KEY
 
 ALLOWED_HOSTS = [
      'localhost',
@@ -72,6 +69,8 @@ INSTALLED_APPS = [
     'channels_redis',
     'dpd_static_support',
     'django_rest_passwordreset',
+    # records issued refresh tokens, so logout and password changes can revoke them
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -80,7 +79,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -186,7 +184,7 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 # X_FRAME_OPTIONS = 'ALLOW-FROM localhost:8000'
 
 # ROUTING FOR CHANNELS ETC.
-ASGI_APPLICATION = 'matplot.routing.application'
+ASGI_APPLICATION = 'core.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -216,6 +214,21 @@ CORS_ORIGIN_WHITELIST = (
 # this is CORS for POST requests
 CSRF_TRUSTED_ORIGINS = [
 ]
+
+# HTTPS hardening for production. nginx terminates TLS and sets X-Forwarded-Proto (nginx/deploy.conf).
+# SECURE_SSL_REDIRECT is left off on purpose: nginx already redirects http to https, and the container
+# healthcheck calls gunicorn directly over http.
+# (is_docker_build: collectstatic and makemigrations run without .env at image build time)
+if not DEBUG and not is_docker_build:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    if SECRET_KEY == DEVELOPMENT_SECRET_KEY:
+        # the same key signs the login tokens (simplejwt), so a known key lets anyone log in as any user
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY is not set. Set a private key of 50 or more characters in .env "
+                                   "(or DEBUG=true for development).")
 
 # Email server Configuration
 # DJANGO_EMAIL_APP_PASSWORD, NOTE THIS IS A DIFFERENT PASSWORD COMPARED TO LOGGING IN W/ EMAIL
@@ -247,14 +260,31 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'spectra': '10/min',
+        # login, registration, logout and password reset (djangoAPI/views.py): slows down password guessing
+        'auth': '10/min',
+        # token refresh, separately: many users behind one address refresh every few minutes
+        'refresh': '60/min',
+        # the scopes of django_rest_passwordreset's own views (its validate_token route is included as is);
+        # ScopedRateThrottle answers 500 for a view whose scope has no rate
+        'django-rest-passwordreset-request-token': '10/min',
+        'django-rest-passwordreset-confirm': '10/min',
+        'django-rest-passwordreset-validate-token': '10/min',
         'burst': '40/min',
         'sustained': '5000/day'
-    }
+    },
+    # one proxy (nginx) in front of the API: the client address is the last X-Forwarded-For entry
+    'NUM_PROXIES': 1,
 }
+
+# password reset answers the same way for unknown email addresses (no user enumeration)
+DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAK = True
+# django_rest_passwordreset >= 1.6 otherwise throttles reset requests with its own 3/day-per-address class and
+# ignores the view's throttle_scope; an empty tuple means "use DEFAULT_THROTTLE_CLASSES", i.e. the 'auth' scope
+DJANGO_REST_PASSWORDRESET_THROTTLE_CLASSES = ()
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,

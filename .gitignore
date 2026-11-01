@@ -170,3 +170,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# automatic updates (shell/auto-deploy.sh) and database dumps (mysql/upgrade.sh)
+.auto-deploy.lock
+logs/
+mysql/dump-*
+mysql/fingerprint-*
+mysql/local-*

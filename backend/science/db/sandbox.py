@@ -4,10 +4,8 @@ import zipfile
 from io import BytesIO
 from typing import NamedTuple
 
-from MySQLdb import ProgrammingError, OperationalError
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
-from science.db.sql import django_tables, LoadSQL
 from science.analyze.prescriptions import standard, sql_update
 
 
@@ -101,18 +99,6 @@ def write_sql():
     dispatch.write_sql()
 
 
-def move_django_tables():
-    with LoadSQL(auto_connect=True, verbose=True) as load_sql:
-        load_sql.create_schema(schema_name='users')
-        for table_name in django_tables:
-            command_str = f"""ALTER TABLE spectra.{table_name} rename users.{table_name}"""
-            try:
-                load_sql.cursor.execute(command_str)
-                load_sql.connection.commit()
-            except (ProgrammingError, OperationalError) as e:
-                print(f'Could not move table {table_name} to users schema.')
-
-
 if __name__ == '__main__':
     """
     Command line interfacing to preload Docker images with processed results, do command line testing.
@@ -121,21 +107,14 @@ if __name__ == '__main__':
 
     import argparse
     # set up the parser for this Script
-    parser = argparse.ArgumentParser(description='Parser for play.py, a Wordle Emulator.')
-    parser.add_argument('--write-upload', dest='write_upload', action='store_true',
-                        help="White the upload files available for users to download via the API.")
-    parser.add_argument('--no-write-upload', dest='write_upload', action='store_false', default=True,
-                        help="Default - Does NOT white the upload files available for users to download via the API.")
-    parser.add_argument('--write-sql', dest='write_sql', action='store_true',
-                        help="White the SQL tables the website uses to via the API.")
-    parser.add_argument('--no-write-sql', dest='write_sql', action='store_false', default=True,
-                        help="Default - Does NOT white the SQL tables the website uses to via the API.")
-    parser.add_argument('--test-run', dest='test_run', action='store_true',
-                        help='Only upload to the MySQL test database, but does not upload to the ' +
-                             'production database.')
-    parser.add_argument('--no-test-run', dest='test_run', action='store_false', default=True,
-                        help='Default - Upload to the MySQL production database after a successful writing to the ' +
-                             'test database.')
+    parser = argparse.ArgumentParser(description='Write the download files or the SQL tables for the website.')
+    # both default to off: --write-upload deletes everything in the output directory first
+    parser.add_argument('--write-upload', action=argparse.BooleanOptionalAction, default=False,
+                        help="Delete and rewrite the files available for users to download via the API.")
+    parser.add_argument('--write-sql', action=argparse.BooleanOptionalAction, default=False,
+                        help="Write the SQL tables the website uses via the API.")
+    parser.add_argument('--test-run', action=argparse.BooleanOptionalAction, default=False,
+                        help='Only upload to the MySQL test database, not to the production database.')
 
     # parse the arguments
     args = parser.parse_args()
@@ -145,5 +124,7 @@ if __name__ == '__main__':
         write_upload_files()
     elif args.write_sql:
         write_sql()
+    else:
+        parser.print_help()
 
     print(f'Done with the script in {os.path.basename(__file__)}, args: {args}')

@@ -156,6 +156,19 @@ When set to `false`, the data upload process will re-upload all spectra and file
 This could be a useful to update all spectra after formatting changes,
 such as to the changes to FITS files.
 
+### `.env` variable: SIMBAD_SERVER
+
+The data upload looks up star names on SIMBAD when a name is not in
+`backend/data/reference_data` yet. Empty (the default) uses the CDS main site in Strasbourg,
+`simbad.harvard.edu` uses the CfA mirror, for example while CDS is down:
+```
+SIMBAD_SERVER=simbad.harvard.edu
+```
+`python -m autostar.simbad_query "HD 189733"` in the backend container tests a live lookup without
+writing any files. The lookups live in `backend/autostar` (formerly the separate `autostar`
+package, see its README), which also translates the results of current astroquery versions back
+to the format of the reference files.
+
 
 ## .evn File Configurations
 
@@ -406,6 +419,10 @@ https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-exi
 
 Fundamentally this is about running the script `/home/ubuntu/Portal/shell/update.sh` on the server,
 however, we have a script that login to the sever for you and run this command do this for you, `deploy_update.sh`.
+The script now waits for the healthchecks and runs `tests/smoke.py` before offering to prune the old
+images. For a deployment that changes the server's `.env` or the database, follow
+[shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security update, the checklist
+applies to later ones too).
 
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 
@@ -419,6 +436,33 @@ Congratulations, you just deployed the SpExoDisks website!
 > 1) go to Lightsail, and click on the server
 > 2) click on their "Connect using SSH"
 
+
+# Smoke Tests
+`tests/smoke.py` requests every page and API endpoint and checks the security settings, see [tests/README.md](tests/README.md).
+Run it against the production site after a deployment, or against a local stack while developing:
+```
+python3 tests/smoke.py
+python3 tests/smoke.py --base-url http://localhost
+```
+Backend unit tests (no database needed): `cd backend && python3 -m unittest discover tests`.
+The user-account endpoints (register, login, token refresh, download, password change, logout) are
+tested by `python3 tests/auth_flow.py --base-url http://localhost` on a local stack only, since it
+creates a user.
+
+## Local database test `shell/local-test.sh`
+Rebuilds the production database from `backend/data` on the local MySQL container and runs the API
+smoke tests against it: the `data.sh` pipeline (build, `update.py`, `commit_data.py`), then the backend
+and nginx start with `DATA_MIGRATE_FROM_STAGED=true` and move the staged tables live, exactly as on
+the server. It needs a `.env` for the local stack (`MYSQL_HOST="mysqlDB"`, see `.env.example`) and
+takes about ten minutes, most of it in `update.py`.
+```
+./shell/local-test.sh               # full run
+./shell/local-test.sh --no-update   # only start the backend and test the data already in MySQL
+./shell/local-test.sh --frontend    # also build and start the frontend (display.sh) and test the pages
+./shell/local-test.sh --down        # stop the containers afterwards
+```
+The result should match production: `curl http://localhost/api/stats_total/` and
+`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra.
 
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller

@@ -1,7 +1,8 @@
+import os
 from django.http import HttpResponse
 from rest_framework import viewsets, permissions
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 # for Data Download
 from rest_framework.views import APIView
@@ -10,25 +11,20 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from django_rest_passwordreset.views import ResetPasswordRequestToken, ResetPasswordConfirm
 
 from .dynamic_data import (dispatch, schema_prefix,
                            available_spectra_to_database, available_isotopologues_to_database)
 from .models import spectra_models, isotopologue_models, \
-    AvailableIsotopologues, \
-    AvailableFloatParams, AvailableSpectrumParams, \
-    AvailableStrParams, Curated, DjangoMigrations, \
-    FluxCalibration, LineFluxesCo, \
-    ObjectNameAliases, ObjectParamsFloat, ObjectParamsStr, Spectra, \
-    StackedLineSpectra, AvailableParamsAndUnits, DefaultSpectrum, DefaultSpectrumInfo, \
+    AvailableIsotopologues, Curated, ObjectNameAliases, Spectra, \
+    AvailableParamsAndUnits, DefaultSpectrum, DefaultSpectrumInfo, \
     StatsTotal, StatsInstrument
 from .serializers import spectra_serializers, isotopologue_serializers, \
-    AvailableIsotopologuesSerializer, \
-    AvailableFloatParamsSerializer, \
-    AvailableSpectrumParamsSerializer, AvailableStrParamsSerializer, CuratedSerializer, \
-    DjangoMigrationsSerializer, \
-    FluxCalibrationSerializer, LineFluxesCoSerializer, \
-    ObjectNameAliasesSerializer, ObjectParamsFloatSerializer, \
-    ObjectParamsStrSerializer, SpectraSerializer, StackedLineSpectraSerializer, \
+    AvailableIsotopologuesSerializer, CuratedSerializer, ObjectNameAliasesSerializer, SpectraSerializer, \
     AvailableParamsAndUnitsSerializer, DefaultSpectrumSerializer, DefaultSpectrumInfoSerializer, \
     UserCreateSerializer, UserSerializer, StatsTotalSerializer, StatsInstrumentSerializer, ChangePasswordSerializer
 """
@@ -50,14 +46,16 @@ for molecule in sorted(isotopologue_models.keys()):
 spectrum_fields = ('wavelength_um', 'flux', 'flux_error')
 
 
+def list_spectrum(self, request):
+    """ The "list" action of every per-spectrum view set: one array per column instead of one row per point.
+    (Defined at module level under its own name: a module-level "def list" shadowed the built-in list().) """
+    return Response(data={key: data_array for key, data_array in
+                          zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
+                    status=status.HTTP_200_OK)
+
+
 spectra_views = {}
 for spectrum_handle in sorted(spectra_models.keys()):
-    def list(self, request):
-        return Response(data={key: data_array for key, data_array in
-                              zip(spectrum_fields, zip(*self.queryset.values_list(*spectrum_fields)))},
-                        status=status.HTTP_200_OK)
-
-
     view_name = f'{spectrum_handle.lower()}ViewSet'
     database_this_handle = available_spectra_to_database[spectrum_handle]
     queryset = spectra_models[spectrum_handle].objects.using(database_this_handle).order_by('pk')
@@ -67,11 +65,15 @@ for spectrum_handle in sorted(spectra_models.keys()):
                                                queryset=queryset,
                                                serializer_class=spectra_serializers[spectrum_handle],
                                                throttle_scope='spectra',
-                                               list=list))
+                                               list=list_spectrum))
 
 """
 Static Views
 """
+
+
+# the download zip is built in memory, see download_spectra
+DOWNLOAD_MAX_SPECTRA = int(os.environ.get('DOWNLOAD_MAX_SPECTRA', '200'))
 
 
 class StatsTotalViewSet(viewsets.ReadOnlyModelViewSet):
@@ -131,29 +133,73 @@ Data Downloads
 """
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def download_spectra(request):
     """
     Get a list of strings from a user with the spectra they would like to download.
     Each spectra being seperated with a % character.
+
+    The zip file is built in memory, so the number of spectra per request is limited.
     """
-    try:
-        spectra_list = request.query_params.get('spectra').split('%')
-    except:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    current_user = request.user
-    if current_user:
-        response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list),
-                                content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
-        return response
-    else:
-        print(f'User {current_user}, is not authenticated')
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    # drop empty entries and duplicates, keeping the order
+    spectra_list = list(dict.fromkeys(handle for handle in request.query_params.get('spectra', '').split('%') if handle))
+    if not spectra_list:
+        return Response({'detail': 'No spectra requested.'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(spectra_list) > DOWNLOAD_MAX_SPECTRA:
+        return Response({'detail': f'At most {DOWNLOAD_MAX_SPECTRA} spectra per download.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
+    return response
+
+
+def revoke_all_tokens(user):
+    """ Blacklist every refresh token issued to a user (after a password change or reset). """
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
+
+
+# the 'auth' throttle scope (core/settings.py) limits password guessing and reset-email floods
+class LoginView(TokenObtainPairView):
+    throttle_scope = 'auth'
+
+
+class RefreshView(TokenRefreshView):
+    # every logged-in browser refreshes about every five minutes, so this scope is separate from the
+    # password-guessing limit, which users behind one shared address would otherwise exhaust together
+    throttle_scope = 'refresh'
+
+
+class PasswordResetRequestView(ResetPasswordRequestToken):
+    throttle_scope = 'auth'
+
+
+class PasswordResetConfirmView(ResetPasswordConfirm):
+    throttle_scope = 'auth'
+
+
+class LogoutView(APIView):
+    """ Revoke the refresh token, so a logout also ends the session on the server. """
+    # the refresh token in the body is the credential: an expired access token must not prevent the logout
+    # (the frontend sends its Authorization header anyway, and logs out exactly when that token was refused,
+    # so the default JWT authentication would answer 401 before this view runs)
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request):
+        try:
+            RefreshToken(request.data.get('refresh', '')).blacklist()
+        except TokenError:
+            # already revoked, expired or missing: the client is logged out either way
+            pass
+        return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
 class RegisterView(APIView):
     """ Register a new user. """
-    # User = get_user_model()
+    throttle_scope = 'auth'
+
     def post(self, request):
         """
         overwrite the post method to create a new user.
@@ -206,6 +252,8 @@ class ChangePasswordView(generics.UpdateAPIView):
             # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
+            # other devices and browsers have to log in again with the new password
+            revoke_all_tokens(self.object)
             response = {
                 'status': 'success',
                 'code': status.HTTP_200_OK,
@@ -216,48 +264,3 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Used tables, but supported tables
-class AvailableFloatParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableFloatParams.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = AvailableFloatParamsSerializer
-
-
-class ObjectParamsStrViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ObjectParamsStr.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = ObjectParamsStrSerializer
-
-
-class ObjectParamsFloatViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ObjectParamsFloat.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = ObjectParamsFloatSerializer
-
-
-class StackedLineSpectraViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = StackedLineSpectra.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = StackedLineSpectraSerializer
-
-class FluxCalibrationViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = FluxCalibration.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = FluxCalibrationSerializer
-
-
-class AvailableSpectrumParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableSpectrumParams.objects.using(f'{schema_prefix}spexodisks').order_by('pk')
-    serializer_class = AvailableSpectrumParamsSerializer
-
-
-class AvailableStrParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableStrParams.objects.using(f'{schema_prefix}spexodisks').order_by('pk')
-    serializer_class = AvailableStrParamsSerializer
-
-
-class DjangoMigrationsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DjangoMigrations.objects.using('default').order_by('pk')
-    serializer_class = DjangoMigrationsSerializer
-
-
-class LineFluxesCoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = LineFluxesCo.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = LineFluxesCoSerializer

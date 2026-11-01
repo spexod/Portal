@@ -4,9 +4,9 @@ read -r -p "Portal Data Processing Script, press any key to continue..."
 # delete the old fits and text files
 rm -rf ./backend/output/* || exit
 # take and currently running containers offline
-docker compose --profile web --profile api down || return
+docker compose --profile web --profile api down || exit
 # delete the (to remake) the Django static files, and other cache/generated files
-./shell/rm_volumes.sh || return
+./shell/rm_volumes.sh || exit
 # build and start the backend, wait for it to finish processing
 ./shell/build.sh backend || exit
 docker compose run --rm backend python update.py || exit

@@ -1,0 +1,9 @@
+[Unit]
+Description=SpExoDisks: report that %i failed (log to Portal/logs, alert to ALERT_WEBHOOK_URL)
+Documentation=file:///home/ubuntu/Portal/shell/auto_update.md
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Portal
+ExecStart=/home/ubuntu/Portal/shell/notify-failure.sh %i

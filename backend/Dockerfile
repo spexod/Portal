@@ -1,7 +1,8 @@
 # # Things that can be cached
 # Base Configurations
 FROM python:3.14-alpine AS build
-ENV PYTHONNUNBUFFERED=1
+# print output straight away, also without a terminal (docker compose run ... > log, systemd)
+ENV PYTHONUNBUFFERED=1
 WORKDIR /home/python_user/backend_app
 # No database credentials at build time: MYSQL_* are passed only at runtime (compose.yaml
 # "environment:"), so they are never stored in the image. IS_DOCKER_BUILD is set inline on
@@ -35,6 +36,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # # Things that will need to update every time the code changes
 # COPY --chown=python_user:python_group . .
 COPY . .
+# the spectra are excluded from the image (.dockerignore) and bind-mounted with the rest of "data" at run
+# time (compose.yaml); the build steps below import the models, which read data/reference_data
+RUN mkdir -p data/reference_data data/spectral_data
 # generate the Django migration files (no database needed at build time)
 # Database initialization and "migrate" now run at container start, see docker-entrypoint.sh
 # (--skip-checks: the model system checks ask MySQL for its server version)
@@ -50,4 +54,5 @@ USER python_user
 # initialize the database and apply migrations, then run CMD (or the "docker compose run" command)
 ENTRYPOINT ["/bin/sh", "/home/python_user/backend_app/docker-entrypoint.sh"]
 # what runs when the container is started
-CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000"]
+# (no control socket: gunicorn 26 would create it in the home directory, which is read-only in the container)
+CMD ["gunicorn", "core.wsgi", "--bind", "0.0.0.0:8000", "--no-control-socket"]

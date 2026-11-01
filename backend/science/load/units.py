@@ -1,17 +1,9 @@
-import os
 
 import numpy as np
-from autostar.table_read import row_dict
 from autostar.simbad_query import StarDict
 from autostar.object_params import SingleParam
 
 from ref.ref import unit_filepath
-
-
-def read_units_file():
-    param_data = row_dict(filename=unit_filepath, key='param_handle', delimiter=",",
-                          null_value='NULL', inner_key_remove=True)
-    return param_data
 
 
 def params_value_format(value, decimals):
@@ -20,15 +12,6 @@ def params_value_format(value, decimals):
     except TypeError:
         formatted_value = value
     return formatted_value
-
-
-def params_err_format(err, sig_figs):
-    if sig_figs < 2:
-        decimals = 1
-    else:
-        decimals = sig_figs - 1
-    format_string = f'1.{decimals}e'
-    return err.__format__(format_string)
 
 
 class ParamsCheck:

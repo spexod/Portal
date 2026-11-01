@@ -12,15 +12,15 @@ echo "Build a local API (backend) and NGINX-server completed, building the front
 # build the frontend on the local machine (we need the cache from this for the docker-build later)
 cd SpExo-FrontEnd || exit
 # remove the .next folder to ensure a clean build
-rm -rf .next || return
+rm -rf .next || exit
 # copy production environment variables
-rm .env.production || return
+rm -f .env.production || exit
 cp .env.display .env.production || exit
 # update the packages in package-lock.json (this requires node https://nodejs.org/en/download/package-manager)
 npm update || exit
 cd ../ || exit
 # build in the docker container
-echo -r -p "Local Build for frontend completed (needed for fetch-cache), launching the test-website..."
+read -r -p "Local Build for frontend completed (needed for fetch-cache), launching the test-website..."
 ./shell/build.sh frontend || exit
 # test the build on a local machine
 # stop here to look for error messages
