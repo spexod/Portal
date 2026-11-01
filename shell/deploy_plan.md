@@ -115,6 +115,24 @@ emptied again (see section 3).
   files, stored with the data repository or in a table, and have `update.py` process only the files whose sum
   changed or that are new, re-upload a spectrum when its file changed, and leave the rest untouched. The same
   sums can tell `deploy.sh` which output files the rsync will move before it starts.
+- **The GitHub feed must be handled autonomously.** Since the security deployment GitHub produces a stream of
+  things to act on: Dependabot pull requests (actions, pip, npm; five were opened within an hour of the first
+  run), the weekly `security.yml` and `audit.yml` runs, failed jobs with their logs, Dependabot security alerts,
+  and the manual re-runs after a fix. Reading all of that in the browser and relaying it by hand does not scale.
+  Steps:
+  1. *Read access from the sandbox* (done 2026-11-01 for reading, `shell/github-status.sh`): the script saves
+     runs, the logs of failed jobs, open and recently closed pull requests and open security alerts for both
+     repositories into `logs/github/` (gitignored). It runs on the development computer with `gh` logged in;
+     in the sandbox it needs the GitHub token as a sandbox secret (`sbx secret set github --sandbox spexo
+     -t "$(gh auth token)"` on the host, see CLAUDE.md), after which the assistant can run it, and `gh`, itself.
+  2. *Routine, run by the assistant from the sandbox*: after each push and once a week, read the status; for a
+     failed run read the log and propose or commit the fix; for a Dependabot PR check the run, read the release
+     notes of a major-version bump, and merge it when green (actions and dev dependencies) or stage it for the
+     next deployment (runtime dependencies, which need `deploy.sh`); keep `.trivyignore` and the review dates
+     current; write a short note of what was done into the plan.
+  3. *Scheduled*: the same routine as a scheduled cloud agent or a timer, so the weekly runs are followed up
+     without anyone opening GitHub; a failed run or a critical alert becomes a message, everything else a
+     weekly summary.
 - **Accessibility.** Keyboard navigation and screen-reader support: a visible focus order through the explore
   page (drawer, tables, plot controls), labels and roles on the custom dropdowns and buttons, `alt` text on the
   images, skip links, and colour contrast in `spexostrap/Colors.css`. Measure with an automated checker in the
