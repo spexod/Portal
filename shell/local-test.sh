@@ -115,7 +115,7 @@ if [ "$with_frontend" = true ]; then
     step "5b. frontend image (the build needs no API), started against the local API through nginx"
     [ -d SpExo-FrontEnd/app ] || { echo "SpExo-FrontEnd is missing, see shell/init.sh" >&2; exit 1; }
     rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production
-    NEXT_PUBLIC_API_BASE_CLIENT=http://localhost/ ./shell/build.sh frontend
+    ./shell/build.sh frontend
     have_image "$FRONTEND_IMAGE" frontend || exit 1
     [ "$with_auto_deploy" = true ] && docker push -q "$FRONTEND_IMAGE" >/dev/null
     COMPOSE_PROFILES=db,api,web docker compose up --detach --wait --force-recreate frontend

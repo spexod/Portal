@@ -8,7 +8,7 @@ docker compose --profile web --profile api down
 # build the backend image
 ./shell/build.sh backend || exit
 # the frontend image for the test website: the browser calls the local API through nginx
-export NEXT_PUBLIC_API_BASE_CLIENT=http://localhost/
+# the browser calls the API on the page's own origin (NEXT_PUBLIC_API_BASE_CLIENT defaults to "/")
 rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production || exit
 # the newest package versions within the ranges, and the exact base images, for this build
 python3 shell/refresh_versions.py || exit

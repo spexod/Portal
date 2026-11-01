@@ -137,9 +137,10 @@ services:
       args:
         # the Node line to follow (the current LTS); versions.env pins the exact image
         - "BASE_IMAGE=${FRONTEND_BASE_IMAGE:-node:26-alpine}"
-        # public values compiled into the pages: the API the browser calls (a test stack: http://localhost/)
-        # and the EmailJS key of the contact form (empty: the form says it is not configured)
-        - "NEXT_PUBLIC_API_BASE_CLIENT=${NEXT_PUBLIC_API_BASE_CLIENT:-https://spexodisks.com/}"
+        # public values compiled into the pages: the API the browser calls (relative by default: the
+        # page's own origin, which nginx shares with the API) and the EmailJS key of the contact form
+        # (empty: the form says it is not configured)
+        - "NEXT_PUBLIC_API_BASE_CLIENT=${NEXT_PUBLIC_API_BASE_CLIENT:-/}"
         - "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=${NEXT_PUBLIC_EMAILJS_PUBLIC_KEY:-}"
     image: ${FRONTEND_IMAGE:-ghcr.io/spexod/frontend:LATEST}
     container_name: frontend
