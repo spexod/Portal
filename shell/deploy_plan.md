@@ -94,7 +94,17 @@ emptied again (see section 3).
   screenshotted and compared: the smoke test only checks that pages answer and contain expected text, not how
   they look. Start with screenshots of every page at phone and desktop widths after a build (`local-test.sh
   --frontend`), then a comparison against the previous run to flag layout changes. Other frontend tooling may
-  follow (an accessibility checker, see below; a bundle-size check).
+  follow (an accessibility checker, see below; a bundle-size check). First findings from headless screenshots
+  of the local site on 2026-11-01 (Playwright, Chromium 156, 1280 px and 390 px wide):
+  - Explore page, desktop: the "Select spectra by hovering..." heading is drawn over the plot area, the
+    "No Spectra Staged for Download" notice covers the navigation bar, and the staged-download icon covers
+    the plot's flux axis.
+  - Explore page, phone: the table columns are cut to two or three characters ("BD", "CRIR"), the four
+    buttons above the table wrap into narrow pills, and the "Add Columns" control is a vertical strip of
+    letters at the right edge; the page is not usable at this width.
+  - Home page, phone: the instrument carousel's numbers and names overlap each other, and the text in the
+    HITRAN box breaks into "importedHITRAN from".
+  - Home page, desktop: no problems seen.
 - **Faster data updates: process only what changed.** Today `DATA_NEW_UPLOADS_ONLY=true` only skips the *upload*
   of spectra whose handle is already in the `spectra` table: `update.py` still reads every FITS file, rebuilds
   every object's parameters (SIMBAD, Gaia, TIC lookups against the reference files) and all tables in the
