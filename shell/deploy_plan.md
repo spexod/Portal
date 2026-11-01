@@ -3,7 +3,7 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
-## Checklist (status 2026-11-01, night: deployed)
+## Checklist (status 2026-11-01, night: deployed, automatic updates on)
 
 Done:
 - [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
@@ -19,13 +19,26 @@ Done:
       0 warnings; the pages carry the security headers; the contact page shows the "not configured" message of
       the new frontend build
 
+- [x] login, spectrum download, logout by hand; prunes on the server and the laptop
+- [x] systemd units installed, `spexodisks-auto-deploy.timer` enabled (04:00 UTC, the certbot timer and the
+      certificate watcher were already active); `auto-deploy.sh` needed its execute bit (fixed)
+- [x] manual `workflow_dispatch` of `security.yml`: `publish` failed with `permission_denied: write_package`
+      until the backend package granted the Portal repository *Write* access (documented in auto_update.md);
+      the rerun published the CI-built `LATEST` and `sha-c6b90d0...`
+- [x] first automatic update (`systemctl start spexodisks-auto-deploy.service`, 18:06 UTC): dump taken (582M,
+      3.5 min), then the script failed on the static-files volume and left backend and nginx stopped, about two
+      minutes of downtime until `docker compose up --detach backend nginx`; the backend came up on the CI image;
+      `smoke.py --strict` 41/41 afterwards. The script is fixed (see "Deployment workflow problems", item 00)
+- [x] `claude` merged into `main` in both repositories (Portal: merge commit a138488; SpExo-FrontEnd fast-forward)
+
 Remaining:
-1. [ ] By hand on the site: login, spectrum download, logout (section 5); then the prune on the server
-       (`docker image prune --force`, images only) and on the laptop
-2. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
-3. [ ] Fast-forward the commits on `claude` made after the merge into `main` (scripts, compose, docs, the
-       frontend rendering change) and push; they reach the server with the next `update.sh` (the frontend
-       change needs a new frontend image: `deploy.sh`, or the planned CI build)
+1. [ ] Push Portal `main` (the fixed `auto-deploy.sh`, `github-status.sh`) and `git pull origin main` on the
+       server, so the nightly timer runs the fixed script
+2. [ ] Push SpExo-FrontEnd `main`; the dynamic-rendering change reaches the site with the next frontend image
+       (`deploy.sh`, or the planned CI build)
+3. [ ] Dependabot PR #4, `spexod` 0.1.1 to 0.3.0 in `backend/requirements.txt`: a runtime dependency, check the
+       release notes and the image build on the PR, then merge; the nightly update ships it after the next
+       `publish` (weekly schedule, or by hand)
 
 Note on the repeated `data.sh`: it stages the processed data in the `new_*` schemas but does not mark it
 committed; `deploy.sh` does that (`science.db.commit_data`). The backend's entrypoint only moves staged data

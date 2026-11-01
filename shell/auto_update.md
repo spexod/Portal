@@ -110,3 +110,9 @@ repository. In the Portal repository settings add the Actions secret `DATA_REPO_
 personal access token with *Contents: read* on `spexod/data` and nothing else. Then run the workflow
 once from the Actions tab (*Run workflow*): it publishes `ghcr.io/spexod/backend:LATEST` only from
 `main` and only on the schedule or that manual run, never from a plain push.
+
+The publish job pushes with the workflow's own `GITHUB_TOKEN` (`permissions: packages: write`). That only
+works when the package grants the repository access: a package first pushed from a developer computer with
+a personal token is not linked to any repository, and the push fails with `denied: permission_denied:
+write_package`. Once, for each package: github.com/orgs/spexod/packages/container/<backend|frontend>/settings,
+"Manage Actions access", add `spexod/Portal` with the role *Write* (done for both on 2026-11-01).
