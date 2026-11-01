@@ -129,6 +129,9 @@ emptied again (see section 3).
   - Home page, phone: the instrument carousel's numbers and names overlap each other, and the text in the
     HITRAN box breaks into "importedHITRAN from".
   - Home page, desktop: no problems seen.
+  All of the above fixed on 2026-11-01 (SpExo-FrontEnd branch `claude-wp5-visual`), with more found and fixed
+  along the way: the download cart moved from a floating corner icon into the header, the explore page
+  became one scroll region, the forms, team, contact and tutorial pages were laid out for a phone.
 - **Faster data updates: process only what changed.** Today `DATA_NEW_UPLOADS_ONLY=true` only skips the *upload*
   of spectra whose handle is already in the `spectra` table: `update.py` still reads every FITS file, rebuilds
   every object's parameters (SIMBAD, Gaia, TIC lookups against the reference files) and all tables in the

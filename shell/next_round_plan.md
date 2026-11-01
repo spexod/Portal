@@ -270,7 +270,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 | WP2 | `claude-wp2-ci-builds` (stacked on `claude-wp1-tooling`, both repositories) | done 2026-11-01: frontend settings as build args and run-time env, `audit.yml` builds, scans and publishes the frontend image, `security.yml` publishes on push to `main`; the server side (`sha-` tags for rollback by hand, `deploy.sh` as fallback) documented | frontend built from build args alone, local-test --frontend 40/40, API base checked in the compiled pages, browser console clean | the first real publish of each image is watched by the user; the frontend package needs the repository's write access (auto_update.md) |
 | WP3 | `pipeline-split` | plan written 2026-10-31, needs rebase on `main` | | |
 | WP4 | | `github-status.sh` on `main`; routine not started | | D1 |
-| WP5 | `claude-wp5-visual` | 1 done 2026-11-01: `tests/screenshots.mjs` + `tests/package.json`; the fixes (2) and the comparison (3) open | 18 screenshots of the local stack, 0 page errors | D7 |
+| WP5 | `claude-wp5-visual` (both repositories) | 1 and 2 done 2026-11-01: `tests/screenshots.mjs`, `tests/states.mjs`; the explore page as one scroll region (plot and header fixed, rows scroll), the downloads menu in the header, the plot title, notes, mode bar and controls row, the columns menu, phone layouts of home, forms, team, contact, tutorials. Open: the comparison between runs (3); tutorial video #4 shows an empty frame | 40 smoke checks and 18 + 22 screenshots per round, six rounds | D7 |
 | WP6 | | not started | | D2, D7 |
 | WP7 | | not started | | |
 | WP8 | | not started | | |
