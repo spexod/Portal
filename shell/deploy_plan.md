@@ -3,18 +3,21 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
-## Checklist (status 2026-11-02)
+## Checklist (status 2026-11-01, afternoon)
 
 Done:
 - [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
-- [x] `deploy.sh`: backend and frontend images pushed to ghcr.io as `LATEST`, staged data marked committed
 - [x] database dump on the server (`mysql/dump-<time>.sql.gz`)
-- [x] pull request `claude` → `main` opened; `security.yml` ran: `audit` passed, `image` failed on the missing secret
+- [x] pull request `claude` → `main` opened; GitHub secret `DATA_REPO_TOKEN` set; `security.yml` passes
+      (the five Trivy findings in pip's bundled libraries are accepted in `.trivyignore` until 2027-02-01)
+- [x] code review of both repositories; review commits: Trivy ignore file, dead-code removal (Portal),
+      Next.js 16.4.3 and fast-uri 3.1.9 in the lock file (SpExo-FrontEnd, fixes the critical `npm audit` findings)
 
 Remaining, in order:
-1. [ ] GitHub secret `DATA_REPO_TOKEN` (section 6), then "Re-run failed jobs" on the pull request run
-2. [ ] Code review of the pull request. **If any commit is added**, run `./deploy.sh` again before the server
-       update so the `LATEST` images match `main` (`data.sh` is not needed again)
+1. [ ] SpExo-FrontEnd: push the lock-file commit; `audit.yml` on the pull request goes green
+2. [ ] `./deploy.sh` once more, **after** the last commit in either repository: the dead-code commit changed the
+       backend image and the lock-file commit changed the frontend image, and the server pulls `LATEST`
+       (`data.sh` is not needed again). A `deploy.sh` run started before the lock-file commit built the old frontend
 3. [ ] Merge both repositories into `main` and push (section 1; also SpExo-FrontEnd `claude` → `main`)
 4. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2)
 5. [ ] `./deploy_update.sh`; do not confirm the prune prompt yet (section 4)
@@ -22,13 +25,29 @@ Remaining, in order:
 7. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
 
 Until step 5 nothing on the server changes: the server only pulls new images when `update.sh` runs, and the
-nightly timer is not installed yet. One side effect of step "deploy.sh" is already in place: the staged data is
+nightly timer is not installed yet. One side effect of the first "deploy.sh" is already in place: the staged data is
 committed, so if the current (old) backend container restarts before the update, its entrypoint moves that
 data live. That is harmless, the data is meant to go live.
 
+## Next round of work (not part of this deployment)
+
+- **Contact form.** The live site ships the placeholder `YOUR_PUBLIC_KEY`, so the EmailJS form has failed since
+  the 2026-05-31 commit that split the contact page; the new build shows "not configured, email
+  info.spexodisks@gmail.com" instead. The key is in the git history of SpExo-FrontEnd (the contact page called
+  `emailjs.sendForm('gmail', 'spexodisks', e.target, 'user_B1HRM3yK7kbsgFQ2zgKON')` from 2022 to May 2026;
+  EmailJS renamed the User ID to Public Key and old values still work). Put it in `.env.deploy` as
+  `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=user_B1HRM3yK7kbsgFQ2zgKON`, rebuild the frontend, and test with a real
+  submission from the site. If it fails, the EmailJS account (probably the one for info.spexodisks@gmail.com)
+  has rotated the key or lapsed: the owner finds the current key under Account > API Keys.
+- **pip in the runtime image.** Drop the unused venv/virtualenv steps in `backend/Dockerfile` (every package
+  installs into the system site-packages anyway) and `pip uninstall pip` at the end, which removes the bundled
+  urllib3/msgpack/setuptools copies that `.trivyignore` accepts. Then delete the `.trivyignore` entries.
+- **Pipeline split** (branch `pipeline-split`, `shell/pipeline_split_plan.md`): separate API and pipeline
+  images, drop the dead dependencies.
+
 ## What is being deployed
 
-Portal, 15 commits (`git log main..claude`):
+Portal, 25 commits (`git log main..claude`):
 
 | Area | Change | Visible effect |
 |---|---|---|
@@ -40,7 +59,7 @@ Portal, 15 commits (`git log main..claude`):
 | operations | `shell/auto-deploy.sh` nightly update with rollback, database dump and alerts; `security.yml` audits and publishes the backend image; `shell/update.sh` waits for health and runs the smoke test | see "After the deployment" |
 | tests | `tests/smoke.py`, `tests/auth_flow.py`, `shell/local-test.sh`, `backend/tests` | |
 
-SpExo-FrontEnd, 6 commits: Dependabot and npm audit, forms never submit natively, token refresh shared
+SpExo-FrontEnd, 7 commits (the last one updates the lock file to Next.js 16.4.3): Dependabot and npm audit, forms never submit natively, token refresh shared
 across tabs with server-side logout, last good data kept when a revalidation fails, labels rendered
 without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY`.
 
@@ -59,14 +78,12 @@ without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMA
      for arm64 would be pushed as `LATEST` and the server could not run it.
    - `SIMBAD_SERVER=simbad.harvard.edu` while CDS Strasbourg is offline (only matters for `data.sh`).
    - `MYSQL_HOST="spexodisks.com"` and the production password as before.
-4. `SpExo-FrontEnd/.env.deploy`: `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=` is empty. The form on `main` used the
-   placeholder `YOUR_PUBLIC_KEY`, so it did not work before either; fill in the real EmailJS public key
-   now if you have it, otherwise the contact page shows a message that the form is not configured.
+4. `SpExo-FrontEnd/.env.deploy`: `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=` stays empty for this deployment (the
+   contact page says the form is not configured and gives the email address); see "Next round of work".
 5. Optional but recommended, 15 minutes: `./shell/local-test.sh --frontend` against a local database
    (needs a second `.env` with `MYSQL_HOST="mysqlDB"`, see `.env.example`).
-6. Push both repositories. Pushing Portal `main` runs `security.yml` (pip-audit, image build, Trivy).
-   The image job needs the `DATA_REPO_TOKEN` secret (section 6); until it is set that job fails, which
-   has no effect on the site.
+6. Push both repositories. Pushing Portal `main` runs `security.yml` (pip-audit, image build, Trivy);
+   the `DATA_REPO_TOKEN` secret is set and the run on the pull request passed.
 
 ## 2. On the server: complete `.env` first
 
