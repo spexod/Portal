@@ -166,7 +166,7 @@ without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMA
 
 ## 2. On the server: complete `.env` first
 
-`ssh -i spexo-ssh-key.pem ubuntu@spexodisks.com`, then edit `/home/ubuntu/Portal/.env`:
+`ssh spexo` (the `Host spexo` entry from README.md), then edit `/home/ubuntu/Portal/.env`:
 
 | Variable | Required value | Why |
 |---|---|---|
@@ -233,7 +233,7 @@ first and bash keeps executing the **old** copy it opened, so this first run doe
 the healthchecks or run the smoke test. Watch it by hand:
 
 ```
-ssh -i spexo-ssh-key.pem ubuntu@spexodisks.com
+ssh spexo
 cd /home/ubuntu/Portal
 docker compose ps                       # backend "healthy" takes up to a minute: schema init, Django migrations
 docker compose logs backend | grep -E "docker-entrypoint|Applying|migrating|Tables updated|ERROR|Traceback"
