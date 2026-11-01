@@ -48,8 +48,13 @@ elif MYSQL_HOST == "localhost" and is_docker:
     warn("Using MYSQL_HOST to 'mysqlDB', it was detected that we are in a docker container.")
     MYSQL_HOST = "mysqlDB"
 print(f"MYSQL_HOST: {MYSQL_HOST}, is_docker: {is_docker}, is_docker_build: {is_docker_build}")
-MYSQL_USER = os.environ.get("MYSQL_USER", "username")
-MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "password")
+# Two database accounts (mysql/users.sql): the pipeline account owns the schemas and is what this module
+# and the pipeline use; the API account (core/settings.py) reads the catalogue and writes the users schema.
+# Both fall back to MYSQL_USER/MYSQL_PASSWORD, the single (root) account of older setups.
+MYSQL_USER = os.environ.get("MYSQL_PIPELINE_USER") or os.environ.get("MYSQL_USER", "username")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PIPELINE_PASSWORD") or os.environ.get("MYSQL_PASSWORD", "password")
+MYSQL_API_USER = os.environ.get("MYSQL_API_USER") or os.environ.get("MYSQL_USER", "username")
+MYSQL_API_PASSWORD = os.environ.get("MYSQL_API_PASSWORD") or os.environ.get("MYSQL_PASSWORD", "password")
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/home/ubuntu/SpExServer/backend/output")
 update_mode = str_is_true(os.environ.get("DATA_NEW_UPLOADS_ONLY", "true"))
 # the API reads the live tables unless told otherwise: the new_* tables are dropped while an update runs

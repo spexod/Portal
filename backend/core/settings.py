@@ -14,7 +14,7 @@ from warnings import warn
 from django.core.exceptions import ImproperlyConfigured
 from datetime import timedelta
 
-from science.db.sql import (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_CONNECT_OPTIONS,
+from science.db.sql import (MYSQL_HOST, MYSQL_API_USER, MYSQL_API_PASSWORD, MYSQL_CONNECT_OPTIONS,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
                             wait_for_mysql_to_start, is_docker_build)
 
@@ -105,11 +105,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
+# Database: the API account (SELECT on the catalogue schemas, read and write on users; mysql/users.sql).
+# docker-entrypoint.sh runs the migrations with the pipeline account, which may change the users schema.
 data_auth = {
     'ENGINE': 'django.db.backends.mysql',
-    'USER': MYSQL_USER,
-    'PASSWORD': MYSQL_PASSWORD,
+    'USER': MYSQL_API_USER,
+    'PASSWORD': MYSQL_API_PASSWORD,
     'PORT': sql_port,
     'HOST': MYSQL_HOST,
     # TLS settings shared with the other database clients, see science/db/sql.py

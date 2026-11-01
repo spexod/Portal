@@ -89,6 +89,12 @@ services:
       MYSQL_HOST: "${MYSQL_HOST:-localhost}"
       MYSQL_USER: "${MYSQL_USER:-root}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
+      # the two least-privilege accounts of mysql/users.sql (create them with mysql/create-users.sh); when
+      # empty, everything connects as MYSQL_USER
+      MYSQL_API_USER: "${MYSQL_API_USER:-}"
+      MYSQL_API_PASSWORD: "${MYSQL_API_PASSWORD:-}"
+      MYSQL_PIPELINE_USER: "${MYSQL_PIPELINE_USER:-}"
+      MYSQL_PIPELINE_PASSWORD: "${MYSQL_PIPELINE_PASSWORD:-}"
       # optional TLS mode for database connections, the default depends on MYSQL_HOST (see science/db/sql.py)
       MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
       API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-false}"
@@ -192,6 +198,8 @@ services:
           MYSQL_HOST: "${MYSQL_HOST:-localhost}"
           MYSQL_USER: "${MYSQL_USER:-root}"
           MYSQL_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
+          MYSQL_PIPELINE_USER: "${MYSQL_PIPELINE_USER:-}"
+          MYSQL_PIPELINE_PASSWORD: "${MYSQL_PIPELINE_PASSWORD:-}"
           MYSQL_SSL_MODE: "${MYSQL_SSL_MODE:-}"
           API_USE_NEW_TABLES: "${API_USE_NEW_TABLES:-false}"
           SIMBAD_SERVER: "${SIMBAD_SERVER:-}"

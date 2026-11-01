@@ -177,3 +177,5 @@ logs/
 mysql/dump-*
 mysql/fingerprint-*
 mysql/local-*
+# the account definitions are source, not a dump
+!mysql/users.sql
