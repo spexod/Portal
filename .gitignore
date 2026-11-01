@@ -179,3 +179,6 @@ mysql/fingerprint-*
 mysql/local-*
 # the account definitions are source, not a dump
 !mysql/users.sql
+# exact versions resolved for a build (shell/refresh_versions.py)
+versions.env
+backend/requirements.lock

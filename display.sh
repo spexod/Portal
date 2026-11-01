@@ -14,9 +14,9 @@ rm -rf .next || exit
 # copy production environment variables
 rm -f .env.production || exit
 cp .env.display .env.production || exit
-# update the packages in package-lock.json (this requires node https://nodejs.org/en/download/package-manager)
-npm update || exit
 cd ../ || exit
+# the newest package versions within the ranges, and the exact base images, for this build
+python3 shell/refresh_versions.py || exit
 # build in the docker container
 ./shell/build.sh frontend || exit
 # test the build on a local machine

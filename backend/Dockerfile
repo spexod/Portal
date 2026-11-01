@@ -1,6 +1,9 @@
 # # Things that can be cached
 # Base Configurations
-FROM python:3.14-alpine AS build
+# The Python line is pinned here (and in compose.yaml, BACKEND_BASE_IMAGE); the exact image comes from
+# versions.env (shell/refresh_versions.py). Moving to a new line is an administrator's decision.
+ARG BASE_IMAGE=python:3.15-alpine
+FROM ${BASE_IMAGE} AS build
 # print output straight away, also without a terminal (docker compose run ... > log, systemd)
 ENV PYTHONUNBUFFERED=1
 WORKDIR /home/python_user/backend_app
@@ -11,14 +14,8 @@ ARG MPLCONFIGDIR
 ENV MPLCONFIGDIR=$MPLCONFIGDIR
 ARG DATA_OUTPUT_DIR
 ENV DATA_OUTPUT_DIR=$DATA_OUTPUT_DIR
-# update pip
+# the newest pip for the install below (pip is removed again at the end of the build)
 RUN pip install --upgrade pip
-# install a virtual environment
-RUN pip install virtualenv
-# create a virtual environment
-RUN python -m venv /home/python_user/backend_app/venv
-# activate the virtual environment
-RUN source /home/python_user/backend_app/venv/bin/activate
 # install mysql client and gcc compiler on the alpine image
 RUN apk update && apk add --no-cache mariadb-dev build-base
 # # setup a username and group
@@ -30,9 +27,12 @@ RUN chown python_user:python_group $MPLCONFIGDIR
 # make and output directory for data processing results
 RUN mkdir -p $DATA_OUTPUT_DIR
 RUN chown python_user:python_group $DATA_OUTPUT_DIR
-# pip install the requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# requirements.txt lists the packages, unpinned (they follow the newest release); shell/refresh_versions.py
+# writes requirements.lock, the exact versions a build is tested with, and REQUIREMENTS=requirements.lock
+# (versions.env) selects it. The * also copies the lock file when it exists.
+ARG REQUIREMENTS=requirements.txt
+COPY requirements.* ./
+RUN pip install --no-cache-dir -r $REQUIREMENTS
 # # Things that will need to update every time the code changes
 # COPY --chown=python_user:python_group . .
 COPY . .
@@ -49,6 +49,10 @@ RUN mkdir /home/python_user/backend_app/static_root
 RUN IS_DOCKER_BUILD=true python manage.py collectstatic --clear --noinput
 # allow the user to read the static files
 RUN chown -R python_user:python_group /home/python_user/backend_app/static_root
+# pip is not needed at run time, and its bundled copies of urllib3, msgpack and setuptools are what the
+# Trivy scan flagged (.trivyignore)
+RUN pip uninstall --yes pip
+LABEL org.opencontainers.image.source="https://github.com/spexod/Portal"
 # set the user
 USER python_user
 # initialize the database and apply migrations, then run CMD (or the "docker compose run" command)

@@ -11,7 +11,9 @@
 #                         journalctl -u spexodisks-auto-deploy
 # Unlike shell/update.sh this never runs "docker compose down" and never prunes volumes.
 #
-# Environment: SMOKE_BASE_URL (default https://spexodisks.com), KEEP_DUMPS (default 3).
+# Environment: SMOKE_BASE_URL (default https://spexodisks.com), SMOKE_ONLY (check groups for tests/smoke.py,
+# default all), KEEP_DUMPS (default 3), BACKEND_HEALTHY_TIMEOUT (seconds to wait for the backend's
+# healthcheck, default 300). shell/local-test.sh --auto-deploy runs this script against the local stack.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -21,6 +23,7 @@ flock -n 9 || { echo "another update is running"; exit 0; }
 
 smoke_base_url=${SMOKE_BASE_URL:-https://spexodisks.com}
 keep_dumps=${KEEP_DUMPS:-3}
+backend_timeout=${BACKEND_HEALTHY_TIMEOUT:-300}
 
 # The services this script updates: the long-running ones of the enabled profiles, except MySQL.
 # MySQL stays on the version in MYSQL_VERSION: a database upgrade at 04:00 has no way back
@@ -57,7 +60,7 @@ reset_static_volume() {
 wait_for_backend() {
     has backend "${services[@]}" || return 0
     local state _
-    for _ in $(seq 60); do   # up to 5 minutes, the healthcheck needs the database
+    for _ in $(seq "$((backend_timeout / 5))"); do   # up to 5 minutes by default, the healthcheck needs the database
         state=$(docker inspect --format '{{.State.Health.Status}}' "$(container_of backend)" 2>/dev/null || echo none)
         [ "$state" = healthy ] && return 0
         sleep 5
@@ -70,14 +73,20 @@ wait_for_backend() {
 site_is_healthy() {
     wait_for_backend || return 1
     sleep 10   # nginx re-resolves the container addresses every 30s (resolver valid=30s in nginx/deploy.conf)
-    python3 tests/smoke.py --base-url "$smoke_base_url"
+    python3 tests/smoke.py --base-url "$smoke_base_url" ${SMOKE_ONLY:+--only "$SMOKE_ONLY"}
 }
 
-# ---- what is running now, to compare and to roll back to
-declare -A before before_tag
+# ---- what is running now, to compare and to roll back to. The running image gets a "previous" tag:
+# an image that loses its tag and its container is garbage-collected by Docker's containerd image
+# store, so a rollback by image id alone can find nothing to roll back to (seen in local-test.sh
+# --auto-deploy, 2026-11-01); a tagged image stays, and "docker image prune" leaves it alone
+declare -A before before_tag previous_tag
 for s in "${services[@]}"; do
     before[$s]=$(image_of "$s")
     before_tag[$s]=$(tag_of "$s")
+    [ -z "${before_tag[$s]}" ] && continue
+    previous_tag[$s]="${before_tag[$s]%:*}:previous"
+    docker tag "${before[$s]}" "${previous_tag[$s]}"
 done
 
 docker compose pull --quiet --ignore-pull-failures "${services[@]}"
@@ -128,10 +137,10 @@ if [ "$healthy" = true ]; then
     exit 0
 fi
 
-# ---- roll back every changed service to the image it ran before
+# ---- roll back every changed service to the image it ran before (kept under its "previous" tag)
 echo "the site is not healthy after the update, rolling back: ${changed[*]}" >&2
 for s in "${changed[@]}"; do
-    docker tag "${before[$s]}" "${before_tag[$s]}"
+    docker tag "${previous_tag[$s]}" "${before_tag[$s]}"
 done
 if has backend "${changed[@]}"; then
     reset_static_volume

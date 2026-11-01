@@ -30,6 +30,8 @@ read -r -p "Pushing the new images to the container repository"
 ./shell/ghcr-login.sh
 docker compose push || exit
 # once everything else is competed, we mark the database as ready to be updated
+./shell/data-status.sh || exit
+read -r -p "commit the staged data above (the backend moves it live at its next start)? press any key to continue, control-c to stop..."
 # (DB_INIT_ON_START=false: only the status flag changes here, the schema steps of the entrypoint are not needed)
 docker compose run --rm -e DB_INIT_ON_START=false backend python -m science.db.commit_data || exit
 echo " completed the push to the container repository, continue the update with ./deploy_update.sh"

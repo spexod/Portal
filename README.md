@@ -329,6 +329,24 @@ __Windows (PowerShell)__
 `.\data.sh`
 
 
+### Versions `shell/refresh_versions.py`
+
+Git holds only what to follow. The runtimes are pinned to a line: `python:3.15-alpine` and `node:26-alpine`
+(the current LTS) as `BACKEND_BASE_IMAGE` and `FRONTEND_BASE_IMAGE` in `compose.yaml`, `mysql:9.7` as
+`MYSQL_VERSION`, `nginx:stable`. Moving to a new line is an administrator's decision; Dependabot opens a
+pull request when one exists. The packages follow the newest release: `backend/requirements.txt` is unpinned
+and `SpExo-FrontEnd/package.json` has open ranges, because every image is built, scanned and smoke-tested
+before it is published, and the nightly update on the server rolls back when the smoke test fails.
+
+Before a build, `python3 shell/refresh_versions.py` resolves all of that to exact versions: `versions.env`
+(every image line with the digest its tag points to today) and `backend/requirements.lock` (every Python
+package at an exact version, compiled with uv inside the backend's base image), both gitignored, and
+`SpExo-FrontEnd/package-lock.json` updated within the ranges. `shell/build.sh` reads `versions.env`;
+`display.sh` runs the refresh; the image workflow (`.github/workflows/security.yml`) runs it before the
+build, audits the lock, keeps it with the run and writes the base image and the commit into the image
+labels. The lock files are copied into the images, so `docker run --rm --entrypoint cat
+ghcr.io/spexod/backend:LATEST requirements.lock` says what an image runs.
+
 ### Data upload `data.sh`
 `data.sh` is a script that will start from input data files and create 
 the MySQL tables and FITS/TXT files for the SpExoDisks website.
@@ -420,9 +438,12 @@ https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-exi
 Fundamentally this is about running the script `/home/ubuntu/Portal/shell/update.sh` on the server,
 however, we have a script that login to the sever for you and run this command do this for you, `deploy_update.sh`.
 The script now waits for the healthchecks and runs `tests/smoke.py` before offering to prune the old
-images. For a deployment that changes the server's `.env` or the database, follow
-[shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security update, the checklist
-applies to later ones too).
+images. Before an update that changes `compose.yaml` or needs new `.env` values, run the dry run on the
+server first: `./shell/update.sh --check` pulls `main`, validates the compose configuration with the
+server's `.env` and pulls the images without stopping anything. For a deployment that changes the server's
+`.env` or the database, follow [shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security
+update, the checklist applies to later ones too). Between deployments the server updates itself every
+night from the published images, see [shell/auto_update.md](shell/auto_update.md).
 
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 
@@ -459,10 +480,15 @@ takes about ten minutes, most of it in `update.py`.
 ./shell/local-test.sh               # full run
 ./shell/local-test.sh --no-update   # only start the backend and test the data already in MySQL
 ./shell/local-test.sh --frontend    # also build and start the frontend (display.sh) and test the pages
+./shell/local-test.sh --frontend --auto-deploy   # then run the nightly update script against the stack:
+                                    # an update with a changed backend image and a rollback with a broken one
 ./shell/local-test.sh --down        # stop the containers afterwards
 ```
 The result should match production: `curl http://localhost/api/stats_total/` and
-`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra.
+`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra. The test
+stack runs the images under local names (`spexodisks-local/backend`, `spexodisks-local/frontend`), never
+the registry's. `./shell/data-status.sh` prints which database the pipeline scripts talk to and whether
+data is staged, committed or live; `data.sh` and `deploy.sh` show it before they change anything.
 
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller
