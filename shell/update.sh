@@ -1,9 +1,11 @@
 #!/bin/bash
 # Update the server to the current main and the current images, then check the site.
 #   ./shell/update.sh            the update
-#   ./shell/update.sh --check    dry run: pull main, validate the compose configuration with the server's .env,
-#                                pull the images; nothing stops or starts (run it before an update that changes
-#                                compose.yaml or needs new .env values)
+#   ./shell/update.sh --check    dry run: fetch main (the checkout stays as it is), validate main's compose
+#                                configuration with the server's .env, and list the images an update would
+#                                pull; nothing is pulled, stopped or started, so the nightly update is not
+#                                triggered either (run it before an update that changes compose.yaml or
+#                                needs new .env values)
 # stop at the first failure: a failed pull must not take the running site down
 set -euo pipefail
 check=false
@@ -13,6 +15,18 @@ check=false
 echo "SpExServer Update Script"
 cd /home/ubuntu/Portal/ || exit
 user='chw3k5'
+if [ "$check" = true ]; then
+    git fetch --quiet origin main
+    echo "commits an update would bring in:"
+    git log --oneline HEAD..origin/main | cat
+    git show origin/main:compose.yaml > /tmp/compose-check.yaml
+    docker compose -f /tmp/compose-check.yaml --env-file .env config --quiet && echo "main's compose configuration with this .env: ok"
+    echo "images an update would pull:"
+    docker compose -f /tmp/compose-check.yaml --env-file .env config --images
+    rm -f /tmp/compose-check.yaml
+    echo "check passed: nothing was pulled, stopped or started"
+    exit 0
+fi
 # This is public repo, so we can pull without authentication, to update the compose file
 git pull origin main
 # log in to THe GitHub Container Registry
@@ -21,10 +35,6 @@ cat .git_token.txt | docker login ghcr.io --username "${user}" --password-stdin
 docker compose config --quiet && echo "compose configuration: ok"
 # pull the fresh version from the container registry
 docker compose pull
-if [ "$check" = true ]; then
-    echo "check passed: main pulled, the compose configuration is valid, the images are pulled; nothing was restarted"
-    exit 0
-fi
 # take the currently running continues offline
 docker compose down
 # delete the (to remake) the Django static files and other temp files

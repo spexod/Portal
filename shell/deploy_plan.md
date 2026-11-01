@@ -94,8 +94,9 @@ emptied again (see section 3).
   the 2026-05-31 commit that split the contact page; the new build shows "not configured, email
   info.spexodisks@gmail.com" instead. The key is in the git history of SpExo-FrontEnd (the contact page called
   `emailjs.sendForm('gmail', 'spexodisks', e.target, 'user_B1HRM3yK7kbsgFQ2zgKON')` from 2022 to May 2026;
-  EmailJS renamed the User ID to Public Key and old values still work). Put it in `.env.deploy` as
-  `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=user_B1HRM3yK7kbsgFQ2zgKON`, rebuild the frontend, and test with a real
+  EmailJS renamed the User ID to Public Key and old values still work). Set the GitHub repository variable
+  `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=user_B1HRM3yK7kbsgFQ2zgKON` in SpExo-FrontEnd (the CI build reads it; a local
+  `deploy.sh` build reads the same name from Portal's `.env`), rebuild the frontend, and test with a real
   submission from the site. If it fails, the EmailJS account (probably the one for info.spexodisks@gmail.com)
   has rotated the key or lapsed: the owner finds the current key under Account > API Keys.
 - **pip in the runtime image.** Drop the unused venv/virtualenv steps in `backend/Dockerfile` (every package
@@ -205,8 +206,8 @@ without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMA
      for arm64 would be pushed as `LATEST` and the server could not run it.
    - `SIMBAD_SERVER=simbad.harvard.edu` while CDS Strasbourg is offline (only matters for `data.sh`).
    - `MYSQL_HOST="spexodisks.com"` and the production password as before.
-4. `SpExo-FrontEnd/.env.deploy`: `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=` stays empty for this deployment (the
-   contact page says the form is not configured and gives the email address); see "Next round of work".
+4. The EmailJS key stays unset for this deployment (the contact page says the form is not configured and
+   gives the email address); see "Next round of work".
 5. Optional but recommended, 15 minutes: `./shell/local-test.sh --frontend` against a local database
    (needs a second `.env` with `MYSQL_HOST="mysqlDB"`, see `.env.example`).
 6. Push both repositories. Pushing Portal `main` runs `security.yml` (pip-audit, image build, Trivy);
@@ -259,7 +260,7 @@ change would then be wrong.
 ## 3. Build and publish the images (development computer)
 
 `./deploy.sh` as before. It rsyncs `backend/output` and `backend/data` to the server, builds the backend
-image, builds the frontend with `.env.deploy` (no API needed since the pages render on request), pushes
+image, builds the frontend from compose's build args (no API needed since the pages render on request), pushes
 both images to ghcr.io and marks staged data committed (prints "No staged data to commit" when
 `data.sh` was not run, which is fine for this deployment).
 

@@ -86,7 +86,9 @@ for s in "${services[@]}"; do
     before_tag[$s]=$(tag_of "$s")
     [ -z "${before_tag[$s]}" ] && continue
     previous_tag[$s]="${before_tag[$s]%:*}:previous"
-    docker tag "${before[$s]}" "${previous_tag[$s]}"
+    # a container whose image is gone from the store (pruned by hand) has nothing to keep: say so and go on
+    docker tag "${before[$s]}" "${previous_tag[$s]}" \
+        || echo "no image to keep as ${previous_tag[$s]} (the running one is not in the store)" >&2
 done
 
 docker compose pull --quiet --ignore-pull-failures "${services[@]}"

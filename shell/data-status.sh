@@ -2,8 +2,11 @@
 # Print which database the pipeline scripts talk to and the state of the staged data, so data.sh and
 # deploy.sh say what they are about to do before they do it.
 #   ./shell/data-status.sh
+set -o pipefail
 cd "$(dirname "$0")/.."
-docker compose run --rm -T -e DB_INIT_ON_START=false backend python - <<'PY' 2>/dev/null | grep -E "^(database|account|staged|committed|migrated)"
+# the backend's own start-up lines are filtered out of stdout; errors stay on stderr, and a failure of the
+# python (no image, no database, a wrong password) fails this script
+docker compose --progress quiet run --rm -T -e DB_INIT_ON_START=false backend python - <<'PY' | grep -E "^(database|account|staged|committed|migrated)"
 from science.db.sql import MYSQL_HOST, MYSQL_USER, update_mode
 from science.db.data_status import get_data_status_mysql
 staged, committed, migrated = get_data_status_mysql()

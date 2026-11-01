@@ -57,8 +57,10 @@ def proxy_args() -> list[str]:
 
 
 def image_tags() -> dict[str, str]:
-    """The image tag to follow for each *_IMAGE variable in compose.yaml."""
-    return dict(IMAGE_VARIABLE.findall(COMPOSE_FILE.read_text()))
+    """The image tag to follow for each *_IMAGE variable in compose.yaml, except the application's own
+    images (BACKEND_IMAGE, FRONTEND_IMAGE): those are what the builds produce, not what they follow."""
+    return {variable: tag for variable, tag in IMAGE_VARIABLE.findall(COMPOSE_FILE.read_text())
+            if not tag.startswith("ghcr.io/spexod/")}
 
 
 def resolve_digest(tag: str) -> str:

@@ -12,10 +12,17 @@ docker compose --profile web --profile api down
 ./shell/rm_volumes.sh
 # delete the output directory contents
 rm -rf ./backend/output/*
+# the newest package versions within the ranges, and the exact base images, for both builds (the
+# GitHub build does the same, see .github/workflows/security.yml)
+python3 shell/refresh_versions.py || exit
 # build the backend image
 ./shell/build.sh backend || exit
 # the frontend image: the pages are rendered on request, so the build needs no API; its settings are the
 # build args in compose.yaml (NEXT_PUBLIC_*) and the run-time environment, not env files
+if ! grep -q -E '^NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=.+' .env; then
+    echo "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY is not set in .env: the contact form of this build will say it is not configured"
+    read -r -p "press any key to build anyway, control-c to stop..."
+fi
 rm -rf SpExo-FrontEnd/.next SpExo-FrontEnd/.env.production || exit
 # build in the docker container
 ./shell/build.sh frontend --no-cache || exit

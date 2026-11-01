@@ -70,3 +70,4 @@ for (const width of widths) {
 await browser.close();
 writeFileSync(join(outDir, 'report.txt'), report.join('\n') + '\n');
 console.log(report.join('\n'));
+process.exit(report.some((line) => line.startsWith('FAIL')) ? 1 : 0);
