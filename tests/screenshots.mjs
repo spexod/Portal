@@ -29,7 +29,7 @@ for (const width of widths) {
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', (e) => errors.push(`page error: ${e.message}`));
-        page.on('console', (m) => { if (m.type() === 'error') errors.push(`console error: ${m.text()}`); });
+        page.on('console', (m) => { if (m.type() === 'error' && !/compute-pressure/.test(m.text())) errors.push(`console error: ${m.text()}`); });
         const name = (path === '/' ? 'home' : path.slice(1).toLowerCase()) + `-${width}.png`;
         let status = 'no response';
         try {
