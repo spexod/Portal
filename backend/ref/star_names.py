@@ -891,12 +891,6 @@ def optimal_star_name(star_name_lower):
     return name_type
 
 
-def remove_key(d, key):
-    r = dict(d)
-    del r[key]
-    return r
-
-
 def star_letter_check(striped_name):
     star_letter = None
     if striped_name[-2:] in double_star_letters:

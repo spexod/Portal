@@ -9,11 +9,9 @@ science/db/new_configs/*
 *__pycache__*
 *.DS_Store*
 djangoAPI/migrations
-science/plots/output/*
 *.ipynb_checkpoints*
 spexodisks.egg-info/
 ref/data_status.toml
-uploads
 output
 *sql_config.py
 venv*

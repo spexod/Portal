@@ -35,7 +35,6 @@ except ValueError:
 base_dir = os.path.dirname(backend_dir)
 working_dir = os.path.join(backend_dir, "science")
 input_data_dir = os.path.join(backend_dir, "data")
-uploads_dir = os.path.join(backend_dir, "uploads")
 output_dir = os.path.join(backend_dir, "output")
 ref_dir = os.path.join(input_data_dir, "reference_data")
 spectra_dir = os.path.join(input_data_dir, "spectral_data")

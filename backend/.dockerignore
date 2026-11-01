@@ -20,5 +20,4 @@ output
 # time; the spectra and the generated data products are large and never read during the build.
 data/spectral_data
 data/data_products
-uploads
 tests

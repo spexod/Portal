@@ -36,17 +36,6 @@ for spectrum_handle in sorted(views.spectra_views.keys()):
 
 
 """
-Tables with duplicated information in other tables, these are raw versions of the available data
-"""
-
-# router.register(r'objectparamsfloat', views.ObjectParamsFloatViewSet)
-# router.register(r'objectparamsstr', views.ObjectParamsStrViewSet)
-# router.register(r'availablefloatparams', views.AvailableFloatParamsViewSet)
-# router.register(r'availablespectrumparams', views.AvailableSpectrumParamsViewSet)
-# router.register(r'availablestrparams', views.AvailableStrParamsViewSet)
-
-
-"""
 URL Patterns
 """
 urlpatterns = [path('', include(router.urls)),

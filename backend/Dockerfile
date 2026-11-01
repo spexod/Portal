@@ -38,7 +38,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 # the spectra are excluded from the image (.dockerignore) and bind-mounted with the rest of "data" at run
 # time (compose.yaml); the build steps below import the models, which read data/reference_data
-RUN mkdir -p data/reference_data data/spectral_data uploads
+RUN mkdir -p data/reference_data data/spectral_data
 # generate the Django migration files (no database needed at build time)
 # Database initialization and "migrate" now run at container start, see docker-entrypoint.sh
 # (--skip-checks: the model system checks ask MySQL for its server version)

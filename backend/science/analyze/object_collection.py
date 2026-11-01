@@ -91,40 +91,6 @@ def get_stacked_line_handle(isotopologue: str, transition: str, spectrum_handle:
                "_" + spectrum_handle).lower()
 
 
-def spectrum_sql_upload_old(output_sql, single_spectrum, database=spectra_schema, table_name=None):
-    spectrum_handle = single_spectrum.spectrum_handle
-    if table_name is None:
-        table_name = spectrum_handle
-    output_sql.creat_table(table_name=table_name, database=database,
-                           dynamic_type="spectrum", run_silent=True)
-    output_sql.buffer_insert_init(table_name=table_name,
-                                  columns=["wavelength_um", "velocity_kmps", "flux", "flux_error"],
-                                  database=database, run_silent=True)
-    if single_spectrum.flux_error is None:
-        for wavelength_um, velocity_kmps, flux \
-                in zip(single_spectrum.wavelength_um, single_spectrum.velocity_kmps, single_spectrum.flux):
-            if is_good_num(flux):
-                output_sql.buffer_insert_value(values=[wavelength_um, velocity_kmps, flux, None])
-            else:
-                output_sql.buffer_insert_value(values=[wavelength_um, velocity_kmps, None, None])
-    else:
-        for wavelength_um, velocity_kmps, flux, flux_error \
-                in zip(single_spectrum.wavelength_um, single_spectrum.velocity_kmps,
-                       single_spectrum.flux, single_spectrum.flux_error):
-            single_row_values = [wavelength_um, velocity_kmps]
-            if is_good_num(flux):
-                single_row_values.append(flux)
-            else:
-                single_row_values.append(None)
-            if is_good_num(flux_error):
-                single_row_values.append(flux_error)
-            else:
-                single_row_values.append(None)
-            output_sql.buffer_insert_value(values=single_row_values)
-    output_sql.buffer_insert_execute(run_silent=True)
-    return
-
-
 def spectrum_data_for_sql(single_spectrum):
     spectrum_data = {"spectrum_handle": single_spectrum.spectrum_handle.lower(),
                      "spexodisks_handle": single_spectrum.spexodisks_handle,

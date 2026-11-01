@@ -20,21 +20,11 @@ from django_rest_passwordreset.views import ResetPasswordRequestToken, ResetPass
 from .dynamic_data import (dispatch, schema_prefix,
                            available_spectra_to_database, available_isotopologues_to_database)
 from .models import spectra_models, isotopologue_models, \
-    AvailableIsotopologues, \
-    AvailableFloatParams, AvailableSpectrumParams, \
-    AvailableStrParams, Curated, DjangoMigrations, \
-    FluxCalibration, LineFluxesCo, \
-    ObjectNameAliases, ObjectParamsFloat, ObjectParamsStr, Spectra, \
-    StackedLineSpectra, AvailableParamsAndUnits, DefaultSpectrum, DefaultSpectrumInfo, \
+    AvailableIsotopologues, Curated, ObjectNameAliases, Spectra, \
+    AvailableParamsAndUnits, DefaultSpectrum, DefaultSpectrumInfo, \
     StatsTotal, StatsInstrument
 from .serializers import spectra_serializers, isotopologue_serializers, \
-    AvailableIsotopologuesSerializer, \
-    AvailableFloatParamsSerializer, \
-    AvailableSpectrumParamsSerializer, AvailableStrParamsSerializer, CuratedSerializer, \
-    DjangoMigrationsSerializer, \
-    FluxCalibrationSerializer, LineFluxesCoSerializer, \
-    ObjectNameAliasesSerializer, ObjectParamsFloatSerializer, \
-    ObjectParamsStrSerializer, SpectraSerializer, StackedLineSpectraSerializer, \
+    AvailableIsotopologuesSerializer, CuratedSerializer, ObjectNameAliasesSerializer, SpectraSerializer, \
     AvailableParamsAndUnitsSerializer, DefaultSpectrumSerializer, DefaultSpectrumInfoSerializer, \
     UserCreateSerializer, UserSerializer, StatsTotalSerializer, StatsInstrumentSerializer, ChangePasswordSerializer
 """
@@ -274,48 +264,3 @@ class ChangePasswordView(generics.UpdateAPIView):
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Used tables, but supported tables
-class AvailableFloatParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableFloatParams.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = AvailableFloatParamsSerializer
-
-
-class ObjectParamsStrViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ObjectParamsStr.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = ObjectParamsStrSerializer
-
-
-class ObjectParamsFloatViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ObjectParamsFloat.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = ObjectParamsFloatSerializer
-
-
-class StackedLineSpectraViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = StackedLineSpectra.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = StackedLineSpectraSerializer
-
-class FluxCalibrationViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = FluxCalibration.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = FluxCalibrationSerializer
-
-
-class AvailableSpectrumParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableSpectrumParams.objects.using(f'{schema_prefix}spexodisks').order_by('pk')
-    serializer_class = AvailableSpectrumParamsSerializer
-
-
-class AvailableStrParamsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AvailableStrParams.objects.using(f'{schema_prefix}spexodisks').order_by('pk')
-    serializer_class = AvailableStrParamsSerializer
-
-
-class DjangoMigrationsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DjangoMigrations.objects.using('default').order_by('pk')
-    serializer_class = DjangoMigrationsSerializer
-
-
-class LineFluxesCoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = LineFluxesCo.objects.using(f'{schema_prefix}spexodisks').all()
-    serializer_class = LineFluxesCoSerializer

@@ -5,9 +5,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from .models import (spectra_models, isotopologue_models,
-                     AvailableIsotopologues, AvailableFloatParams, AvailableSpectrumParams, AvailableStrParams, Curated,
-                     DjangoMigrations, FluxCalibration, LineFluxesCo, ObjectNameAliases, ObjectParamsFloat,
-                     ObjectParamsStr, Spectra, StackedLineSpectra, AvailableParamsAndUnits,
+                     AvailableIsotopologues, Curated, ObjectNameAliases, Spectra, AvailableParamsAndUnits,
                      DefaultSpectrum, DefaultSpectrumInfo, StatsTotal, StatsInstrument)
 
 """
@@ -158,45 +156,9 @@ class AvailableIsotopologuesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AvailableFloatParamsSerializer(ModelSerializer):
-    class Meta:
-        model = AvailableFloatParams
-        fields = '__all__'
-
-
-class AvailableSpectrumParamsSerializer(ModelSerializer):
-    class Meta:
-        model = AvailableSpectrumParams
-        fields = '__all__'
-
-
-class AvailableStrParamsSerializer(ModelSerializer):
-    class Meta:
-        model = AvailableStrParams
-        fields = '__all__'
-
-
 class CuratedSerializer(ModelSerializer):
     class Meta:
         model = Curated
-        fields = '__all__'
-
-
-class DjangoMigrationsSerializer(ModelSerializer):
-    class Meta:
-        model = DjangoMigrations
-        fields = '__all__'
-
-
-class FluxCalibrationSerializer(ModelSerializer):
-    class Meta:
-        model = FluxCalibration
-        fields = '__all__'
-
-
-class LineFluxesCoSerializer(ModelSerializer):
-    class Meta:
-        model = LineFluxesCo
         fields = '__all__'
 
 
@@ -206,25 +168,7 @@ class ObjectNameAliasesSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class ObjectParamsFloatSerializer(ModelSerializer):
-    class Meta:
-        model = ObjectParamsFloat
-        fields = '__all__'
-
-
-class ObjectParamsStrSerializer(ModelSerializer):
-    class Meta:
-        model = ObjectParamsStr
-        fields = '__all__'
-
-
 class SpectraSerializer(ModelSerializer):
     class Meta:
         model = Spectra
-        fields = '__all__'
-
-
-class StackedLineSpectraSerializer(ModelSerializer):
-    class Meta:
-        model = StackedLineSpectra
         fields = '__all__'

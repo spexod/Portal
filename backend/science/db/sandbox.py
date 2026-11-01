@@ -4,10 +4,8 @@ import zipfile
 from io import BytesIO
 from typing import NamedTuple
 
-from MySQLdb import ProgrammingError, OperationalError
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
 
-from science.db.sql import django_tables, LoadSQL
 from science.analyze.prescriptions import standard, sql_update
 
 
@@ -99,18 +97,6 @@ def write_upload_files():
 def write_sql():
     dispatch = Dispatch(verbose=True, output_dir=None)
     dispatch.write_sql()
-
-
-def move_django_tables():
-    with LoadSQL(auto_connect=True, verbose=True) as load_sql:
-        load_sql.create_schema(schema_name='users')
-        for table_name in django_tables:
-            command_str = f"""ALTER TABLE spectra.{table_name} rename users.{table_name}"""
-            try:
-                load_sql.cursor.execute(command_str)
-                load_sql.connection.commit()
-            except (ProgrammingError, OperationalError) as e:
-                print(f'Could not move table {table_name} to users schema.')
 
 
 if __name__ == '__main__':
