@@ -3,6 +3,29 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
+## Checklist (status 2026-11-02)
+
+Done:
+- [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
+- [x] `deploy.sh`: backend and frontend images pushed to ghcr.io as `LATEST`, staged data marked committed
+- [x] database dump on the server (`mysql/dump-<time>.sql.gz`)
+- [x] pull request `claude` → `main` opened; `security.yml` ran: `audit` passed, `image` failed on the missing secret
+
+Remaining, in order:
+1. [ ] GitHub secret `DATA_REPO_TOKEN` (section 6), then "Re-run failed jobs" on the pull request run
+2. [ ] Code review of the pull request. **If any commit is added**, run `./deploy.sh` again before the server
+       update so the `LATEST` images match `main` (`data.sh` is not needed again)
+3. [ ] Merge both repositories into `main` and push (section 1; also SpExo-FrontEnd `claude` → `main`)
+4. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2)
+5. [ ] `./deploy_update.sh`; do not confirm the prune prompt yet (section 4)
+6. [ ] `python3 tests/smoke.py --strict`, login, spectrum download, logout (section 5); then confirm the prune
+7. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+
+Until step 5 nothing on the server changes: the server only pulls new images when `update.sh` runs, and the
+nightly timer is not installed yet. One side effect of step "deploy.sh" is already in place: the staged data is
+committed, so if the current (old) backend container restarts before the update, its entrypoint moves that
+data live. That is harmless, the data is meant to go live.
+
 ## What is being deployed
 
 Portal, 15 commits (`git log main..claude`):
