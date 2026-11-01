@@ -154,6 +154,14 @@ emptied again (see section 3).
   3. *Scheduled*: the same routine as a scheduled cloud agent or a timer, so the weekly runs are followed up
      without anyone opening GitHub; a failed run or a critical alert becomes a message, everything else a
      weekly summary.
+- **Code review, full pass** over both code bases (backend science, API, autostar; frontend app, components,
+  context; the shell scripts with shellcheck), with the ten TODO/FIXME markers resolved and unit tests for the
+  pure functions found on the way. See `shell/next_round_plan.md`, WP8.
+- **Security review, second pass**: the items the first review left open (MySQL root as the application user,
+  unpaginated list endpoints, migrations regenerated at build), a Content-Security-Policy, the registry token
+  on the server, a secrets inventory with rotation dates, Dependabot alerts. See `shell/next_round_plan.md`, WP9.
+- **The detailed plan for all of the above**, with the rules for unattended work and the decisions needed at
+  the check-in, is `shell/next_round_plan.md`.
 - **Accessibility.** Keyboard navigation and screen-reader support: a visible focus order through the explore
   page (drawer, tables, plot controls), labels and roles on the custom dropdowns and buttons, `alt` text on the
   images, skip links, and colour contrast in `spexostrap/Colors.css`. Measure with an automated checker in the
