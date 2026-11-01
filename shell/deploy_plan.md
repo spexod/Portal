@@ -90,6 +90,24 @@ emptied again (see section 3).
      disappears), tagged with the commit SHA, independent of a laptop's state.
   After both steps, what remains on the development computer is data work: `data.sh`, the rsync of the
   download files and the staged-data commit, which the pipeline split separates from the API anyway.
+- **Visual checks of the frontend.** Add headless Chromium (Playwright) to the test tooling so the pages can be
+  screenshotted and compared: the smoke test only checks that pages answer and contain expected text, not how
+  they look. Start with screenshots of every page at phone and desktop widths after a build (`local-test.sh
+  --frontend`), then a comparison against the previous run to flag layout changes. Other frontend tooling may
+  follow (an accessibility checker, see below; a bundle-size check).
+- **Faster data updates: process only what changed.** Today `DATA_NEW_UPLOADS_ONLY=true` only skips the *upload*
+  of spectra whose handle is already in the `spectra` table: `update.py` still reads every FITS file, rebuilds
+  every object's parameters (SIMBAD, Gaia, TIC lookups against the reference files) and all tables in the
+  `new_*` schemas, about ten minutes, and a changed file that keeps its handle is never re-uploaded. Keep a
+  manifest of MD5 sums (or sizes and mtimes as a fast pre-check) of `data/spectral_data` and the reference
+  files, stored with the data repository or in a table, and have `update.py` process only the files whose sum
+  changed or that are new, re-upload a spectrum when its file changed, and leave the rest untouched. The same
+  sums can tell `deploy.sh` which output files the rsync will move before it starts.
+- **Accessibility.** Keyboard navigation and screen-reader support: a visible focus order through the explore
+  page (drawer, tables, plot controls), labels and roles on the custom dropdowns and buttons, `alt` text on the
+  images, skip links, and colour contrast in `spexostrap/Colors.css`. Measure with an automated checker in the
+  test tooling (axe through Playwright, see above) and fix the findings page by page; then a manual pass with a
+  screen reader on the explore page, which is the hardest one.
 
 ## What is being deployed
 
