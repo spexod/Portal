@@ -8,7 +8,8 @@ of the security deployment and the short list this plan grew from.
 
 ## 1. Rules for unattended work
 
-- **Branches.** One branch per work package, named `claude-<package>` (for example `claude-wp1-tooling`; git
+- **Branches.** Since 2026-11-01 the work packages are merged into the `claude` branch of each repository
+  (the user's review branch); the per-package branches stay for the record. One branch per work package, named `claude-<package>` (for example `claude-wp1-tooling`; git
   allows no `claude/...` branches beside the old `claude` branch). A package that builds on another's files
   branches from that package's branch instead of `main` and says so in section 5 (merge them in that
   order). The two plan files are kept current on `main`: a package branch may change them, and `main`
@@ -273,7 +274,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 | WP5 | `claude-wp5-visual` (both repositories) | 1 and 2 done 2026-11-01: `tests/screenshots.mjs`, `tests/states.mjs`; the explore page as one scroll region (plot and header fixed, rows scroll), the downloads menu in the header, the plot title, notes, mode bar and controls row, the columns menu, phone layouts of home, forms, team, contact, tutorials. Open: the comparison between runs (3); tutorial video #4 shows an empty frame | 40 smoke checks and 18 + 22 screenshots per round, six rounds | D7 |
 | WP6 | | not started | | D2, D7 |
 | WP7 | | not started | | |
-| WP8 | | not started | | |
+| WP8 | `claude` | first pass done 2026-11-01 on the merged work (`main..claude` in both repositories, high effort): 10 findings per repository, all fixed (see the two "Review fixes" commits); the review of the code the branches did not touch (science pipeline, API, components the round left alone) is still open | the fixes rebuilt and tested: 40 checks, menu walk-through, 22 states, 18 pages | |
 | WP9 | | not started | | D4, D8 |
 | WP10 | | not started | | D5, D6 |
 | WP11 | | not started; runs last | | |
