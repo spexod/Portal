@@ -104,18 +104,14 @@ emptied again (see section 3).
 - **Pipeline split** (branch `pipeline-split`, `shell/pipeline_split_plan.md`): separate API and pipeline
   images, drop the dead dependencies.
 - **Build the production images on GitHub, not on a developer computer.** Two steps:
-  1. *Backend.* `security.yml` already builds, scans and publishes `ghcr.io/spexod/backend` from `main` on the
-     weekly schedule and by hand. Publish on every push to `main` as well (keep the two-job separation: the
-     third-party actions never run with a token that can write to the registry). The server's nightly timer,
-     or `systemctl start spexodisks-auto-deploy.service` for an immediate update, becomes the deployment path;
-     `deploy.sh` then only builds the backend for the frontend build (until step 2) and does the data steps.
-  2. *Frontend.* Done on 2026-11-01: the pages are rendered on request (`dynamic = 'force-dynamic'` in
-     `app/layout.js`), the tables come from the fetch data cache (120 s), and the build fetches nothing, so the
-     image builds with no API, no database and no secrets; `deploy.sh`, `display.sh` and `compose.yaml` no
-     longer start a local API or use host networking for it. Remaining: an `image` job in SpExo-FrontEnd's
-     workflow that builds the image from `main`, scans it and publishes `ghcr.io/spexod/frontend`. Gain: both
-     images reproducible from a commit, built for amd64 on a runner (the `DOCKER_PLATFORM` trap in section 1
-     disappears), tagged with the commit SHA, independent of a laptop's state.
+  1. *Backend.* Done 2026-11-01 (branch `claude-wp2-ci-builds`): `security.yml` publishes on every push to
+     `main` as well as on the schedule and by hand, with the same job separation; the nightly timer, or
+     `systemctl start spexodisks-auto-deploy.service`, is the deployment path.
+  2. *Frontend.* Done 2026-11-01: the pages render on request, the image's settings are build args
+     (`NEXT_PUBLIC_*`, public) and the run-time environment (`API_BASE_SERVER`), and SpExo-FrontEnd's
+     `audit.yml` builds the image with the newest packages within the ranges, scans it and publishes it from
+     `main`. Remaining once: the frontend package on ghcr.io grants the SpExo-FrontEnd repository write access,
+     and the first publish is watched.
   After both steps, what remains on the development computer is data work: `data.sh`, the rsync of the
   download files and the staged-data commit, which the pipeline split separates from the API anyway.
 - **Visual checks of the frontend.** Add headless Chromium (Playwright) to the test tooling so the pages can be
