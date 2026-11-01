@@ -438,9 +438,12 @@ https://gist.github.com/jonjack/bf295d4170edeb00e96fb158f9b1ba3c#updating-an-exi
 Fundamentally this is about running the script `/home/ubuntu/Portal/shell/update.sh` on the server,
 however, we have a script that login to the sever for you and run this command do this for you, `deploy_update.sh`.
 The script now waits for the healthchecks and runs `tests/smoke.py` before offering to prune the old
-images. For a deployment that changes the server's `.env` or the database, follow
-[shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security update, the checklist
-applies to later ones too).
+images. Before an update that changes `compose.yaml` or needs new `.env` values, run the dry run on the
+server first: `./shell/update.sh --check` pulls `main`, validates the compose configuration with the
+server's `.env` and pulls the images without stopping anything. For a deployment that changes the server's
+`.env` or the database, follow [shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security
+update, the checklist applies to later ones too). Between deployments the server updates itself every
+night from the published images, see [shell/auto_update.md](shell/auto_update.md).
 
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 
@@ -477,10 +480,15 @@ takes about ten minutes, most of it in `update.py`.
 ./shell/local-test.sh               # full run
 ./shell/local-test.sh --no-update   # only start the backend and test the data already in MySQL
 ./shell/local-test.sh --frontend    # also build and start the frontend (display.sh) and test the pages
+./shell/local-test.sh --frontend --auto-deploy   # then run the nightly update script against the stack:
+                                    # an update with a changed backend image and a rollback with a broken one
 ./shell/local-test.sh --down        # stop the containers afterwards
 ```
 The result should match production: `curl http://localhost/api/stats_total/` and
-`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra.
+`curl https://spexodisks.com/api/stats_total/` report the same numbers of stars and spectra. The test
+stack runs the images under local names (`spexodisks-local/backend`, `spexodisks-local/frontend`), never
+the registry's. `./shell/data-status.sh` prints which database the pipeline scripts talk to and whether
+data is staged, committed or live; `data.sh` and `deploy.sh` show it before they change anything.
 
 # Local Machine Testing
 Portal is a conglomerate repository that brings together other smaller

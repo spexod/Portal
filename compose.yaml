@@ -55,7 +55,8 @@ services:
         # selects requirements.lock, the exact package versions a build is tested with
         - "BASE_IMAGE=${BACKEND_BASE_IMAGE:-python:3.15-alpine}"
         - "REQUIREMENTS=${REQUIREMENTS:-requirements.txt}"
-    image: ghcr.io/spexod/backend:LATEST
+    # BACKEND_IMAGE: a local name for test stacks (shell/local-test.sh), the registry name otherwise
+    image: ${BACKEND_IMAGE:-ghcr.io/spexod/backend:LATEST}
     container_name: backend
     healthcheck:
       test: ["CMD", "python", "healthcheck.py"]
@@ -136,7 +137,7 @@ services:
       args:
         # the Node line to follow (the current LTS); versions.env pins the exact image
         - "BASE_IMAGE=${FRONTEND_BASE_IMAGE:-node:26-alpine}"
-    image: ghcr.io/spexod/frontend:LATEST
+    image: ${FRONTEND_IMAGE:-ghcr.io/spexod/frontend:LATEST}
     container_name: frontend
     environment:
       # the standalone Next.js server binds to HOSTNAME, which Docker sets to the container ID (so it

@@ -1,6 +1,13 @@
 #!/bin/bash
+# Update the server to the current main and the current images, then check the site.
+#   ./shell/update.sh            the update
+#   ./shell/update.sh --check    dry run: pull main, validate the compose configuration with the server's .env,
+#                                pull the images; nothing stops or starts (run it before an update that changes
+#                                compose.yaml or needs new .env values)
 # stop at the first failure: a failed pull must not take the running site down
 set -euo pipefail
+check=false
+[ "${1:-}" = "--check" ] && check=true
 # no "clear": over the ssh in deploy_update.sh there is no terminal, clear fails on the missing TERM,
 # and with set -e that ended the script before the pull (2026-11-01)
 echo "SpExServer Update Script"
@@ -10,8 +17,14 @@ user='chw3k5'
 git pull origin main
 # log in to THe GitHub Container Registry
 cat .git_token.txt | docker login ghcr.io --username "${user}" --password-stdin
+# the compose file and the .env agree (a missing required value fails here, not after "down")
+docker compose config --quiet && echo "compose configuration: ok"
 # pull the fresh version from the container registry
 docker compose pull
+if [ "$check" = true ]; then
+    echo "check passed: main pulled, the compose configuration is valid, the images are pulled; nothing was restarted"
+    exit 0
+fi
 # take the currently running continues offline
 docker compose down
 # delete the (to remake) the Django static files and other temp files

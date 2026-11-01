@@ -71,9 +71,11 @@ of the security deployment and the short list this plan grew from.
   pages, and measure. (WP9, after the frontend reads pages)
 - **The database user is root** for the API, the pipeline and the upload computer. A read-only user for
   the API and a schema-scoped user for the pipeline removes the worst case of an API compromise. Needs D4. (WP9)
-- **Rollback by image id.** `auto-deploy.sh` rolls back to the image id it recorded, which is lost after a
-  prune. With CI publishing `sha-<commit>` tags, record and roll back by tag, and the server can also be
-  pinned to a known tag by hand. (WP2)
+- **Rollback by image id.** `auto-deploy.sh` rolled back to the image id it recorded, which is lost after a
+  prune, and, with the containerd image store, as soon as the image has neither tag nor container (the
+  `--auto-deploy` test found exactly that). Done in WP1: the running image is tagged `previous` before the
+  update and the rollback uses the tag. WP2 can add the `sha-<commit>` tags on top, so the server can also
+  be pinned to a known build by hand.
 - **`API_BASE_SERVER` is baked into the frontend image** from `.env.production` at build time. With dynamic
   rendering it is read at run time, so it belongs in compose's `environment:` (it already has the right
   value, `http://backend:8000/`), and the image is then the same for the local test site and production;
@@ -157,6 +159,18 @@ overlap). Verification as written there, plus WP1's auto-deploy dry run with the
    re-runs), stage runtime dependencies for the next deploy; `.trivyignore` review dates; a short note
    into section 5.
 3. The same routine on a schedule (a scheduled cloud agent or a sandbox cron) once it has run by hand twice.
+
+The routine, as run by the assistant (read-only token, decision D1):
+1. `./shell/github-status.sh` (or the public API without a token); read `logs/github/status.txt`.
+2. For every failed run: read its `*-failed.log`; if the cause is in the repository, fix it on a branch and
+   name the branch and the fix in the message; if it is a transient (runner, registry, network), say so and
+   ask the user to re-run.
+3. For every open Dependabot PR: which line or action it moves, what its run says, what the release notes
+   say about breaking changes; a one-line recommendation (merge, wait, close) per PR for the user.
+4. Open security alerts: severity, package, whether the resolved lock already has the fixed version
+   (then the next image build takes it), or whether a floor in `requirements.txt`/`package.json` is needed.
+5. `.trivyignore` entries past their review date; the `DATA_REPO_TOKEN` and the sandbox token expiry dates.
+6. A short note into section 5 of this plan with the date and what was done.
 
 ### WP5. Frontend visual fixes and a screenshot harness
 *Goal: the explore page works on a phone, nothing overlaps, and a screenshot run catches regressions.*
@@ -248,7 +262,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 
 | Package | Branch | Status | Verified by | Open |
 |---|---|---|---|---|
-| WP1 | `claude-wp1-tooling` | 4 and 5 done 2026-11-01 (venv/pip gone, Python 3.15 line, `refresh_versions.py`, CI resolves and labels, Dependabot policy); 1 to 3 open | backend built on 3.15 from the lock; local-test --frontend 40/40 + account flow; Trivy 0 findings without the ignore file | |
+| WP1 | `claude-wp1-tooling` | all six steps done 2026-11-01: `local-test.sh --auto-deploy` (update and rollback of `auto-deploy.sh` against the local stack), `update.sh --check`, `data-status.sh` in `data.sh`/`deploy.sh`, venv/pip gone, Python 3.15 line, `refresh_versions.py`, CI resolves and labels, Dependabot policy | backend built on 3.15 from the lock; local-test --frontend 40/40 + account flow; Trivy 0 findings without the ignore file; auto-deploy update and rollback scenarios (see commit) | |
 | WP2 | | not started | | D9 |
 | WP3 | `pipeline-split` | plan written 2026-10-31, needs rebase on `main` | | |
 | WP4 | | `github-status.sh` on `main`; routine not started | | D1 |
