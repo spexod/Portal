@@ -38,6 +38,11 @@ emptied again (see section 3).
 
 ## Deployment workflow problems found during this deployment (fix before the next one)
 
+0. **`update.sh` died on `clear`** (found on the first real run, fixed on `claude`): with `set -euo pipefail`
+   and no terminal over ssh, `clear` fails on the missing `TERM` variable and ends the script before the
+   pull; `deploy_update.sh` then went on to its prune prompt as if the update had run. The server was untouched.
+   Fixed together with items 1 to 3: no `clear`, the pull in a separate ssh step, `ssh -t`, the ssh exit status
+   checked, and the prune prompt only when a terminal exists.
 1. **`update.sh` updates itself mid-run.** It pulls `main` and bash keeps executing the copy it already opened,
    so a change to `update.sh` only takes effect on the run after the one that pulls it. `deploy_update.sh`
    should pull in a separate ssh step first (`ssh ... "cd Portal && git pull origin main"`), then run the script;
