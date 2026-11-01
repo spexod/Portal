@@ -1,7 +1,8 @@
 #!/bin/bash
 # stop at the first failure: a failed pull must not take the running site down
 set -euo pipefail
-clear
+# no "clear": over the ssh in deploy_update.sh there is no terminal, clear fails on the missing TERM,
+# and with set -e that ended the script before the pull (2026-11-01)
 echo "SpExServer Update Script"
 cd /home/ubuntu/Portal/ || exit
 user='chw3k5'
@@ -23,9 +24,14 @@ docker compose up --detach --wait
 sleep 10   # nginx re-resolves the container addresses (resolver valid=30s in nginx/deploy.conf)
 python3 tests/smoke.py --base-url "${SMOKE_BASE_URL:-https://spexodisks.com}"
 # clear the old images and cache to keep the disk usage down on the server computer
-echo -e "\nCompleted: Portal Update Script, check the website at spexodisks.com. After confirming the site, press any-key prune"
-read -r -p  "docker cache (deleting replaced docker images)..."
-# images only: never volumes (the Let's Encrypt certificates live in one)
-docker image prune --force
+echo -e "\nCompleted: Portal Update Script, check the website at spexodisks.com."
+# the prune needs a terminal for the prompt (ssh -t in deploy_update.sh, or an interactive session);
+# without one the script ends here and the replaced images stay until "docker image prune --force"
+if [ -t 0 ]; then
+    read -r -p "After confirming the site, press any key to prune the docker cache (deleting replaced docker images)..."
+    # images only: never volumes (the Let's Encrypt certificates live in one)
+    docker image prune --force
+else
+    echo "no terminal: skipping the prune prompt; run 'docker image prune --force' on the server after checking the site"
+fi
 echo "completed: Portal Update Script"
-read -r -p "press any-key to exit."

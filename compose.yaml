@@ -58,6 +58,10 @@ services:
       interval: 6s
       timeout: 5s
       retries: 10
+      # the entrypoint waits for MySQL, creates schemas, applies migrations and moves staged data live
+      # before gunicorn starts; failed checks in this period do not count, so "docker compose up --wait"
+      # (shell/update.sh, auto-deploy.sh) does not report the container unhealthy while it is still starting
+      start_period: 180s
     # the container is read-only, except for specific volumes
     read_only: true
     volumes:
@@ -117,7 +121,6 @@ services:
     platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: ./SpExo-FrontEnd
-      network: host
       platforms:
         - ${DOCKER_PLATFORM:-linux/amd64}
     image: ghcr.io/spexod/frontend:LATEST

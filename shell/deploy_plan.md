@@ -3,32 +3,127 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
-## Checklist (status 2026-11-02)
+## Checklist (status 2026-11-01, night: deployed)
 
 Done:
 - [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
-- [x] `deploy.sh`: backend and frontend images pushed to ghcr.io as `LATEST`, staged data marked committed
 - [x] database dump on the server (`mysql/dump-<time>.sql.gz`)
-- [x] pull request `claude` → `main` opened; `security.yml` ran: `audit` passed, `image` failed on the missing secret
+- [x] GitHub secret `DATA_REPO_TOKEN` set; `security.yml` and `audit.yml` pass (the five Trivy findings in pip's
+      bundled libraries are accepted in `.trivyignore` until 2027-02-01)
+- [x] code review of both repositories; review commits: Trivy ignore file, dead-code removal, deploy plan (Portal),
+      Next.js 16.4.3 and fast-uri 3.1.9 in the lock file (SpExo-FrontEnd, fixes the critical `npm audit` findings)
+- [x] both repositories merged into `main` and pushed; CI green on `main`; `deploy.sh` run after the last commits
+- [x] server `.env` completed; `update.sh` run from an interactive session on the server (`ssh spexo`), after
+      `deploy_update.sh` had died on `clear` (fixed on `claude`, see "Deployment workflow problems")
+- [x] **the site is live on the new images**: `tests/smoke.py --strict` from outside gives 41 passed, 0 failed,
+      0 warnings; the pages carry the security headers; the contact page shows the "not configured" message of
+      the new frontend build
 
-Remaining, in order:
-1. [ ] GitHub secret `DATA_REPO_TOKEN` (section 6), then "Re-run failed jobs" on the pull request run
-2. [ ] Code review of the pull request. **If any commit is added**, run `./deploy.sh` again before the server
-       update so the `LATEST` images match `main` (`data.sh` is not needed again)
-3. [ ] Merge both repositories into `main` and push (section 1; also SpExo-FrontEnd `claude` → `main`)
-4. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2)
-5. [ ] `./deploy_update.sh`; do not confirm the prune prompt yet (section 4)
-6. [ ] `python3 tests/smoke.py --strict`, login, spectrum download, logout (section 5); then confirm the prune
-7. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+Remaining:
+1. [ ] By hand on the site: login, spectrum download, logout (section 5); then the prune on the server
+       (`docker image prune --force`, images only) and on the laptop
+2. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+3. [ ] Fast-forward the commits on `claude` made after the merge into `main` (scripts, compose, docs, the
+       frontend rendering change) and push; they reach the server with the next `update.sh` (the frontend
+       change needs a new frontend image: `deploy.sh`, or the planned CI build)
 
-Until step 5 nothing on the server changes: the server only pulls new images when `update.sh` runs, and the
-nightly timer is not installed yet. One side effect of step "deploy.sh" is already in place: the staged data is
-committed, so if the current (old) backend container restarts before the update, its entrypoint moves that
-data live. That is harmless, the data is meant to go live.
+Note on the repeated `data.sh`: it stages the processed data in the `new_*` schemas but does not mark it
+committed; `deploy.sh` does that (`science.db.commit_data`). The backend's entrypoint only moves staged data
+live when it is committed, so a `data.sh` run that is not followed by `deploy.sh` leaves the new staging in
+place, unused, until the next `deploy.sh`. Harmless, but the output directory on the development computer is
+emptied again (see section 3).
+
+## Deployment workflow problems found during this deployment (fix before the next one)
+
+0. **`update.sh` died on `clear`** (found on the first real run, fixed on `claude`): with `set -euo pipefail`
+   and no terminal over ssh, `clear` fails on the missing `TERM` variable and ends the script before the
+   pull; `deploy_update.sh` then went on to its prune prompt as if the update had run. The server was untouched.
+   Fixed together with items 1 to 3: no `clear`, the pull in a separate ssh step, `ssh -t`, the ssh exit status
+   checked, and the prune prompt only when a terminal exists.
+1. **`update.sh` updates itself mid-run.** It pulls `main` and bash keeps executing the copy it already opened,
+   so a change to `update.sh` only takes effect on the run after the one that pulls it. `deploy_update.sh`
+   should pull in a separate ssh step first (`ssh ... "cd Portal && git pull origin main"`), then run the script;
+   or `update.sh` should `exec` itself after the pull.
+2. **`deploy_update.sh` ignores failures.** After the ssh step it goes straight to its own prune prompt, whether
+   the server update succeeded, failed or was interrupted with Ctrl-C. It needs `set -e` or `|| exit` on the
+   ssh command, so a failed server update stops the script and nothing on the laptop is pruned.
+3. **The prompts in `update.sh` do not work over ssh.** `deploy_update.sh` calls ssh without `-t`, so the
+   `read` prompts in `update.sh` get no terminal: `read` returns an error at end of input and `set -e` ends
+   the script before the prune, and "press any-key to exit" never waits. Either call `ssh -t`, or better make
+   `update.sh` non-interactive with a `--prune` flag that `deploy_update.sh` passes once the site is checked.
+4. **`update.sh` logs in to ghcr.io from `.git_token.txt`.** `shell/ghcr-login.sh` is the documented way;
+   `update.sh` should use it (or skip the login when the registry session is still valid) so there is one place
+   that holds the token.
+5. **`data.sh` and `deploy.sh` are coupled by the staged-data commit** (note above) and nothing records which
+   `data.sh` run the committed staging came from. `data.sh` could print the staging schemas it wrote and
+   `deploy.sh` could show what it is about to commit.
+6. **The first run of a changed workflow is always the risky one.** `shell/local-test.sh` exercises the data and
+   display steps against a local database, but there is no equivalent for `update.sh`; a dry-run mode
+   (`update.sh --check`: pull, `docker compose config`, image pull, no `down`) would catch a missing `.env`
+   value before the site goes down.
+
+## Next round of work (not part of this deployment)
+
+- **Contact form.** The live site ships the placeholder `YOUR_PUBLIC_KEY`, so the EmailJS form has failed since
+  the 2026-05-31 commit that split the contact page; the new build shows "not configured, email
+  info.spexodisks@gmail.com" instead. The key is in the git history of SpExo-FrontEnd (the contact page called
+  `emailjs.sendForm('gmail', 'spexodisks', e.target, 'user_B1HRM3yK7kbsgFQ2zgKON')` from 2022 to May 2026;
+  EmailJS renamed the User ID to Public Key and old values still work). Put it in `.env.deploy` as
+  `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=user_B1HRM3yK7kbsgFQ2zgKON`, rebuild the frontend, and test with a real
+  submission from the site. If it fails, the EmailJS account (probably the one for info.spexodisks@gmail.com)
+  has rotated the key or lapsed: the owner finds the current key under Account > API Keys.
+- **pip in the runtime image.** Drop the unused venv/virtualenv steps in `backend/Dockerfile` (every package
+  installs into the system site-packages anyway) and `pip uninstall pip` at the end, which removes the bundled
+  urllib3/msgpack/setuptools copies that `.trivyignore` accepts. Then delete the `.trivyignore` entries.
+- **Pipeline split** (branch `pipeline-split`, `shell/pipeline_split_plan.md`): separate API and pipeline
+  images, drop the dead dependencies.
+- **Build the production images on GitHub, not on a developer computer.** Two steps:
+  1. *Backend.* `security.yml` already builds, scans and publishes `ghcr.io/spexod/backend` from `main` on the
+     weekly schedule and by hand. Publish on every push to `main` as well (keep the two-job separation: the
+     third-party actions never run with a token that can write to the registry). The server's nightly timer,
+     or `systemctl start spexodisks-auto-deploy.service` for an immediate update, becomes the deployment path;
+     `deploy.sh` then only builds the backend for the frontend build (until step 2) and does the data steps.
+  2. *Frontend.* Done on 2026-11-01: the pages are rendered on request (`dynamic = 'force-dynamic'` in
+     `app/layout.js`), the tables come from the fetch data cache (120 s), and the build fetches nothing, so the
+     image builds with no API, no database and no secrets; `deploy.sh`, `display.sh` and `compose.yaml` no
+     longer start a local API or use host networking for it. Remaining: an `image` job in SpExo-FrontEnd's
+     workflow that builds the image from `main`, scans it and publishes `ghcr.io/spexod/frontend`. Gain: both
+     images reproducible from a commit, built for amd64 on a runner (the `DOCKER_PLATFORM` trap in section 1
+     disappears), tagged with the commit SHA, independent of a laptop's state.
+  After both steps, what remains on the development computer is data work: `data.sh`, the rsync of the
+  download files and the staged-data commit, which the pipeline split separates from the API anyway.
+- **Visual checks of the frontend.** Add headless Chromium (Playwright) to the test tooling so the pages can be
+  screenshotted and compared: the smoke test only checks that pages answer and contain expected text, not how
+  they look. Start with screenshots of every page at phone and desktop widths after a build (`local-test.sh
+  --frontend`), then a comparison against the previous run to flag layout changes. Other frontend tooling may
+  follow (an accessibility checker, see below; a bundle-size check). First findings from headless screenshots
+  of the local site on 2026-11-01 (Playwright, Chromium 156, 1280 px and 390 px wide):
+  - Explore page, desktop: the "Select spectra by hovering..." heading is drawn over the plot area, the
+    "No Spectra Staged for Download" notice covers the navigation bar, and the staged-download icon covers
+    the plot's flux axis.
+  - Explore page, phone: the table columns are cut to two or three characters ("BD", "CRIR"), the four
+    buttons above the table wrap into narrow pills, and the "Add Columns" control is a vertical strip of
+    letters at the right edge; the page is not usable at this width.
+  - Home page, phone: the instrument carousel's numbers and names overlap each other, and the text in the
+    HITRAN box breaks into "importedHITRAN from".
+  - Home page, desktop: no problems seen.
+- **Faster data updates: process only what changed.** Today `DATA_NEW_UPLOADS_ONLY=true` only skips the *upload*
+  of spectra whose handle is already in the `spectra` table: `update.py` still reads every FITS file, rebuilds
+  every object's parameters (SIMBAD, Gaia, TIC lookups against the reference files) and all tables in the
+  `new_*` schemas, about ten minutes, and a changed file that keeps its handle is never re-uploaded. Keep a
+  manifest of MD5 sums (or sizes and mtimes as a fast pre-check) of `data/spectral_data` and the reference
+  files, stored with the data repository or in a table, and have `update.py` process only the files whose sum
+  changed or that are new, re-upload a spectrum when its file changed, and leave the rest untouched. The same
+  sums can tell `deploy.sh` which output files the rsync will move before it starts.
+- **Accessibility.** Keyboard navigation and screen-reader support: a visible focus order through the explore
+  page (drawer, tables, plot controls), labels and roles on the custom dropdowns and buttons, `alt` text on the
+  images, skip links, and colour contrast in `spexostrap/Colors.css`. Measure with an automated checker in the
+  test tooling (axe through Playwright, see above) and fix the findings page by page; then a manual pass with a
+  screen reader on the explore page, which is the hardest one.
 
 ## What is being deployed
 
-Portal, 15 commits (`git log main..claude`):
+Portal, 25 commits (`git log main..claude`):
 
 | Area | Change | Visible effect |
 |---|---|---|
@@ -40,7 +135,7 @@ Portal, 15 commits (`git log main..claude`):
 | operations | `shell/auto-deploy.sh` nightly update with rollback, database dump and alerts; `security.yml` audits and publishes the backend image; `shell/update.sh` waits for health and runs the smoke test | see "After the deployment" |
 | tests | `tests/smoke.py`, `tests/auth_flow.py`, `shell/local-test.sh`, `backend/tests` | |
 
-SpExo-FrontEnd, 6 commits: Dependabot and npm audit, forms never submit natively, token refresh shared
+SpExo-FrontEnd, 7 commits (the last one updates the lock file to Next.js 16.4.3): Dependabot and npm audit, forms never submit natively, token refresh shared
 across tabs with server-side logout, last good data kept when a revalidation fails, labels rendered
 without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY`.
 
@@ -59,18 +154,16 @@ without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMA
      for arm64 would be pushed as `LATEST` and the server could not run it.
    - `SIMBAD_SERVER=simbad.harvard.edu` while CDS Strasbourg is offline (only matters for `data.sh`).
    - `MYSQL_HOST="spexodisks.com"` and the production password as before.
-4. `SpExo-FrontEnd/.env.deploy`: `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=` is empty. The form on `main` used the
-   placeholder `YOUR_PUBLIC_KEY`, so it did not work before either; fill in the real EmailJS public key
-   now if you have it, otherwise the contact page shows a message that the form is not configured.
+4. `SpExo-FrontEnd/.env.deploy`: `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=` stays empty for this deployment (the
+   contact page says the form is not configured and gives the email address); see "Next round of work".
 5. Optional but recommended, 15 minutes: `./shell/local-test.sh --frontend` against a local database
    (needs a second `.env` with `MYSQL_HOST="mysqlDB"`, see `.env.example`).
-6. Push both repositories. Pushing Portal `main` runs `security.yml` (pip-audit, image build, Trivy).
-   The image job needs the `DATA_REPO_TOKEN` secret (section 6); until it is set that job fails, which
-   has no effect on the site.
+6. Push both repositories. Pushing Portal `main` runs `security.yml` (pip-audit, image build, Trivy);
+   the `DATA_REPO_TOKEN` secret is set and the run on the pull request passed.
 
 ## 2. On the server: complete `.env` first
 
-`ssh -i spexo-ssh-key.pem ubuntu@spexodisks.com`, then edit `/home/ubuntu/Portal/.env`:
+`ssh spexo` (the `Host spexo` entry from README.md), then edit `/home/ubuntu/Portal/.env`:
 
 | Variable | Required value | Why |
 |---|---|---|
@@ -115,7 +208,7 @@ change would then be wrong.
 ## 3. Build and publish the images (development computer)
 
 `./deploy.sh` as before. It rsyncs `backend/output` and `backend/data` to the server, builds the backend
-image, starts the local API for the frontend build, builds the frontend with `.env.deploy`, pushes
+image, builds the frontend with `.env.deploy` (no API needed since the pages render on request), pushes
 both images to ghcr.io and marks staged data committed (prints "No staged data to commit" when
 `data.sh` was not run, which is fine for this deployment).
 
@@ -137,7 +230,7 @@ first and bash keeps executing the **old** copy it opened, so this first run doe
 the healthchecks or run the smoke test. Watch it by hand:
 
 ```
-ssh -i spexo-ssh-key.pem ubuntu@spexodisks.com
+ssh spexo
 cd /home/ubuntu/Portal
 docker compose ps                       # backend "healthy" takes up to a minute: schema init, Django migrations
 docker compose logs backend | grep -E "docker-entrypoint|Applying|migrating|Tables updated|ERROR|Traceback"
