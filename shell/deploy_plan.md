@@ -3,7 +3,7 @@
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
 the new compose file and settings fail closed instead of starting with insecure defaults.
 
-## Checklist (status 2026-11-01, evening)
+## Checklist (status 2026-11-01, night: deployed)
 
 Done:
 - [x] `data.sh` against the production database (after the token-blacklist clean-up); Django migrations applied
@@ -12,23 +12,20 @@ Done:
       bundled libraries are accepted in `.trivyignore` until 2027-02-01)
 - [x] code review of both repositories; review commits: Trivy ignore file, dead-code removal, deploy plan (Portal),
       Next.js 16.4.3 and fast-uri 3.1.9 in the lock file (SpExo-FrontEnd, fixes the critical `npm audit` findings)
-- [x] both repositories merged into `main` and pushed; CI green on `main`
-- [x] first `./deploy_update.sh` started, interrupted with Ctrl-C during the server step; the server then had
-      `main` pulled by hand, so the next `update.sh` run is the new version (healthcheck wait + smoke test)
+- [x] both repositories merged into `main` and pushed; CI green on `main`; `deploy.sh` run after the last commits
+- [x] server `.env` completed; `update.sh` run from an interactive session on the server (`ssh spexo`), after
+      `deploy_update.sh` had died on `clear` (fixed on `claude`, see "Deployment workflow problems")
+- [x] **the site is live on the new images**: `tests/smoke.py --strict` from outside gives 41 passed, 0 failed,
+      0 warnings; the pages carry the security headers; the contact page shows the "not configured" message of
+      the new frontend build
 
-Remaining, in order:
-1. [ ] Confirm that the last `./deploy.sh` ran **after** the final commits (Portal dead-code removal, SpExo-FrontEnd
-       lock file 6186b26). If not, run it again: `ghcr.io/spexod/frontend:LATEST` would still be Next.js 16.4.0,
-       which has the remote-code-execution advisory the lock-file commit fixes. `data.sh` is being run again as
-       well; see the note below.
-2. [ ] Server `.env` completed and `docker compose config --quiet` passes (section 2). The interrupted run may
-       not have reached `docker compose up`; check before the next run, the new compose file refuses to start
-       without `MYSQL_PASSWORD` and the backend without `DJANGO_SECRET_KEY`
-3. [ ] `./deploy_update.sh` again; do not confirm the prune prompt yet (section 4). This time `update.sh` waits
-       for the healthchecks and runs the smoke test itself
-4. [ ] From the laptop `python3 tests/smoke.py --strict`, login, spectrum download, logout (section 5); then
-       confirm the prune
-5. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+Remaining:
+1. [ ] By hand on the site: login, spectrum download, logout (section 5); then the prune on the server
+       (`docker image prune --force`, images only) and on the laptop
+2. [ ] systemd units and timer, `ghcr-login.sh`, one manual `workflow_dispatch` of `security.yml` (section 6)
+3. [ ] Fast-forward the commits on `claude` made after the merge into `main` (scripts, compose, docs, the
+       frontend rendering change) and push; they reach the server with the next `update.sh` (the frontend
+       change needs a new frontend image: `deploy.sh`, or the planned CI build)
 
 Note on the repeated `data.sh`: it stages the processed data in the `new_*` schemas but does not mark it
 committed; `deploy.sh` does that (`science.db.commit_data`). The backend's entrypoint only moves staged data
