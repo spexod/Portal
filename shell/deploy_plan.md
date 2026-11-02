@@ -1,3 +1,113 @@
+# Deployment 2 (2026-11-02): the next round, `claude-wp9-alignment` of both repositories
+
+What goes live: everything on `claude-wp9-alignment` that `main` does not have yet (Portal 28 commits,
+SpExo-FrontEnd 24): the version policy and tooling (WP1), the CI image builds (WP2), the Dependabot setup
+(WP4), the visual rounds (WP5) and the second security pass (WP9: email confirmation for new accounts,
+registration without enumeration, the streamed download zip, `MYSQL_BIND_ADDRESS` defaulting to the loopback,
+HSTS with `includeSubDomains`). Both branches fast-forward onto `main`; the merge to `main` builds and
+publishes both images (`security.yml`, `audit.yml`); the server takes them with `shell/auto-deploy.sh`,
+started by hand here so that somebody watches, otherwise at 04:00 UTC.
+
+**Prerequisites, confirmed 2026-11-02:** the server's `.env` has `MYSQL_BIND_ADDRESS=0.0.0.0` (the compose
+default is now `127.0.0.1`, without it the upload computers would lose port 3306) and a working
+`DJANGO_EMAIL_USER`/`DJANGO_EMAIL_APP_PASSWORD` (new accounts confirm their address by mail).
+
+## Checklist
+
+1. [ ] Development computer: `main` fast-forwarded in both repositories and pushed (section A)
+2. [ ] CI green on both `main`s, `publish` included (section B); the frontend package may need "Manage
+       Actions access" for the SpExo-FrontEnd repository on its first publish
+3. [ ] Server: `update.sh --check` clean, `git pull`, `.env` values present (section C)
+4. [ ] Server: `spexodisks-auto-deploy.service` run and completed, nginx reloaded (section D)
+5. [ ] Verified from outside: `smoke.py --strict`, the headers, one registration confirmed by mail (section E)
+6. [ ] Sandbox back on the `claude` branch for the next work package
+
+## A. Development computer (the ssh key for GitHub lives here, so the push happens here)
+
+```
+cd ~/sandboxes/Portal
+git status --short | grep -v '^??'            # must print nothing (the sandbox commits everything)
+git checkout claude && git merge --ff-only claude-wp9-alignment
+git checkout main   && git merge --ff-only claude
+git push origin main
+cd SpExo-FrontEnd
+git checkout claude && git merge --ff-only claude-wp9-alignment
+git checkout main   && git merge --ff-only claude
+git push origin main
+cd ..
+```
+
+`--ff-only` refuses if anything diverged; nothing should, `main` is an ancestor of `claude` in both.
+
+## B. Watch the builds (about 15 minutes; the backend image is built without cache)
+
+```
+gh run list --repo spexod/Portal --limit 3
+gh run list --repo spexod/SpExo-FrontEnd --limit 3
+gh run watch --repo spexod/Portal              # pick the newest run, waits until it ends
+gh run watch --repo spexod/SpExo-FrontEnd
+```
+
+Both runs must end with the `publish` job green. If the frontend's `publish` fails with
+`permission_denied: write_package`: GitHub → organization spexod → Packages → `frontend` → Package settings →
+Manage Actions access → add the SpExo-FrontEnd repository with *Write*, then `gh run rerun <run-id> --failed`.
+
+## C. Server: check before touching anything
+
+```
+ssh spexo
+cd ~/Portal
+git rev-parse --short HEAD                     # the commit to go back to, note it
+./shell/update.sh --check                      # lists the commits, validates main's compose with this .env
+grep -E '^(MYSQL_BIND_ADDRESS|DJANGO_EMAIL_USER|PUBLIC_SITE_URL|REQUIRE_EMAIL_VERIFICATION)=' .env
+git pull origin main
+docker compose config --quiet && echo "compose + .env: ok"
+```
+
+`MYSQL_BIND_ADDRESS=0.0.0.0` and `DJANGO_EMAIL_USER=...` must be in the grep; `PUBLIC_SITE_URL` and
+`REQUIRE_EMAIL_VERIFICATION` may be absent (defaults: `https://spexodisks.com`, on when a mail user is set).
+
+## D. Server: update (after B is green)
+
+```
+sudo systemctl start spexodisks-auto-deploy.service
+journalctl -u spexodisks-auto-deploy --since "10 min ago" --follow     # Ctrl-C when "update completed" shows
+docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload   # the new deploy.conf (HSTS)
+docker compose ps
+```
+
+The service dumps the database first (a few minutes), recreates `backend` and `frontend` with the new images
+and the new compose settings, runs the smoke test against `https://spexodisks.com` and rolls back by itself
+if that fails. It does not touch `mysqlDB` and does not reload nginx, hence the reload line. `docker compose
+ps` must show `mysqlDB` with `0.0.0.0:3306->3306/tcp`.
+
+## E. Verify from outside
+
+```
+cd ~/sandboxes/Portal
+python3 tests/smoke.py --strict
+curl -sI https://spexodisks.com/ | grep -iE 'strict-transport|x-frame'
+```
+
+By hand, with an address you own: Register → the mail "Confirm your email address for SpExoDisks" → the
+link opens `/VerifyEmail?token=...` → Confirm → Login → a download. Register once more with the same
+address: the same on-screen answer, and the mail "Your SpExoDisks account" instead of a second account.
+
+## F. Rollback (only if D's own rollback did not restore the site)
+
+```
+ssh spexo
+cd ~/Portal
+docker tag ghcr.io/spexod/backend:previous  ghcr.io/spexod/backend:LATEST
+docker tag ghcr.io/spexod/frontend:previous ghcr.io/spexod/frontend:LATEST
+git checkout <the commit noted in C>
+docker compose up --detach --force-recreate backend frontend nginx
+python3 tests/smoke.py --base-url https://spexodisks.com
+```
+
+The database dump from before the update is `mysql/dump-<version>-<time>.sql.gz` (restore with
+`./mysql/upgrade.sh restore <file>`); this update adds no migration, so the dump should not be needed.
+
 # Deployment plan: the security review branch (`claude`, 2026-10-31)
 
 The order matters: the server's `.env` has to be completed **before** `shell/update.sh` runs, because
