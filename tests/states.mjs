@@ -31,6 +31,29 @@ const states = [
         await add.click({ force: true });
         await p.waitForTimeout(1200);
     }],
+    ['explore-hover-sort', async (p) => {
+        // a hovered sort button previews the pressed look with the arrow of the order a click gives
+        await p.locator('.sortButton').first().hover(); await p.waitForTimeout(300);
+    }],
+    ['explore-hover-checkbox', async (p) => {
+        await p.locator('.SpexoDataHeader input[type="checkbox"]').first().hover(); await p.waitForTimeout(300);
+    }],
+    ['explore-downloads-item-hover', async (p) => {
+        // a staged spectrum hovered in the downloads menu: the item turns orange and its x white
+        await p.locator('img[alt="ArrowIcon"]').first().hover(); await p.waitForTimeout(500);
+        await p.locator('img[title^="Click add"]').first().click({ force: true }); await p.waitForTimeout(600);
+        const t = p.locator('.header-downloads-toggle');
+        if (await t.getAttribute('aria-expanded') !== 'true') await t.click();
+        await p.locator('.spectrum-link').first().hover(); await p.waitForTimeout(300);
+    }],
+    ['explore-downloads-x-hover', async (p) => {
+        // the x of a staged spectrum hovered: a white disc with an orange x and a black border
+        await p.locator('img[alt="ArrowIcon"]').first().hover(); await p.waitForTimeout(500);
+        await p.locator('img[title^="Click add"]').first().click({ force: true }); await p.waitForTimeout(600);
+        const t = p.locator('.header-downloads-toggle');
+        if (await t.getAttribute('aria-expanded') !== 'true') await t.click();
+        await p.locator('.spectrum-remove').first().hover(); await p.waitForTimeout(300);
+    }],
     ['explore-star', async (p) => {
         await p.locator('.spexo-datacell-link').first().click();
         await p.waitForLoadState('networkidle');
