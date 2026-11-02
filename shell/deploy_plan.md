@@ -15,15 +15,21 @@ default is now `127.0.0.1`, without it the upload computers would lose port 3306
 ## Checklist
 
 1. [x] Development computer: `main` fast-forwarded in both repositories and pushed (2026-11-02 02:43 UTC)
-2. [ ] CI green on both `main`s, `publish` included (section B). Portal: green, backend `LATEST` published 02:53.
-       SpExo-FrontEnd: the Trivy scan failed on `undici` and `brace-expansion` bundled inside npm in
-       `node:26-alpine`; the runner stage now removes npm (commit on `claude`), to be merged and pushed again
+2. [x] CI green on both `main`s, `publish` included. Portal: backend `LATEST` published 02:53 UTC. SpExo-FrontEnd:
+       the first run's Trivy scan failed on `undici` and `brace-expansion` bundled inside npm in `node:26-alpine`
+       (the runner stage now removes npm, 21f990a); the second run's `publish` failed with `permission_denied:
+       write_package` until the `frontend` package granted the SpExo-FrontEnd repository write access
+       (Manage Actions access); the re-run published at about 03:05
 3. [x] Server: `git pull` done, `.env` values present. **Caution learned:** the server's `update.sh` was the old
        one without `--check`, so the first command ran the full update (`down`, volumes, `up`) with the old
        images and the new files; the site was back within a minute (backend restart). `--check` is a dry run only
        from this version on
-4. [ ] Server: `spexodisks-auto-deploy.service` run and completed, nginx reloaded (section D)
-5. [ ] Verified from outside: `smoke.py --strict`, the headers, one registration confirmed by mail (section E)
+4. [x] Server: `spexodisks-auto-deploy.service` started by hand 03:06 UTC: dump, recreate, smoke test; from
+       outside the API answered 502 for about 20 s (03:10:45 to 03:11:06) while the backend restarted, the new
+       frontend was live at 03:11:06. nginx had already been recreated with the new config by the step-3 mishap
+5. [x] Verified from outside 03:12 UTC: `smoke.py --strict` 43/43, HSTS `includeSubDomains`, `/VerifyEmail` 200,
+       `POST /api/users/verify-email/` with a bad token 400. Left for the user: one registration confirmed by
+       mail (section E) and a download
 6. [ ] Sandbox back on the `claude` branch for the next work package
 
 ## A. Development computer (the ssh key for GitHub lives here, so the push happens here)
