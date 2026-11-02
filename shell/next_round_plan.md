@@ -271,7 +271,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 | WP2 | `claude-wp2-ci-builds` (stacked on `claude-wp1-tooling`, both repositories) | done 2026-11-01: frontend settings as build args and run-time env, `audit.yml` builds, scans and publishes the frontend image, `security.yml` publishes on push to `main`; the server side (`sha-` tags for rollback by hand, `deploy.sh` as fallback) documented | frontend built from build args alone, local-test --frontend 40/40, API base checked in the compiled pages, browser console clean | the first real publish of each image is watched by the user; the frontend package needs the repository's write access (auto_update.md) |
 | WP3 | `pipeline-split` | plan written 2026-10-31, needs rebase on `main` | | |
 | WP4 | | `github-status.sh` on `main`; routine not started | | D1 |
-| WP5 | `claude-wp5-visual` (both repositories) | 1 and 2 done 2026-11-01: `tests/screenshots.mjs`, `tests/states.mjs`; the explore page as one scroll region (plot and header fixed, rows scroll), the downloads menu in the header, the plot title, notes, mode bar and controls row, the columns menu, phone layouts of home, forms, team, contact, tutorials. Open: the comparison between runs (3); tutorial video #4 shows an empty frame | 40 smoke checks and 18 + 22 screenshots per round, six rounds | D7 |
+| WP5 | `claude-wp5-visual` (both repositories) | 1 and 2 done 2026-11-01: `tests/screenshots.mjs`, `tests/states.mjs`; the explore page as one scroll region (plot and header fixed, rows scroll), the downloads menu in the header, the plot title, notes, mode bar and controls row, the columns menu, phone layouts of home, forms, team, contact, tutorials. Open: the comparison between runs (3); tutorial video #4 shows an empty frame | 40 smoke checks and 18 + 22 screenshots per round, six rounds; round 2 (2026-11-02, `claude-wp5b-round2`): header spacing, the API link in a new tab, the sample menu above the table, cell values wrap instead of being clipped, the header's checkboxes, sort and column buttons in the site's colours, the plot kept in place across spectrum changes (plot and controls in the explore layout, the page only requests the load), ESASky links on the documented path | D7 |
 | WP6 | | not started | | D2, D7 |
 | WP7 | | not started | | |
 | WP8 | `claude` | first pass done 2026-11-01 on the merged work (`main..claude` in both repositories, high effort): 10 findings per repository, all fixed (see the two "Review fixes" commits); the review of the code the branches did not touch (science pipeline, API, components the round left alone) is still open | the fixes rebuilt and tested: 40 checks, menu walk-through, 22 states, 18 pages | |
@@ -290,9 +290,14 @@ table updated and a message naming what was verified and what needs the user.
 
 - 2026-11-01: the SIMBAD web pages at the CDS (both hosts) are still unreachable after the incident of
   2026-10-29; the site now links to the Harvard mirror by default (`NEXT_PUBLIC_SIMBAD_HOST` in
-  SpExo-FrontEnd, `simbadURL()`). ESASky answered 503 for every page the same evening; the stored links
-  are correct and redirect to ESASky's current address, nothing to change. Tutorial video #4 shows an empty
-  frame in the test browser while #1 to #3 load: check the video's visibility on YouTube.
+  SpExo-FrontEnd, `simbadURL()`). ESASky (sky.esa.int) answered 503 "Service Unavailable" for every page,
+  its home page included, on 2026-11-01 and still on 2026-11-02: an outage on ESA's side, not a change of
+  the link format. ESASky's documented entry point is `https://sky.esa.int/esasky?target=...` with the
+  parameters the stored links use (target, hips, fov, cooframe, sci, lang; cosmos.esa.int/web/esdc/
+  esasky-url-parameters); the stored links name the site root, which ESASky redirects. Since 2026-11-02
+  the site rewrites them to the documented path (`esaSkyURL()`), and newly processed data stores that
+  path (science/analyze/object_collection.py). Re-check the links when ESASky is back. Tutorial video #4
+  shows an empty frame in the test browser while #1 to #3 load: check the video's visibility on YouTube.
 - 2026-11-01: the browser's API base is relative by default (`/`, SpExo-FrontEnd `claude-wp5-visual`):
   the pages work from whatever host and port they are served on, which an absolute `http://localhost/`
   did not (a test site published on port 8888 could not load spectra). To do when WP2 is next touched: the

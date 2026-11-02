@@ -38,6 +38,16 @@ const states = [
     }],
     ['explore-scrolled', async (p) => { await p.evaluate(() => window.scrollBy(0, 1400)); await p.waitForTimeout(400); }],
     ['explore-table-scrolled', async (p) => { await p.evaluate(() => { const r = document.querySelector('.SpexoSearchScroller'); if (r) r.scrollTop = 1400; }); await p.waitForTimeout(400); }],
+    ['explore-columns-added', async (p) => {
+        await p.click('button#AddColumn'); await p.waitForTimeout(500);
+        for (const label of ['T_eff', 'Distance']) { await p.locator('.drop-down li', { hasText: label }).first().click(); await p.waitForTimeout(400); }
+        await p.keyboard.press('Escape'); await p.mouse.click(10, 300); await p.waitForTimeout(500);
+    }],
+    ['explore-spectrum-switch', async (p) => {
+        // a spectrum loaded from the table: the plot must stay in place while the next one arrives
+        await p.locator('img[alt="ArrowIcon"]').first().hover(); await p.waitForTimeout(500);
+        await p.locator('a.linkText').first().click({ force: true }); await p.waitForTimeout(250);
+    }],
     ['explore-help', async (p) => { await p.click('.instructionsButton'); await p.waitForTimeout(500); }],
     ['login-submitted', async (p) => { await p.goto(baseURL + '/Login', { waitUntil: 'networkidle' }); await p.click('button[type="submit"], input[type="submit"]').catch(() => {}); await p.waitForTimeout(800); }],
     ['register-submitted', async (p) => { await p.goto(baseURL + '/Register', { waitUntil: 'networkidle' }); await p.click('button[type="submit"], input[type="submit"]').catch(() => {}); await p.waitForTimeout(800); }],
