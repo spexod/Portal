@@ -43,6 +43,10 @@ const states = [
         for (const label of ['T_eff', 'Distance']) { await p.locator('.drop-down li', { hasText: label }).first().click(); await p.waitForTimeout(400); }
         await p.keyboard.press('Escape'); await p.mouse.click(10, 300); await p.waitForTimeout(500);
     }],
+    ['explore-sorted', async (p) => {
+        // the table sorted by RA: the column's sort button looks pressed
+        await p.locator('.sortButton').first().click(); await p.waitForTimeout(800);
+    }],
     ['explore-spectrum-switch', async (p) => {
         // a spectrum loaded from the table: the plot must stay in place while the next one arrives
         await p.locator('img[alt="ArrowIcon"]').first().hover(); await p.waitForTimeout(500);
