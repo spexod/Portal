@@ -39,7 +39,8 @@ from science.load.hitran import (HitranRef, isotopologue_to_molecule, isotopolog
 
 
 def set_website_values(ra_epoch_j2000_deg, dec_epoch_j2000_deg):
-    esa_sky = f'https://sky.esa.int/?target={ra_epoch_j2000_deg}%20{dec_epoch_j2000_deg}&' + \
+    # the documented ESASky entry point (https://www.cosmos.esa.int/web/esdc/esasky-url-parameters)
+    esa_sky = f'https://sky.esa.int/esasky/?target={ra_epoch_j2000_deg}%20{dec_epoch_j2000_deg}&' + \
               f'hips=DSS2+color&fov=0.24832948784432046&cooframe=J2000&sci=true&lang=en'
     ra_dec_str_for_web = ra_dec_web_format(ra_epoch_j2000_deg=ra_epoch_j2000_deg,
                                            dec_epoch_j2000_deg=dec_epoch_j2000_deg)
