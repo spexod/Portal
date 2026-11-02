@@ -45,6 +45,7 @@ urlpatterns = [path('', include(router.urls)),
                path('users/token/verify/', TokenVerifyView.as_view()),
                path('users/logout/', views.LogoutView.as_view()),
                path('users/register', views.RegisterView.as_view()),
+               path('users/verify-email/', views.VerifyEmailView.as_view()),
                path('users/me', views.RetrieveUserView.as_view()),
                path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
                # the throttled views come first, the include keeps the remaining routes (validate_token)

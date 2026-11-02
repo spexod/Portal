@@ -16,7 +16,7 @@ const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-');
 const outDir = process.argv[3] || join('..', 'logs', 'screenshots', stamp);
 // the pages of the site (SpExo-FrontEnd/app/(SharedContext)/*/page.js*), see tests/smoke.py PAGES
 const pages = ['/', '/ExploreData', '/Tutorials', '/DataInfo', '/DevTeam', '/Contact', '/Login', '/Register',
-               '/ResetPasswordRequest'];
+               '/ResetPasswordRequest', '/VerifyEmail'];
 const widths = [1280, 390];
 
 mkdirSync(outDir, { recursive: true });

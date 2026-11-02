@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created, post_password_reset
+from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -91,15 +92,15 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-    email_plaintext_message = f"https://spexodisks.com/ResetPassword?token={reset_password_token.key}"
+    email_plaintext_message = f"{settings.PUBLIC_SITE_URL}/ResetPassword?token={reset_password_token.key}"
     try:
         send_mail(
             # title:
-            "Password Reset for SpExoDisks".format(title="SpExoDisks"),
+            "Password Reset for SpExoDisks",
             # message:
             "Click the following link to reset your password " + email_plaintext_message,
             # from:
-            "donotreplyspexodisks@gmail.com",
+            settings.DEFAULT_FROM_EMAIL,
             # to:
             [reset_password_token.user.email]
         )

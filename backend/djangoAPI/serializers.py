@@ -25,6 +25,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         """
         model = User
         fields = ('first_name', 'last_name', 'email', 'institution', 'password')
+        # the unique validator would answer "already exists": RegisterView handles an existing address without
+        # telling the client (the address's owner gets a mail instead)
+        extra_kwargs = {'email': {'validators': []}}
 
     def validate(self, data):
         """

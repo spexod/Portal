@@ -8,8 +8,9 @@ download -> password change (revokes every token) -> login with the new password
 the refresh token). Standard library only.
 
 The user it creates stays in the database, so the script refuses any host other than localhost unless
---remote is given. Eight requests go to the throttled 'auth' endpoints (10 per minute per address, see
-REST_FRAMEWORK in core/settings.py): wait a minute between runs.
+--remote is given. Ten requests go to the throttled 'auth' endpoints (10 per minute per address, see
+REST_FRAMEWORK in core/settings.py): wait a minute between runs. The local stack has no mail account, so
+REQUIRE_EMAIL_VERIFICATION is off and the new account can log in at once (core/settings.py).
 
     python3 tests/auth_flow.py --base-url http://localhost
 """
@@ -84,10 +85,19 @@ def main():
     status, user = api.json("POST", "/api/users/register", {
         "first_name": "Auth", "last_name": "Flow", "email": email, "institution": "tests/auth_flow.py",
         "password": password})
-    checks.check("register", status == 201 and isinstance(user, dict) and user.get("email") == email, f"HTTP {status} {user}")
+    checks.check("register", status == 201 and isinstance(user, dict) and "detail" in user, f"HTTP {status} {user}")
     if status == 429:
         print("\nthrottled by the 'auth' scope: wait a minute and run again")
         return 2
+    checks.check("register never returns the account's data", not (isinstance(user, dict) and "email" in user))
+    # the same answer for an address that has an account (no user enumeration; the owner gets a mail instead)
+    status2, again = api.json("POST", "/api/users/register", {
+        "first_name": "Auth", "last_name": "Flow", "email": email, "institution": "tests/auth_flow.py",
+        "password": password})
+    checks.check("registering an existing address answers exactly like a new one", status2 == status and again == user,
+                 f"HTTP {status2} {again}")
+    status, body = api.json("POST", "/api/users/verify-email/", {"token": "not-a-token"})
+    checks.check("verify-email with an invalid token is refused", status == 400, f"HTTP {status} {body}")
 
     # 2. login
     status, tokens = api.json("POST", "/api/users/token/", {"email": email, "password": password})

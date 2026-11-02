@@ -16,7 +16,7 @@ from datetime import timedelta
 
 from science.db.sql import (MYSQL_HOST, MYSQL_API_USER, MYSQL_API_PASSWORD, MYSQL_CONNECT_OPTIONS,
                             sql_port, DEBUG, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_APP_PASSWORD,
-                            wait_for_mysql_to_start, is_docker_build)
+                            wait_for_mysql_to_start, is_docker_build, str_is_true)
 
 
 # At image build time (collectstatic, makemigrations) no database is reachable, so skip
@@ -243,12 +243,21 @@ if EMAIL_USER:
     EMAIL_HOST_PASSWORD = EMAIL_APP_PASSWORD
 else:
     warn("Email server not configured, please set the environment variables DJANGO_EMAIL_USER and DJANGO_EMAIL_APP_PASSWORD")
+    # the mails (password reset, address confirmation) go to the container log instead
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = EMAIL_USER or 'donotreplyspexodisks@gmail.com'
 
 # USER AUTHENTICATION FOR SIGNUP AND LOGIN
 AUTH_USER_MODEL = 'djangoAPI.UserAccount'
 
-DOMAIN = 'localhost:3000'
 SITE_NAME = 'SpExoDisks'
+# the address of the website, for the links in the mails (password reset, address confirmation)
+PUBLIC_SITE_URL = os.environ.get('PUBLIC_SITE_URL', 'https://spexodisks.com').rstrip('/')
+# a new account confirms its email address with a mailed link before it can log in (djangoAPI/accounts.py);
+# without a mail account (a local stack, the mails go to the log) the account is active at once
+REQUIRE_EMAIL_VERIFICATION = str_is_true(os.environ.get('REQUIRE_EMAIL_VERIFICATION', 'true' if EMAIL_USER else 'false'))
+# how long the confirmation link works
+EMAIL_VERIFICATION_MAX_AGE = timedelta(days=3)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

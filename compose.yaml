@@ -19,9 +19,10 @@ services:
       MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"
       MYSQL_DATABASE: "spexodisks"
     ports:
-      # MYSQL_BIND_ADDRESS=127.0.0.1 keeps the database off the network, the production server needs
-      # remote (TLS) connections from the upload computers, protected by the cloud firewall (shell/ssl.md)
-      - "${MYSQL_BIND_ADDRESS:-0.0.0.0}:3306:3306"
+      # the database listens on this computer only unless .env says otherwise: the production server sets
+      # MYSQL_BIND_ADDRESS=0.0.0.0 for the remote (TLS) connections of the upload computers, which the cloud
+      # firewall restricts to their addresses (shell/ssl.md)
+      - "${MYSQL_BIND_ADDRESS:-127.0.0.1}:3306:3306"
     volumes:
       # store data in a volume on the host for the MySQL database
       - "./mysql/local:/var/lib/mysql:rw"
@@ -87,6 +88,10 @@ services:
       DJANGO_EMAIL_PORT: "${DJANGO_EMAIL_PORT:-587}"
       DJANGO_EMAIL_USER: "${DJANGO_EMAIL_USER:-None}"
       DJANGO_EMAIL_APP_PASSWORD: "${DJANGO_EMAIL_APP_PASSWORD:-None}"
+      # the website's address in the mails (password reset, address confirmation); a new account confirms its
+      # address by mail before it can log in, by default when a mail account is set (core/settings.py)
+      PUBLIC_SITE_URL: "${PUBLIC_SITE_URL:-https://spexodisks.com}"
+      REQUIRE_EMAIL_VERIFICATION: "${REQUIRE_EMAIL_VERIFICATION:-}"
       # required unless DEBUG=true, see core/settings.py
       DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-}"
       DEBUG: "${DEBUG:-false}"

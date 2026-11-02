@@ -33,6 +33,7 @@ PAGES = [
     "/Register",
     "/ResetPasswordRequest",
     "/ResetPassword",
+    "/VerifyEmail",
 ]
 # The API tables the frontend loads at startup (SpExo-FrontEnd/context/fetch_data.js): endpoint, expected JSON type
 API_TABLES = [
@@ -200,6 +201,8 @@ def check_security(site, results, no_redirect):
     res = site.get("/")
     for name in SECURITY_HEADERS:
         results.check("security", f"{name} header", bool(res.header(name)), res.header(name) or "missing")
+    hsts = res.header("strict-transport-security") or ""
+    results.check("security", "HSTS covers the subdomains", "includesubdomains" in hsts.lower(), hsts or "missing")
     server = res.header("server")
     results.check("security", "server header hides the nginx version", not re.search(r"\d", server), server or "absent")
 

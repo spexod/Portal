@@ -1,5 +1,8 @@
 import os
-from django.http import HttpResponse
+from django.conf import settings
+from django.db import IntegrityError, transaction
+from django.http import FileResponse
+from django.contrib.auth import get_user_model
 from rest_framework import viewsets, permissions
 
 from rest_framework.decorators import api_view, permission_classes
@@ -9,7 +12,6 @@ from rest_framework.views import APIView
 
 from rest_framework import status, generics
 from rest_framework.response import Response
-from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,6 +19,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from django_rest_passwordreset.views import ResetPasswordRequestToken, ResetPasswordConfirm
 
+from . import accounts
 from .dynamic_data import (dispatch, schema_prefix,
                            available_spectra_to_database, available_isotopologues_to_database)
 from .models import spectra_models, isotopologue_models, \
@@ -72,8 +75,11 @@ Static Views
 """
 
 
-# the download zip is built in memory, see download_spectra
+User = get_user_model()
+
+# limits per download request, see download_spectra
 DOWNLOAD_MAX_SPECTRA = int(os.environ.get('DOWNLOAD_MAX_SPECTRA', '200'))
+DOWNLOAD_MAX_BYTES = int(os.environ.get('DOWNLOAD_MAX_BYTES', str(2 * 1024 ** 3)))
 
 
 class StatsTotalViewSet(viewsets.ReadOnlyModelViewSet):
@@ -139,7 +145,8 @@ def download_spectra(request):
     Get a list of strings from a user with the spectra they would like to download.
     Each spectra being seperated with a % character.
 
-    The zip file is built in memory, so the number of spectra per request is limited.
+    The zip (uncompressed) is written to a temporary file and streamed, so a request holds at most a small
+    part of it in memory; the number of spectra and the total size per request are limited.
     """
     # drop empty entries and duplicates, keeping the order
     spectra_list = list(dict.fromkeys(handle for handle in request.query_params.get('spectra', '').split('%') if handle))
@@ -148,8 +155,14 @@ def download_spectra(request):
     if len(spectra_list) > DOWNLOAD_MAX_SPECTRA:
         return Response({'detail': f'At most {DOWNLOAD_MAX_SPECTRA} spectra per download.'},
                         status=status.HTTP_400_BAD_REQUEST)
-    response = HttpResponse(dispatch.zip_upload(spectra_handles=spectra_list), content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=spexodisks.zip'
+    try:
+        zip_file, size = dispatch.zip_upload(spectra_handles=spectra_list, max_bytes=DOWNLOAD_MAX_BYTES)
+    except dispatch.TooLarge as too_large:
+        return Response({'detail': f'The requested spectra are {too_large.total_bytes / 1024 ** 2:.0f} MB, at most '
+                                   f'{DOWNLOAD_MAX_BYTES / 1024 ** 2:.0f} MB per download: request fewer spectra.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    response = FileResponse(zip_file, as_attachment=True, filename='spexodisks.zip', content_type='application/zip')
+    response['Content-Length'] = str(size)
     return response
 
 
@@ -197,22 +210,65 @@ class LogoutView(APIView):
 
 
 class RegisterView(APIView):
-    """ Register a new user. """
+    """
+    Register a new user.
+
+    The answer is the same whether or not the address already has an account (the address's owner gets a mail
+    either way: the confirmation link, or a note that the account exists), so the endpoint does not reveal who
+    is registered. With REQUIRE_EMAIL_VERIFICATION the new account is inactive until the link is used.
+    """
     throttle_scope = 'auth'
 
     def post(self, request):
-        """
-        overwrite the post method to create a new user.
-        """
-        data = request.data
-        serializer = UserCreateSerializer(data=data)
+        serializer = UserCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if settings.REQUIRE_EMAIL_VERIFICATION:
+            detail = ('If the address is new, the account was created: open the link in the mail we sent to '
+                      'confirm the address, then log in.')
+        else:
+            detail = 'If the address is new, the account was created: you can log in.'
+        answer = Response({'detail': detail}, status=status.HTTP_201_CREATED)
 
-        user = serializer.create(serializer.validated_data)
-        user = UserSerializer(user)
+        email = User.objects.normalize_email(serializer.validated_data['email']).lower()
+        existing = User.objects.filter(email=email).first()
+        if existing is None:
+            try:
+                with transaction.atomic():
+                    user = serializer.create(serializer.validated_data)
+            except IntegrityError:
+                # registered twice at the same moment: the same answer as for an existing address
+                existing = User.objects.filter(email=email).first()
+            else:
+                if settings.REQUIRE_EMAIL_VERIFICATION:
+                    user.is_active = False
+                    user.save(update_fields=['is_active'])
+                    accounts.send_verification_mail(user)
+                return answer
+        if existing is not None:
+            if existing.is_active or not settings.REQUIRE_EMAIL_VERIFICATION:
+                accounts.send_existing_account_mail(existing)
+            else:
+                # registered before, the link was never used (or expired): a fresh link
+                accounts.send_verification_mail(existing)
+        return answer
 
-        return Response(user.data, status=status.HTTP_201_CREATED)
+
+class VerifyEmailView(APIView):
+    """ Activate the account named by a confirmation token from the registration mail. """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request):
+        user = accounts.user_from_token(request.data.get('token', ''))
+        if user is None:
+            return Response({'detail': 'This confirmation link is not valid or has expired. Register again with the '
+                                       'same address to receive a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+        return Response({'detail': 'Your email address is confirmed: you can log in.'}, status=status.HTTP_200_OK)
 
 
 class RetrieveUserView(APIView):
