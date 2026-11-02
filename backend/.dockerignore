@@ -3,6 +3,8 @@
 /.gitignore
 .idea
 .git
+# a nested repository too (data/ is the private spexod/data clone; its .git/config can hold a token)
+**/.git
 *Dockerfile*
 venv*
 output
