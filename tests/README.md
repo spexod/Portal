@@ -22,7 +22,7 @@ Check groups:
 | `pages` | every page in `SpExo-FrontEnd/app/(SharedContext)` returns HTML without a rendered error, including one real `/ExploreData/<object>` page | exit status 1 |
 | `api` | every table in `SpExo-FrontEnd/context/fetch_data.js` returns non-empty JSON, one per-spectrum and one per-isotopologue table, the tables agree with each other, static files are served | exit status 1 |
 | `auth` | requests without a token, or with wrong credentials, are refused | exit status 1 |
-| `security` | security headers, hidden server version, `robots.txt`, the download endpoint requires a login, unknown API paths are 404, dot-files are refused, http redirects to https | warning, or exit status 1 with `--strict` |
+| `security` | security headers (HSTS with `includeSubDomains`), hidden server version, `robots.txt`, the download endpoint requires a login, unknown API paths are 404, dot-files are refused, http redirects to https | warning, or exit status 1 with `--strict` |
 
 Exit status 2 means the site could not be reached at all.
 
@@ -45,9 +45,13 @@ call to one of the `check_*` functions. A new frontend page is not tested until 
 
 ## Account API test: `auth_flow.py`
 
-Walks through the user-account endpoints on a local stack with a throwaway user: register, login,
-`/users/me`, token refresh (the old refresh token is revoked), an authenticated spectrum download,
-password change (every token is revoked), login with the new password, logout. It creates a user,
+Walks through the user-account endpoints on a local stack with a throwaway user: register (the answer
+never contains the account's data, a second registration with the same address answers identically, an
+invalid email-confirmation token is refused), login, `/users/me`, token refresh (the old refresh token
+is revoked), an authenticated spectrum download, password change (every token is revoked), login with
+the new password, logout. The local stack has no mail account, so the account is active at once; the
+confirmation flow itself (a mailed link, an inactive account until it is used) runs on production only.
+It creates a user,
 so it refuses hosts other than localhost unless `--remote` is given. `shell/local-test.sh` runs it
 after the smoke test.
 
@@ -56,7 +60,7 @@ python3 tests/auth_flow.py --base-url http://localhost
 ```
 
 The login, refresh, register and logout endpoints are throttled to 10 requests per minute per
-address; the test uses eight, so wait a minute between runs.
+address; the test uses ten, so wait a minute between runs.
 
 ## Unit tests: `backend/tests/`
 

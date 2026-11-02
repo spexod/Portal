@@ -127,6 +127,18 @@ variables with the python-dotenv package.
 An `.env` file is required in the root directory of the Portal repository.
 See the `.env.example` file for examples of the required fields.
 
+Settings worth knowing since the 2026-11 round (all documented in `.env.example`):
+
+- `MYSQL_BIND_ADDRESS`: the address MySQL's port 3306 is published on, **this computer only
+  (`127.0.0.1`) by default**. The production server sets `0.0.0.0` so the upload computers can connect
+  over TLS (the cloud firewall limits who can, see [shell/ssl.md](shell/ssl.md)).
+- `DJANGO_EMAIL_USER` and `DJANGO_EMAIL_APP_PASSWORD`: the Gmail account the site sends from. It carries
+  the password-reset mails and, since this round, the **confirmation link every new account has to use
+  before it can log in** (`REQUIRE_EMAIL_VERIFICATION`, on by default when the mail user is set).
+  Without a mail account, as on a local stack, the mails are printed to the backend's log and new
+  accounts are active at once. `PUBLIC_SITE_URL` (default `https://spexodisks.com`) is the address in
+  those links.
+
 SpExoDisks developers will need to provide credentials for new users 
 connect to the MySQL server at spexodisks.com.
 
@@ -354,6 +366,15 @@ The runtime lines are declared once each: the Python line as the default of `BAC
 `compose.yaml` (the backend Dockerfile's `ARG` default and the workflow's runner version follow it), the
 Node line as the default of `ARG BASE_IMAGE` in the frontend Dockerfile (its workflow and `package.json`'s
 `engines` follow it). Moving a line is one edit in each repository plus the Dockerfile defaults.
+`python3 shell/refresh_versions.py --check` verifies that the copies agree (the two lines, and the
+frontend build arguments of `compose.yaml` against the Dockerfile's `ARG`s); every resolve runs the check
+first, so CI does too. Both image workflows also start the built image once before the scan (the backend
+loads its Django configuration, the frontend server answers HTTP).
+
+Neither runtime image carries its package manager: the backend drops `pip` and the frontend drops `npm`
+at the end of the build. They are not needed to run the site, and their bundled libraries (pip's
+`urllib3`, npm's `undici`) are what the Trivy scan kept flagging. To inspect an image, run the tools from
+the builder stage or a plain base image instead.
 
 ### Data upload `data.sh`
 `data.sh` is a script that will start from input data files and create 
@@ -453,11 +474,26 @@ Fundamentally this is about running the script `/home/ubuntu/Portal/shell/update
 however, we have a script that login to the sever for you and run this command do this for you, `deploy_update.sh`.
 The script now waits for the healthchecks and runs `tests/smoke.py` before offering to prune the old
 images. Before an update that changes `compose.yaml` or needs new `.env` values, run the dry run on the
-server first: `./shell/update.sh --check` pulls `main`, validates the compose configuration with the
-server's `.env` and pulls the images without stopping anything. For a deployment that changes the server's
-`.env` or the database, follow [shell/deploy_plan.md](shell/deploy_plan.md) (written for the 2026 security
-update, the checklist applies to later ones too). Between deployments the server updates itself every
-night from the published images, see [shell/auto_update.md](shell/auto_update.md).
+server first: `./shell/update.sh --check` fetches `main`, validates its compose configuration with the
+server's `.env` and lists the images an update would pull, without pulling, stopping or starting anything.
+
+> [!CAUTION]
+> The server runs the script of its **current** checkout. A flag that only exists on `main` (as `--check`
+> did on 2026-11-02) is ignored by the old script, which then runs the full update. Check `git log -1`
+> on the server first, or `git pull origin main` before relying on a new option.
+
+Since the CI builds (2026-11), the usual path needs neither `update.sh` nor `deploy_update.sh`: **a merge
+to `main` is a deployment.** The push builds, scans and publishes the image (`gh run watch --repo
+spexod/Portal`, `--repo spexod/SpExo-FrontEnd`), and the server's nightly timer pulls it at 04:00 UTC,
+or at once with `sudo systemctl start spexodisks-auto-deploy.service` on the server (it blocks until the
+update is through, about five minutes, most of it the database dump; follow it from a second terminal with
+`journalctl -u spexodisks-auto-deploy --follow`). Changes to `compose.yaml`, the nginx configurations or
+the scripts need a `git pull origin main` on the server first; a container is only recreated when its
+image or its compose definition changed, so an nginx-only change also needs
+`docker compose exec nginx nginx -s reload`. For a deployment that changes the server's `.env` or the
+database, write a checklist in [shell/deploy_plan.md](shell/deploy_plan.md) as for the two deployments
+there. Between deployments the server updates itself every night from the published images, see
+[shell/auto_update.md](shell/auto_update.md).
 
 Following the prompts in the script, once the images are pulled and the
 containers are launched (wait 10 seconds for the initialization), 
@@ -480,9 +516,14 @@ python3 tests/smoke.py
 python3 tests/smoke.py --base-url http://localhost
 ```
 Backend unit tests (no database needed): `cd backend && python3 -m unittest discover tests`.
-The user-account endpoints (register, login, token refresh, download, password change, logout) are
-tested by `python3 tests/auth_flow.py --base-url http://localhost` on a local stack only, since it
-creates a user.
+The user-account endpoints (register, email confirmation, login, token refresh, download, password
+change, logout) are tested by `python3 tests/auth_flow.py --base-url http://localhost` on a local stack
+only, since it creates a user. Registration answers the same way whether or not the address has an
+account (the owner learns the difference by mail), and with a mail account configured the new account
+is inactive until the link in the confirmation mail is used (`/VerifyEmail?token=...`, which posts the
+token to `/api/users/verify-email/`); on a local stack without a mail account the mails go to
+`docker compose logs backend` and the account is active at once. Downloads are limited per request
+(`DOWNLOAD_MAX_SPECTRA`, 200, and `DOWNLOAD_MAX_BYTES`, 2 GiB) and streamed from a temporary file.
 
 ## Local database test `shell/local-test.sh`
 Rebuilds the production database from `backend/data` on the local MySQL container and runs the API
