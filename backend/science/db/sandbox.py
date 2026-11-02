@@ -1,7 +1,7 @@
 import os
 import shutil
+import tempfile
 import zipfile
-from io import BytesIO
 from typing import NamedTuple
 
 from spexod.filepaths import fitsfile_py_path, fitsfile_md_path
@@ -67,26 +67,40 @@ class Dispatch:
     def write_sql():
         sql_update(upload_sql=True, write_plots=False, target_file=None)
 
-    def zip_upload(self, spectra_handles: list) -> bytes:
-        failed_requests = []
-        file_count = 0
-        mem_zip = BytesIO()
-        with zipfile.ZipFile(mem_zip, mode="w",) as zip_ref:
-            # This Python file is packaged with the FITS files so that users have a hope of reading them
-            zip_ref.write(fitsfile_py_path, arcname=os.path.basename(fitsfile_py_path))
-            # The Markdown file is packaged with the FITS files so that users have a hope of reading them
-            zip_ref.write(fitsfile_md_path, arcname=os.path.basename(fitsfile_md_path))
-            for spectra_handle in spectra_handles:
-                if spectra_handle in self.output_datum_by_spectrum_handle.keys():
-                    spectrum_data = self.output_datum_by_spectrum_handle[spectra_handle]
-                    for spectrum_datum in spectrum_data:
-                        arcname = os.path.join(f'{spectrum_datum.starname}',
-                                               os.path.basename(spectrum_datum.output_path))
-                        zip_ref.write(spectrum_datum.output_path, arcname=arcname)
-                        file_count += 1
-                else:
-                    failed_requests.append(spectra_handle)
-        return mem_zip.getvalue()
+    class TooLarge(Exception):
+        """ The requested files exceed max_bytes (zip_upload). """
+        def __init__(self, total_bytes: int):
+            super().__init__(f'{total_bytes} bytes requested')
+            self.total_bytes = total_bytes
+
+    # the zip stays in memory up to this size, larger ones go to a temporary file (/var/tmp in the container)
+    zip_memory_limit = 16 * 1024 ** 2
+
+    def zip_upload(self, spectra_handles: list, max_bytes: int | None = None):
+        """
+        The requested spectra as an uncompressed zip, with the reader files (fitsfile.py and its Markdown)
+        so that users have a hope of reading the FITS files. Unknown handles are skipped.
+
+        Returns the open zip file, positioned at its start, and its size in bytes. The file is a
+        SpooledTemporaryFile: small zips stay in memory, large ones are written to disk, so a request never
+        holds a whole archive in memory. Raises TooLarge when the files add up to more than max_bytes.
+        """
+        members = [(fitsfile_py_path, os.path.basename(fitsfile_py_path)),
+                   (fitsfile_md_path, os.path.basename(fitsfile_md_path))]
+        for spectra_handle in spectra_handles:
+            for spectrum_datum in self.output_datum_by_spectrum_handle.get(spectra_handle, []):
+                arcname = os.path.join(f'{spectrum_datum.starname}', os.path.basename(spectrum_datum.output_path))
+                members.append((spectrum_datum.output_path, arcname))
+        total_bytes = sum(os.path.getsize(path) for path, _ in members)
+        if max_bytes is not None and total_bytes > max_bytes:
+            raise self.TooLarge(total_bytes)
+        zip_file = tempfile.SpooledTemporaryFile(max_size=self.zip_memory_limit)
+        with zipfile.ZipFile(zip_file, mode="w") as zip_ref:
+            for path, arcname in members:
+                zip_ref.write(path, arcname=arcname)
+        size = zip_file.tell()
+        zip_file.seek(0)
+        return zip_file, size
 
 
 def write_upload_files():
