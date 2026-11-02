@@ -20,6 +20,12 @@ The build scripts read versions.env (shell/build.sh); the image workflow runs th
 records the result in the image labels. Needs Docker with buildx.
 
     python3 shell/refresh_versions.py [--no-npm] [--no-lock]
+    python3 shell/refresh_versions.py --check     # only check that the declarations agree (below)
+
+Before resolving anything, the script checks the declarations that exist in more than one place: the Python
+line in compose.yaml and backend/Dockerfile, the Node line in compose.yaml, the frontend Dockerfile and its
+package.json "engines", and the frontend build arguments of compose.yaml against the Dockerfile's ARGs
+(the frontend's own workflow checks its build-args against the same Dockerfile).
 """
 import argparse
 import json
@@ -38,6 +44,9 @@ FRONTEND_DIR = REPO / "SpExo-FrontEnd"
 # image variables with their default tag in compose.yaml, e.g. ${NGINX_IMAGE:-nginx:stable}
 IMAGE_VARIABLE = re.compile(r"\$\{(\w+_IMAGE):-([^}]+)\}")
 COMPILE_COMMAND = "python3 shell/refresh_versions.py"
+BACKEND_DOCKERFILE = BACKEND_DIR / "Dockerfile"
+FRONTEND_DOCKERFILE = FRONTEND_DIR / "Dockerfile"
+FRONTEND_PACKAGE = FRONTEND_DIR / "package.json"
 
 
 def run(cmd: list[str]) -> str:
@@ -61,6 +70,57 @@ def image_tags() -> dict[str, str]:
     images (BACKEND_IMAGE, FRONTEND_IMAGE): those are what the builds produce, not what they follow."""
     return {variable: tag for variable, tag in IMAGE_VARIABLE.findall(COMPOSE_FILE.read_text())
             if not tag.startswith("ghcr.io/spexod/")}
+
+
+def compose_default(variable: str) -> str:
+    """The default of ${VARIABLE:-default} in compose.yaml."""
+    match = re.search(r"\$\{" + variable + r":-([^}]+)\}", COMPOSE_FILE.read_text())
+    if not match:
+        sys.exit(f"compose.yaml does not declare a default for {variable}")
+    return match.group(1)
+
+
+def compose_build_args(service: str) -> set[str]:
+    """The names in the build "args:" list of a compose.yaml service."""
+    text = COMPOSE_FILE.read_text()
+    block = re.search(r"^  " + service + r":\n(.*?)(?=^  \w|\Z)", text, re.S | re.M)
+    if not block:
+        sys.exit(f"compose.yaml has no service {service}")
+    return set(re.findall(r'^\s+- "(\w+)=', block.group(1), re.M))
+
+
+def dockerfile_args(path: Path) -> dict[str, str]:
+    """ARG name -> default of a Dockerfile (an empty string for an ARG without a default)."""
+    return {name: default for name, default in re.findall(r"^ARG (\w+)=?(.*)$", path.read_text(), re.M)}
+
+
+def check_declarations() -> None:
+    """The declarations that exist in more than one place agree with each other (see the module docstring)."""
+    problems = []
+    python_line = compose_default("BACKEND_BASE_IMAGE")
+    backend_arg = dockerfile_args(BACKEND_DOCKERFILE).get("BASE_IMAGE")
+    if backend_arg != python_line:
+        problems.append(f"the Python line is {python_line} in compose.yaml and {backend_arg} in backend/Dockerfile")
+    if FRONTEND_DOCKERFILE.exists():
+        node_line = compose_default("FRONTEND_BASE_IMAGE")
+        frontend_args = dockerfile_args(FRONTEND_DOCKERFILE)
+        if frontend_args.get("BASE_IMAGE") != node_line:
+            problems.append(f"the Node line is {node_line} in compose.yaml and {frontend_args.get('BASE_IMAGE')} "
+                            "in the frontend Dockerfile")
+        node_major = re.search(r"node:(\d+)", node_line)
+        engines = json.loads(FRONTEND_PACKAGE.read_text()).get("engines", {}).get("node", "")
+        if node_major and engines != f">={node_major.group(1)}":
+            problems.append(f'package.json "engines" says node "{engines}", the line is {node_line}')
+        compose_args = compose_build_args("frontend") - {"BASE_IMAGE"}
+        dockerfile_build_args = set(frontend_args) - {"BASE_IMAGE"}
+        if compose_args != dockerfile_build_args:
+            problems.append("the frontend build arguments differ: compose.yaml passes "
+                            f"{sorted(compose_args)}, the Dockerfile declares {sorted(dockerfile_build_args)}")
+    else:
+        print(f"  (no {FRONTEND_DIR.name} checkout: the Node line and the frontend build arguments are not checked)")
+    if problems:
+        sys.exit("The declarations disagree:\n  " + "\n  ".join(problems))
+    print("  the Python line, the Node line and the frontend build arguments agree")
 
 
 def resolve_digest(tag: str) -> str:
@@ -95,7 +155,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--no-npm", action="store_true", help="leave package-lock.json alone")
     parser.add_argument("--no-lock", action="store_true", help="resolve the images only, no requirements.lock")
+    parser.add_argument("--check", action="store_true", help="only check that the declarations agree")
     args = parser.parse_args()
+
+    print("Checking the declarations")
+    check_declarations()
+    if args.check:
+        return
 
     print("Resolving the image lines of compose.yaml")
     pinned = {}

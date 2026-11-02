@@ -92,6 +92,18 @@ jobs:
           ./shell/build.sh backend --no-cache \
             --set "backend.labels.org.opencontainers.image.revision=$GITHUB_SHA" \
             --set "backend.labels.org.spexodisks.base-image=$BACKEND_BASE_IMAGE"
+      # the image as built loads its settings, apps, models and URL configuration (IS_DOCKER_BUILD skips the
+      # database connection, as during the build). No database in CI: migrations, the entrypoint and the API
+      # are exercised by the local test (shell/local-test.sh) and the nightly rollback (shell/auto-deploy.sh)
+      - name: Check that the backend image imports its Django configuration
+        run: |
+          docker run --rm --entrypoint python --env IS_DOCKER_BUILD=true --env DJANGO_SETTINGS_MODULE=core.settings \
+            --env DEBUG=false --env MYSQL_PASSWORD=not-used-by-the-check ghcr.io/spexod/backend:LATEST -c '
+          import django
+          django.setup()
+          from django.apps import apps
+          from django.urls import get_resolver
+          print(len(get_resolver().url_patterns), "URL patterns,", len(apps.get_models()), "models")'
       - name: Scan the image, fail on fixable HIGH or CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
