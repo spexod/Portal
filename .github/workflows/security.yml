@@ -17,10 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # the Python line is declared once, as the default of BACKEND_BASE_IMAGE in compose.yaml; the runner
+      # gets the same line for the lock refresh and the audit
+      - name: Read the Python line from compose.yaml
+        id: lines
+        run: |
+          python=$(sed -n 's/.*BACKEND_BASE_IMAGE:-python:\([0-9.]*\)-alpine.*/\1/p' compose.yaml | head -1)
+          [ -n "$python" ] || { echo "::error::BACKEND_BASE_IMAGE's default in compose.yaml is not python:<line>-alpine"; exit 1; }
+          echo "python=$python" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          # the line the backend image runs (BACKEND_BASE_IMAGE in compose.yaml)
-          python-version: "3.15"
+          python-version: ${{ steps.lines.outputs.python }}
       # the exact versions this run builds: the base images by digest and requirements.lock, compiled inside
       # the backend's base image (the version policy in shell/next_round_plan.md: packages follow the newest
       # release, the runtimes are pinned to a line)
@@ -72,23 +79,17 @@ jobs:
       - name: Read the resolved versions
         run: grep -v '^#' versions.env >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # the build the server-side scripts run: docker buildx bake against compose.yaml (shell/build.sh), so
+      # the context, the build arguments, the platform and the image name have one definition. Bake
+      # interpolates the whole compose file, whose run-time section requires MYSQL_PASSWORD; the build
+      # itself never sees the value
       - name: Build the backend image from the resolved versions (no layer cache)
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          platforms: linux/amd64
-          # the same values compose.yaml passes
-          build-args: |
-            MPLCONFIGDIR=/home/python_user/backend_app/.cache/matplotlib
-            DATA_OUTPUT_DIR=/home/python_user/backend_app/output
-            BASE_IMAGE=${{ env.BACKEND_BASE_IMAGE }}
-            REQUIREMENTS=requirements.lock
-          labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.spexodisks.base-image=${{ env.BACKEND_BASE_IMAGE }}
-          no-cache: true
-          load: true
-          tags: ghcr.io/spexod/backend:LATEST
+        env:
+          MYSQL_PASSWORD: not-used-by-the-build
+        run: |
+          ./shell/build.sh backend --no-cache \
+            --set "backend.labels.org.opencontainers.image.revision=$GITHUB_SHA" \
+            --set "backend.labels.org.spexodisks.base-image=$BACKEND_BASE_IMAGE"
       - name: Scan the image, fail on fixable HIGH or CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

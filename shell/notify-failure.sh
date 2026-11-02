@@ -29,7 +29,7 @@ if [ -n "$email" ]; then
         SMTP_HOST="$(env_value DJANGO_EMAIL_HOST)" SMTP_PORT="$(env_value DJANGO_EMAIL_PORT)" \
         SMTP_USER="$(env_value DJANGO_EMAIL_USER)" SMTP_PASSWORD="$(env_value DJANGO_EMAIL_APP_PASSWORD)" \
         python3 - <<'PY'
-import os, smtplib, sys
+import os, smtplib, ssl, sys
 from email.message import EmailMessage
 host, port = os.environ["SMTP_HOST"] or "smtp.gmail.com", int(os.environ["SMTP_PORT"] or 587)
 user, password = os.environ["SMTP_USER"], os.environ["SMTP_PASSWORD"]
@@ -39,7 +39,9 @@ msg = EmailMessage()
 msg["From"], msg["To"], msg["Subject"] = user, os.environ["ALERT_EMAIL"], os.environ["ALERT_TITLE"]
 msg.set_content(os.environ["ALERT_BODY"])
 with smtplib.SMTP(host, port, timeout=30) as smtp:
-    smtp.starttls()
+    # a verifying context: without one, starttls() accepts any certificate and the password would go to
+    # whoever answers for the mail host (Django's mail backend verifies, core/settings.py)
+    smtp.starttls(context=ssl.create_default_context())
     smtp.login(user, password)
     smtp.send_message(msg)
 PY

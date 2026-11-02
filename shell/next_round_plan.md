@@ -275,7 +275,7 @@ download, logout) against the local stack; CI runs the unit tests and `makemigra
 | WP6 | | not started | | D2, D7 |
 | WP7 | | not started | | |
 | WP8 | `claude` | first pass done 2026-11-01 on the merged work (`main..claude` in both repositories, high effort): 10 findings per repository, all fixed (see the two "Review fixes" commits); the review of the code the branches did not touch (science pipeline, API, components the round left alone) is still open | the fixes rebuilt and tested: 40 checks, menu walk-through, 22 states, 18 pages | |
-| WP9 | | not started | | D4, D8 |
+| WP9 | `claude-wp9-alignment` (both repositories) | preparation 2026-11-02: the CI builds aligned with the local ones (`security.yml` builds with `shell/build.sh`, the Python and Node lines read from compose.yaml and the frontend Dockerfile, the frontend base image resolved to its digest, `NEXT_PUBLIC_SIMBAD_HOST` passed everywhere, `local-test.sh --no-refresh`, the alert mail verifies the TLS certificate). Items 1 to 7 not started | bash -n, YAML parse, the line extraction, `bake --print` with the label overrides, the digest lookup | D4, D8 |
 | WP10 | | not started | | D5, D6 |
 | WP11 | | not started; runs last | | |
 | WP12 | | not started | | |

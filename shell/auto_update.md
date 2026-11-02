@@ -71,7 +71,10 @@ The operating system is covered by `unattended-upgrades` above. The containers a
   `package.json`'s ranges, scans it and publishes it, and the nightly update picks it up like the backend.
   The frontend package on ghcr.io must grant the SpExo-FrontEnd repository write access (the same
   "Manage Actions access" setting as for the backend, with the frontend repository instead of Portal).
-  The EmailJS key of the contact form is the repository variable `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` there.
+  The EmailJS key of the contact form is the repository variable `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` there,
+  and `NEXT_PUBLIC_SIMBAD_HOST` (optional) the SIMBAD web host; `compose.yaml` passes the same values from
+  `.env` for a build here. The workflow reads the Node line from the Dockerfile and pins the base image to
+  its digest for the build, as `shell/refresh_versions.py` does for a build here.
 
 ## What `shell/auto-deploy.sh` does
 

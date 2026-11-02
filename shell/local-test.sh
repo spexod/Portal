@@ -24,18 +24,23 @@
 #                                      (a rollback). The stack then runs its images from a registry container
 #                                      on localhost:5000, and the two test images, built on top of the tested
 #                                      one, reach it through "docker compose pull", as on the server
+#   ./shell/local-test.sh --no-refresh stop before a build to use the versions already in versions.env, the
+#                                      lock files and package-lock.json: the default runs shell/refresh_versions.py
+#                                      first, so the test builds what the CI build and the server would
 #   ./shell/local-test.sh --down       stop the containers afterwards (the database files stay in mysql/local)
 # Exit status: 0 when the smoke test passes, 1 otherwise.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 run_update=true
+refresh=true
 down_after=false
 with_frontend=false
 with_auto_deploy=false
 for arg in "$@"; do
     case "$arg" in
         --no-update) run_update=false ;;
+        --no-refresh) refresh=false ;;
         --frontend) with_frontend=true ;;
         --auto-deploy) with_auto_deploy=true ;;
         --down) down_after=true ;;
@@ -93,6 +98,16 @@ step() { printf '\n==== %s\n' "$*"; }
 
 step "1. MySQL"
 docker compose up --detach --wait mysqlDB
+
+# the versions a build uses: the images by digest, requirements.lock, package-lock.json (the parts this run
+# builds), as deploy.sh, display.sh and the GitHub workflows resolve them before their builds
+if [ "$refresh" = true ] && { [ "$run_update" = true ] || [ "$with_frontend" = true ]; }; then
+    step "1b. resolve the versions to build (shell/refresh_versions.py)"
+    refresh_args=()
+    [ "$run_update" = true ] || refresh_args+=(--no-lock)
+    [ "$with_frontend" = true ] || refresh_args+=(--no-npm)
+    python3 shell/refresh_versions.py "${refresh_args[@]}" || exit 1
+fi
 
 if [ "$run_update" = true ]; then
     step "2. backend image"

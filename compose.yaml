@@ -142,6 +142,8 @@ services:
         # (empty: the form says it is not configured)
         - "NEXT_PUBLIC_API_BASE_CLIENT=${NEXT_PUBLIC_API_BASE_CLIENT:-/}"
         - "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=${NEXT_PUBLIC_EMAILJS_PUBLIC_KEY:-}"
+        # the host the SIMBAD links send visitors to (empty: the Harvard mirror, see the frontend's safeURL.js)
+        - "NEXT_PUBLIC_SIMBAD_HOST=${NEXT_PUBLIC_SIMBAD_HOST:-}"
     image: ${FRONTEND_IMAGE:-ghcr.io/spexod/frontend:LATEST}
     container_name: frontend
     environment:

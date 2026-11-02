@@ -342,10 +342,18 @@ Before a build, `python3 shell/refresh_versions.py` resolves all of that to exac
 (every image line with the digest its tag points to today) and `backend/requirements.lock` (every Python
 package at an exact version, compiled with uv inside the backend's base image), both gitignored, and
 `SpExo-FrontEnd/package-lock.json` updated within the ranges. `shell/build.sh` reads `versions.env`;
-`display.sh` runs the refresh; the image workflow (`.github/workflows/security.yml`) runs it before the
-build, audits the lock, keeps it with the run and writes the base image and the commit into the image
-labels. The lock files are copied into the images, so `docker run --rm --entrypoint cat
+`deploy.sh`, `display.sh` and `shell/local-test.sh` run the refresh before their builds (`--no-refresh`
+skips it in the test); the image workflow (`.github/workflows/security.yml`) runs it before the build,
+audits the lock, keeps it with the run, builds with `shell/build.sh` (the same bake against `compose.yaml`
+as the scripts here, so the build has one definition) and writes the base image and the commit into the
+image labels. The frontend workflow resolves `node:26-alpine` to its digest the same way and records it.
+The lock files are copied into the images, so `docker run --rm --entrypoint cat
 ghcr.io/spexod/backend:LATEST requirements.lock` says what an image runs.
+
+The runtime lines are declared once each: the Python line as the default of `BACKEND_BASE_IMAGE` in
+`compose.yaml` (the backend Dockerfile's `ARG` default and the workflow's runner version follow it), the
+Node line as the default of `ARG BASE_IMAGE` in the frontend Dockerfile (its workflow and `package.json`'s
+`engines` follow it). Moving a line is one edit in each repository plus the Dockerfile defaults.
 
 ### Data upload `data.sh`
 `data.sh` is a script that will start from input data files and create 
@@ -488,6 +496,7 @@ takes about ten minutes, most of it in `update.py`.
 ./shell/local-test.sh --frontend    # also build and start the frontend (display.sh) and test the pages
 ./shell/local-test.sh --frontend --auto-deploy   # then run the nightly update script against the stack:
                                     # an update with a changed backend image and a rollback with a broken one
+./shell/local-test.sh --no-refresh  # keep the versions already resolved (versions.env, lock files)
 ./shell/local-test.sh --down        # stop the containers afterwards
 ```
 The result should match production: `curl http://localhost/api/stats_total/` and
