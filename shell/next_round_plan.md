@@ -237,6 +237,10 @@ per item; D4 for the database user.
 ### WP10. Operations: backups, monitoring, retention
 *Goal: a lost server is recoverable and an outage is noticed.* Sessions: 1. Needs: D5, D6, and the user
 runs the server-side setup.
+0. `shell/ubuntu-server.sh` (the 2024 server bootstrap: Docker install, clone, `init.sh`) is the seed of the
+   rebuild procedure; it is unreferenced and partly stale (https clones, no ssl/systemd steps): rewrite it as
+   the "new server" runbook in this package. Removed 2026-11-02 as dead: `shell/restart.sh` (one line, see
+   `docker compose restart`) and `shell/update-repos.sh` (a `git restore .` on three repositories, used by nothing).
 1. `shell/backup.sh`: nightly dump (the auto-deploy already dumps before an update) plus `backend/output`
    and `backend/data` rsync to the D5 target, retention, a restore test documented; a systemd timer.
 2. External uptime check documented; `ALERT_WEBHOOK_URL` set (D6); the failure unit tested end to end.
