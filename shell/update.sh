@@ -19,11 +19,12 @@ if [ "$check" = true ]; then
     git fetch --quiet origin main
     echo "commits an update would bring in:"
     git log --oneline HEAD..origin/main | cat
-    git show origin/main:compose.yaml > /tmp/compose-check.yaml
-    docker compose -f /tmp/compose-check.yaml --env-file .env config --quiet && echo "main's compose configuration with this .env: ok"
+    compose_check=$(mktemp --suffix=.yaml)
+    git show origin/main:compose.yaml > "$compose_check"
+    docker compose -f "$compose_check" --env-file .env config --quiet && echo "main's compose configuration with this .env: ok"
     echo "images an update would pull:"
-    docker compose -f /tmp/compose-check.yaml --env-file .env config --images
-    rm -f /tmp/compose-check.yaml
+    docker compose -f "$compose_check" --env-file .env config --images
+    rm -f "$compose_check"
     echo "check passed: nothing was pulled, stopped or started"
     exit 0
 fi

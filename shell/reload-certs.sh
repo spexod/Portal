@@ -7,12 +7,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Run SQL as root in the mysqlDB container, over the local socket. Passes MySQL's exit status
-# through and drops only the warning about the password on the command line.
+# Run SQL as root in the mysqlDB container, over the local socket. The password comes from the
+# container's MYSQL_ROOT_PASSWORD through a temporary option file (as in mysql/upgrade.sh), so it
+# never appears on a command line, where any user on the host can read it while the client runs.
 mysql_root() {
     docker compose exec -T mysqlDB sh -c \
-        'out=$(mysql -uroot -p"$MYSQL_ROOT_PASSWORD" --batch --skip-column-names -e "$1" 2>&1); status=$?
-         printf "%s\n" "$out" | grep -v "Using a password on the command line" || true
+        'cnf=$(mktemp)
+         printf "[client]\nuser=root\npassword=\"%s\"\n" "$MYSQL_ROOT_PASSWORD" > "$cnf"
+         mysql --defaults-extra-file="$cnf" --batch --skip-column-names -e "$1"; status=$?
+         rm -f "$cnf"
          exit $status' sh "$1"
 }
 

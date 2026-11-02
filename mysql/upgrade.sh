@@ -114,7 +114,8 @@ backup() {
     fingerprint > "mysql/fingerprint-${version}-${stamp}.txt"
 
     echo "Writing a full logical backup to ${dump} (this can take a while)..."
-    in_mysql mysqldump --all-databases --single-transaction --set-gtid-purged=OFF --routines --events --triggers > "$dump"
+    # the dump holds the users schema (emails, password hashes): readable by the owner only
+    (umask 077; in_mysql mysqldump --all-databases --single-transaction --set-gtid-purged=OFF --routines --events --triggers > "$dump")
 
     echo "Shutting down MySQL ${version} cleanly (slow shutdown, can take a few minutes)..."
     query "SET GLOBAL innodb_fast_shutdown = 0"
@@ -149,9 +150,10 @@ dump() {
     fingerprint > "mysql/fingerprint-${version}-${stamp}.txt"
 
     echo "Dumping the schemas $(echo $schemas) to ${file} (the site keeps running)..."
+    # the dump holds the users schema (emails, password hashes): readable by the owner only
     # shellcheck disable=SC2086
-    in_mysql mysqldump --single-transaction --routines --events --triggers --set-gtid-purged=OFF \
-        --databases $schemas | gzip > "$file" || { rm -f "$file"; echo "Dump failed." >&2; exit 1; }
+    (umask 077; in_mysql mysqldump --single-transaction --routines --events --triggers --set-gtid-purged=OFF \
+        --databases $schemas | gzip > "$file") || { rm -f "$file"; echo "Dump failed." >&2; exit 1; }
     echo "Dump complete: ${file} ($(du -h "$file" | cut -f1))"
 }
 
