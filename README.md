@@ -376,6 +376,92 @@ at the end of the build. They are not needed to run the site, and their bundled 
 `urllib3`, npm's `undici`) are what the Trivy scan kept flagging. To inspect an image, run the tools from
 the builder stage or a plain base image instead.
 
+## Uploading new data (the science team's pipeline)
+
+Three commands put new spectra on spexodisks.com. Nothing is built or deployed by hand any more: the
+website's code reaches the server from GitHub on its own (see the end of this section), and a data
+upload needs no new image because the backend reads the tables and the data directory when it starts.
+
+**Once, on the upload computer** (ask the SpExoDisks administrators for the three private pieces):
+
+- Docker Desktop running, Python 3 on the PATH, and this repository cloned (`git clone
+  git@github.com:spexod/Portal.git`).
+- The data repository cloned inside it: `git clone git@github.com:spexod/data.git backend/data`
+  (private; the administrators grant access).
+- The `.env` for an upload computer, provided by the administrators: it points at the production database
+  (`MYSQL_HOST="spexodisks.com"`, the pipeline account, `DATA_NEW_UPLOADS_ONLY=true`); on an Apple-silicon
+  Mac also `DOCKER_PLATFORM=linux/arm64`. The server's firewall must know your IP address, see
+  [shell/ssl.md](shell/ssl.md#when-the-upload-computers-ip-address-changes).
+- The server ssh key set up as `Host spexo` in `~/.ssh/config`, see [Server ssh key](#server-ssh-key-spexo-ssh-keypem).
+
+**Every upload:**
+
+```bash
+cd ~/Portal                      # your clone of this repository
+git pull origin main             # the current pipeline code
+git -C backend/data pull         # the current data; then add the new files under backend/data/spectral_data/...
+```
+
+Put the new spectra and reference files in place under `backend/data` (the layout is the one already
+there), then commit and push them so the data repository stays the single copy:
+
+```bash
+git -C backend/data add -A
+git -C backend/data commit -m "describe the new data"
+git -C backend/data push
+```
+
+Process and stage (minutes to an hour; the script shows which database it writes to and asks before it
+starts; the site keeps serving the old data meanwhile, the new data waits in the `new_*` schemas):
+
+```bash
+./data.sh
+```
+
+Put it live (copies the download files and the data to the server, commits the staged data, restarts
+the backend there, which moves the staged tables live, and checks the site):
+
+```bash
+./upload.sh
+```
+
+That is all. Check the result yourself:
+
+```bash
+curl -s "https://spexodisks.com/api/stats_total/?format=json"; echo     # the counts of stars and spectra
+./shell/data-status.sh                                                  # nothing staged any more
+```
+
+If `data.sh` stops with an error, fix the input and run it again: it only stages, nothing is live until
+`upload.sh`. If `upload.sh` fails in step 4 or 5, the server still runs the previous data; ask an
+administrator to look at `docker compose logs backend` on the server.
+
+**For the administrators: how the website's code gets to the server** (the data pipeline above does not
+need any of this). A merge to `main` in Portal or SpExo-FrontEnd builds, scans and publishes the image,
+and the server's nightly update installs it at 04:00 UTC. With the [GitHub CLI](https://cli.github.com)
+on your computer (`brew install gh`, then `gh auth login`, choose SSH and the browser login):
+
+```bash
+gh run list --repo spexod/Portal --limit 3                 # the runs of the last pushes
+gh run watch --repo spexod/Portal                          # follow a run until it ends (same for --repo spexod/SpExo-FrontEnd)
+gh run view <run-id> --repo spexod/SpExo-FrontEnd --log-failed | grep -iE 'denied|error' | head   # why a job failed
+gh run rerun <run-id> --repo spexod/SpExo-FrontEnd --failed                                      # retry the failed job only
+gh api repos/spexod/Portal/dependabot/alerts?state=open --jq '.[] | [.number, .security_advisory.severity, .dependency.package.name, .security_vulnerability.first_patched_version.identifier] | @tsv'
+```
+
+To install the published images now instead of tonight, on the server:
+
+```bash
+ssh spexo
+cd ~/Portal && git pull origin main                        # the compose file, nginx configuration and scripts
+sudo systemctl start spexodisks-auto-deploy.service        # blocks until the update is through (about 5 minutes)
+journalctl -u spexodisks-auto-deploy --since "15 min ago"  # what it did; "update completed" at the end
+```
+
+The old scripts remain for the rare cases: `deploy.sh` builds and pushes the images from this computer
+(a build that needs a local workaround), `deploy_update.sh` runs `shell/update.sh` on the server (a full
+`docker compose down` and `up`), `display.sh` builds a complete test website on this computer.
+
 ### Data upload `data.sh`
 `data.sh` is a script that will start from input data files and create 
 the MySQL tables and FITS/TXT files for the SpExoDisks website.
@@ -422,9 +508,10 @@ image with the newest packages, scans it, publishes it to ghcr.io as `LATEST` an
 server's nightly update (see [shell/auto_update.md](shell/auto_update.md)) pulls it, checks the site and
 rolls back if the check fails. So for a code change the deployment is: merge, wait for the green run,
 and the site updates the next night (or run `sudo systemctl start spexodisks-auto-deploy.service` on
-the server). `deploy.sh` remains for the data steps (the rsync of the download files and the data
-repository, and committing the staged data) and as the fallback that builds and pushes the images from
-this computer, for example when a build needs a local workaround.
+the server). The data steps that used to be the first half of `deploy.sh` (the rsync of the download
+files and the data directory, committing the staged data, the backend restart) are `upload.sh` now, see
+[Uploading new data](#uploading-new-data-the-science-teams-pipeline). `deploy.sh` remains as the fallback
+that builds and pushes the images from this computer, for example when a build needs a local workaround.
 
 ```bash
 ./deploy.sh
