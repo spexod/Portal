@@ -14,10 +14,14 @@ default is now `127.0.0.1`, without it the upload computers would lose port 3306
 
 ## Checklist
 
-1. [ ] Development computer: `main` fast-forwarded in both repositories and pushed (section A)
-2. [ ] CI green on both `main`s, `publish` included (section B); the frontend package may need "Manage
-       Actions access" for the SpExo-FrontEnd repository on its first publish
-3. [ ] Server: `update.sh --check` clean, `git pull`, `.env` values present (section C)
+1. [x] Development computer: `main` fast-forwarded in both repositories and pushed (2026-11-02 02:43 UTC)
+2. [ ] CI green on both `main`s, `publish` included (section B). Portal: green, backend `LATEST` published 02:53.
+       SpExo-FrontEnd: the Trivy scan failed on `undici` and `brace-expansion` bundled inside npm in
+       `node:26-alpine`; the runner stage now removes npm (commit on `claude`), to be merged and pushed again
+3. [x] Server: `git pull` done, `.env` values present. **Caution learned:** the server's `update.sh` was the old
+       one without `--check`, so the first command ran the full update (`down`, volumes, `up`) with the old
+       images and the new files; the site was back within a minute (backend restart). `--check` is a dry run only
+       from this version on
 4. [ ] Server: `spexodisks-auto-deploy.service` run and completed, nginx reloaded (section D)
 5. [ ] Verified from outside: `smoke.py --strict`, the headers, one registration confirmed by mail (section E)
 6. [ ] Sandbox back on the `claude` branch for the next work package
