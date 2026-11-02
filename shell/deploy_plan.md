@@ -227,7 +227,7 @@ without raw HTML, external links checked, contact form key from `NEXT_PUBLIC_EMA
 | `NGINX_CONFIG_FILE` | `deploy.conf` | as before |
 | `MYSQL_CONFIG_FILE` | `deploy.cnf` | as before |
 | `COMPOSE_PROFILES` | as before (`db,web,api`) | |
-| `MYSQL_BIND_ADDRESS` | optional: the server's address if MySQL should not listen on every interface | the upload computer connects to port 3306 over TLS |
+| `MYSQL_BIND_ADDRESS` | `0.0.0.0` (**required on the server since WP9**: the default became `127.0.0.1`) | the upload computer connects to port 3306 over TLS; without it the nightly update recreates mysqlDB listening on the loopback only |
 | `ALERT_WEBHOOK_URL` | optional, e.g. `https://ntfy.sh/<topic>` | failure alerts from the nightly update |
 | `DOCKER_PLATFORM`, `SIMBAD_SERVER`, `JUPYTER_TOKEN` | leave unset | |
 
